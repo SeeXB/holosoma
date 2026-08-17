@@ -8,6 +8,7 @@ from holosoma_retargeting.config_types.retargeting import (
     RetargetingConfig,
 )
 from holosoma_retargeting.config_types.robot import RobotConfig
+from holosoma_retargeting.config_types.semantic import SemanticRetargetingConfig
 from holosoma_retargeting.config_types.task import TaskConfig
 from holosoma_retargeting.config_types.viser import ViserConfig
 
@@ -19,6 +20,7 @@ __all__ = [
     "RetargeterConfig",
     "RetargetingConfig",
     "RobotConfig",
+    "SemanticRetargetingConfig",
     "TaskConfig",
     "ViserConfig",
 ]

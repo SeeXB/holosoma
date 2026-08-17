@@ -1,0 +1,13 @@
+{
+  "ordinary_degradation_pct": 2.0310318843905897,
+  "ordinary_guardrail_pct": 1.0,
+  "ordinary_pass": false,
+  "global_kf_degradation_pct": 8.161628615549638,
+  "global_kf_guardrail_pct": 0.5,
+  "global_kf_pass": false,
+  "part_improvement_pct": 36.715629716791035,
+  "part_strong_result_target_pct": 5.0,
+  "part_strong_result_pass": true,
+  "part_better_than_raw": true,
+  "stage_a_pass": false
+}

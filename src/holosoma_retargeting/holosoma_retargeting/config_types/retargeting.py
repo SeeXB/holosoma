@@ -9,6 +9,7 @@ from typing import Literal
 from holosoma_retargeting.config_types.data_type import MotionDataConfig
 from holosoma_retargeting.config_types.retargeter import RetargeterConfig
 from holosoma_retargeting.config_types.robot import RobotConfig
+from holosoma_retargeting.config_types.semantic import SemanticRetargetingConfig
 from holosoma_retargeting.config_types.task import TaskConfig
 
 
@@ -63,6 +64,9 @@ class RetargetingConfig:
     retargeter: RetargeterConfig = field(default_factory=RetargeterConfig)
     """Retargeter configuration (nested - can override q_a_init_idx, activate_joint_limits, etc.
     via --retargeter.q-a-init-idx)."""
+
+    semantic: SemanticRetargetingConfig = field(default_factory=SemanticRetargetingConfig)
+    """Semantic-keyframe-aware optimizer mode and fixed ablation settings."""
 
 
 @dataclass

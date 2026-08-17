@@ -1,0 +1,7 @@
+{
+  "penetration_duration": 0.00510204081632653,
+  "penetration_max_depth_m": 0.010958649442312715,
+  "foot_skating_duration": 0.0,
+  "foot_skating_max_velocity": 0.0,
+  "contact_preservation": 0.9387755102040817
+}

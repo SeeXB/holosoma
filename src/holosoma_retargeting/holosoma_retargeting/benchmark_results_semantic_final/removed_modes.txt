@@ -1,0 +1,8 @@
+raw additive Part objective modes
+cardinality/group-balanced additive Part modes
+Jacobian-balanced additive mode
+additive Part/Edge objective modes
+constrained semantic refinement mode
+constrained backtracking mode
+trust-region contraction/re-solve mode
+their schedulers, solver branches, benchmark entrypoints, and exclusive unit tests

@@ -1,0 +1,237 @@
+{
+  "fps": 30,
+  "events": [
+    {
+      "event": "start",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 0,
+          "end_frame": 117,
+          "trigger_frame": 0
+        }
+      ],
+      "trigger": {
+        "primitive": "global_minimum",
+        "signal": "object_progress",
+        "threshold": null,
+        "after": null
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person starts moving towards the box."
+    },
+    {
+      "event": "approach",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 26,
+          "end_frame": 30,
+          "trigger_frame": 26
+        }
+      ],
+      "trigger": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": null
+      },
+      "rationale": "Person slows down to approach the box."
+    },
+    {
+      "event": "contact",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 30,
+          "end_frame": 66,
+          "trigger_frame": 30
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": null
+      },
+      "rationale": "Person makes contact with the box."
+    },
+    {
+      "event": "lift",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 66,
+          "end_frame": 117,
+          "trigger_frame": 66
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person lifts the box off the ground."
+    },
+    {
+      "event": "carry_mid",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 117,
+          "end_frame": 160,
+          "trigger_frame": 117
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": null
+      },
+      "rationale": "Person carries the box mid-air."
+    },
+    {
+      "event": "arrive",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 160,
+          "end_frame": 162,
+          "trigger_frame": 160
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": null
+      },
+      "rationale": "Person arrives at the destination point."
+    },
+    {
+      "event": "place",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 162,
+          "end_frame": 167,
+          "trigger_frame": 162
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": null
+      },
+      "rationale": "Person places the box on the ground."
+    },
+    {
+      "event": "release",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "confidence": 1.0,
+      "windows": [
+        {
+          "start_frame": 167,
+          "end_frame": 169,
+          "trigger_frame": 167
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person releases the box."
+    }
+  ],
+  "trigger_thresholds": {
+    "contact_enter": 0.20345109701156616,
+    "contact_exit": 0.19543024897575378,
+    "lift_enter": 0.9066363573074341,
+    "lift_exit": 0.00016065062663983554,
+    "near_goal": 0.01050157193094492,
+    "released": 0.2215205579996109,
+    "moving": 0.7994167804718018,
+    "still": 0.005530157592147589,
+    "approach_distance": 0.5722991824150085,
+    "approach_speed": 0.5432947278022766
+  }
+}

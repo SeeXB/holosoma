@@ -10,12 +10,23 @@ import re
 from pathlib import Path
 
 import numpy as np
-import smplx  # type: ignore[import-not-found]
 import torch
 import trimesh
 from jinja2 import Template
 from scipy.spatial import Delaunay  # type: ignore[import-untyped]
 from scipy.spatial.transform import Rotation as R  # type: ignore[import-untyped]  # noqa: N817
+
+
+def _rotation_from_wxyz(quaternions):
+    """SciPy-version-independent Rotation constructor for wxyz quaternions."""
+    values = np.asarray(quaternions)
+    return R.from_quat(values[..., [1, 2, 3, 0]])
+
+
+def _rotation_as_wxyz(rotation):
+    """SciPy-version-independent wxyz quaternion conversion."""
+    values = rotation.as_quat()
+    return values[..., [3, 0, 1, 2]]
 
 
 def load_intermimic_data(file_path):
@@ -333,8 +344,8 @@ def augment_object_poses(
             (object_moving_frame_idx - np.arange(object_moving_frame_idx, N)) / rotation_tau
         )
         rotation = R.from_euler("z", rotation_list)
-        object_quat = R.from_quat(object_poses[:, :4], scalar_first=True)
-        object_quat_rotated = (rotation * object_quat).as_quat(scalar_first=True)
+        object_quat = _rotation_from_wxyz(object_poses[:, :4])
+        object_quat_rotated = _rotation_as_wxyz(rotation * object_quat)
         object_poses_augmented[:, :4] = object_quat_rotated
 
     return object_poses_augmented
@@ -366,7 +377,7 @@ def transform_from_human_to_world(human_initial_root, object_initial_pose, local
     y_axis = y_axis / np.linalg.norm(y_axis)
 
     rotation_matrix = np.column_stack([x_axis, y_axis, z_axis])
-    quat = R.from_matrix(rotation_matrix).as_quat(scalar_first=True)
+    quat = _rotation_as_wxyz(R.from_matrix(rotation_matrix))
     return rotation_matrix @ local_translation, quat
 
 
@@ -526,6 +537,10 @@ def load_smpl_motion(model_path, motion_file):
         smplx.SMPL: The loaded SMPL model object.
     """
     print("Loading SMPL model and motion...")
+    try:
+        import smplx  # type: ignore[import-not-found]  # noqa: PLC0415
+    except ImportError as exc:
+        raise RuntimeError("load_smpl_motion requires the optional smplx package") from exc
     model = smplx.SMPL(model_path=model_path, gender="neutral", ext="pkl").to("cpu")
     motion_data = np.load(motion_file)
 
@@ -816,4 +831,4 @@ def estimate_human_orientation(human_joints, joint_names, frame_idx=0):
     rotation_matrix = np.column_stack([forward_vec, left_vec, up_vec])
     assert np.linalg.det(rotation_matrix) > 0
     rotation = R.from_matrix(rotation_matrix)
-    return rotation.as_quat(scalar_first=True)
+    return _rotation_as_wxyz(rotation)

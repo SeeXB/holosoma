@@ -1,0 +1,286 @@
+{
+  "fps": 30,
+  "events": [
+    {
+      "event": "start",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 1,
+      "criticality": 0.25,
+      "criticality_rationale": "The person starts moving towards the box.",
+      "failure_if_inaccurate": "The person may not initiate movement correctly.",
+      "windows": [
+        {
+          "start_frame": 0,
+          "end_frame": 26,
+          "trigger_frame": 0
+        }
+      ],
+      "trigger": {
+        "primitive": "global_minimum",
+        "signal": "object_progress",
+        "threshold": null,
+        "after": null
+      },
+      "end": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "rationale": "The person begins their approach."
+    },
+    {
+      "event": "approach",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 2,
+      "criticality": 0.5,
+      "criticality_rationale": "Approaching the box is necessary before making contact.",
+      "failure_if_inaccurate": "The person may miss the box entirely.",
+      "windows": [
+        {
+          "start_frame": 26,
+          "end_frame": 30,
+          "trigger_frame": 26
+        }
+      ],
+      "trigger": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "rationale": "The pelvis slows down as they get closer to the box."
+    },
+    {
+      "event": "contact",
+      "body_parts": [
+        "left_hand",
+        "right_hand"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 3,
+      "criticality": 0.75,
+      "criticality_rationale": "Making contact with the box is crucial for lifting.",
+      "failure_if_inaccurate": "The person may not lift the box properly.",
+      "windows": [
+        {
+          "start_frame": 30,
+          "end_frame": 66,
+          "trigger_frame": 30
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "rationale": "The hands come into contact with the box surface."
+    },
+    {
+      "event": "lift",
+      "body_parts": [
+        "left_hand",
+        "right_hand"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 3,
+      "criticality": 0.75,
+      "criticality_rationale": "Lifting the box is essential for carrying it.",
+      "failure_if_inaccurate": "The person may drop the box.",
+      "windows": [
+        {
+          "start_frame": 66,
+          "end_frame": 117,
+          "trigger_frame": 66
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "rationale": "The box lifts off the ground."
+    },
+    {
+      "event": "carry_mid",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 3,
+      "criticality": 0.75,
+      "criticality_rationale": "Carrying the box mid-air requires maintaining control.",
+      "failure_if_inaccurate": "The person may lose balance or drop the box.",
+      "windows": [
+        {
+          "start_frame": 117,
+          "end_frame": 160,
+          "trigger_frame": 117
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "rationale": "The pelvis moves forward while carrying the box."
+    },
+    {
+      "event": "arrive",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 3,
+      "criticality": 0.75,
+      "criticality_rationale": "Arriving at the goal position is necessary before placing the box.",
+      "failure_if_inaccurate": "The person may overshoot or undershoot the placement point.",
+      "windows": [
+        {
+          "start_frame": 160,
+          "end_frame": 162,
+          "trigger_frame": 160
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "rationale": "The pelvis approaches the target location."
+    },
+    {
+      "event": "place",
+      "body_parts": [
+        "pelvis"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 3,
+      "criticality": 0.75,
+      "criticality_rationale": "Placing the box accurately is crucial for completing the task.",
+      "failure_if_inaccurate": "The person may not place the box correctly.",
+      "windows": [
+        {
+          "start_frame": 162,
+          "end_frame": 167,
+          "trigger_frame": 162
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "rationale": "The pelvis stops near the target location."
+    },
+    {
+      "event": "release",
+      "body_parts": [
+        "left_hand",
+        "right_hand"
+      ],
+      "confidence": 1.0,
+      "criticality_level": 4,
+      "criticality": 1.0,
+      "criticality_rationale": "Releasing the box completes the task successfully.",
+      "failure_if_inaccurate": "The person may fail to complete the task.",
+      "windows": [
+        {
+          "start_frame": 167,
+          "end_frame": 191,
+          "trigger_frame": 167
+        }
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "end": {
+        "primitive": "global_maximum",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": null,
+        "after": "release"
+      },
+      "rationale": "The hands move away from the box."
+    }
+  ],
+  "trigger_thresholds": {
+    "contact_enter": 0.20345109701156616,
+    "contact_exit": 0.1954302340745926,
+    "lift_enter": 0.9066363573074341,
+    "lift_exit": 0.00016065062663983554,
+    "near_goal": 0.01050157193094492,
+    "released": 0.2215205579996109,
+    "moving": 0.7994167804718018,
+    "still": 0.005530157592147589,
+    "approach_distance": 0.5722991824150085,
+    "approach_speed": 0.5432952642440796
+  },
+  "generation_metadata": {
+    "model": "qwen2.5-omni-7b",
+    "temperature": 0,
+    "seed": 0,
+    "sample_count": 12,
+    "source_video": "/home/zongyouyu/sxb/GMR/outputs/omomo_smplx/sub3_largebox_003_human_object.mp4",
+    "source_smplx": "/home/zongyouyu/sxb/GMR/outputs/omomo_smplx/sub3_largebox_003.npz",
+    "repair_policy": "field_only_immutable_valid_fields",
+    "vlm_attempt_count": 3,
+    "accepted_repairs": [
+      {
+        "attempt": 2,
+        "fields": [
+          "start.body_parts"
+        ]
+      }
+    ]
+  }
+}

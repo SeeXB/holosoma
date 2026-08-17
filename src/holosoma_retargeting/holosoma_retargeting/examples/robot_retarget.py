@@ -449,6 +449,7 @@ def build_retargeter_kwargs_from_config(
     constants: SimpleNamespace,
     object_urdf_path: str | None,
     task_type: str,
+    semantic_config=None,
 ) -> dict:
     """Build kwargs for InteractionMeshRetargeter from a RetargeterConfig.
     This is a convenience function that allows building kwargs directly from
@@ -476,6 +477,7 @@ def build_retargeter_kwargs_from_config(
         "visualize": retargeter_config.visualize,
         "debug": retargeter_config.debug,
         "w_nominal_tracking_init": retargeter_config.w_nominal_tracking_init,
+        "semantic_config": semantic_config,
     }
     if task_type == "climbing":
         kwargs["nominal_tracking_tau"] = retargeter_config.nominal_tracking_tau
@@ -598,7 +600,7 @@ def determine_output_path(
 # ----------------------------- Main -----------------------------
 
 
-def main(cfg: RetargetingConfig) -> None:
+def main(cfg: RetargetingConfig) -> Path:
     """Main retargeting pipeline.
     Args:
         cfg: Configuration arguments
@@ -659,7 +661,13 @@ def main(cfg: RetargetingConfig) -> None:
     )
 
     # Create retargeter
-    retargeter_kwargs = build_retargeter_kwargs_from_config(cfg.retargeter, constants, object_urdf_path, task_type)
+    retargeter_kwargs = build_retargeter_kwargs_from_config(
+        cfg.retargeter,
+        constants,
+        object_urdf_path,
+        task_type,
+        semantic_config=cfg.semantic,
+    )
     retargeter = InteractionMeshRetargeter(**retargeter_kwargs)
     logger.info("Retargeter created")
 
@@ -720,6 +728,7 @@ def main(cfg: RetargetingConfig) -> None:
 
     if cfg.retargeter.debug:
         input("Press Enter to exit ...")
+    return Path(dest_res_path)
 
 
 if __name__ == "__main__":

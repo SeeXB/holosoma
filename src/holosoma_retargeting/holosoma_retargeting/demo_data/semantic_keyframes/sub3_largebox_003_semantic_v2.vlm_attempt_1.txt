@@ -1,0 +1,3 @@
+```json
+{"repairs":[{"event":"start","field":"body_parts","action":"replace","value":["pelvis"]},{"event":"approach","field":"body_parts","action":"replace","value":["pelvis"]},{"event":"contact","field":"body_parts","action":"replace","value":["left_hand","right_hand"]},{"event":"lift","field":"body_parts","action":"replace","value":["left_hand","right_hand"]},{"event":"carry_mid","field":"body_parts","action":"replace","value":["pelvis"]},{"event":"arrive","field":"body_parts","action":"replace","value":["pelvis"]},{"event":"place","field":"body_parts","action":"replace","value":["pelvis"]},{"event":"release","field":"body_parts","action":"replace","value":["left_hand","right_hand"]}]}
+```

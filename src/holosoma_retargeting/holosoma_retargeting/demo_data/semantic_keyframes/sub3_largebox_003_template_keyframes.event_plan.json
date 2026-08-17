@@ -1,0 +1,160 @@
+{
+  "events": [
+    {
+      "event": "start",
+      "body_parts": [
+        "pelvis"
+      ],
+      "trigger": {
+        "primitive": "global_minimum",
+        "signal": "object_progress",
+        "threshold": null,
+        "after": null
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person starts moving towards the box."
+    },
+    {
+      "event": "approach",
+      "body_parts": [
+        "pelvis"
+      ],
+      "trigger": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": null
+      },
+      "rationale": "Person slows down to approach the box."
+    },
+    {
+      "event": "contact",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": null
+      },
+      "rationale": "Person makes contact with the box."
+    },
+    {
+      "event": "lift",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person lifts the box off the ground."
+    },
+    {
+      "event": "carry_mid",
+      "body_parts": [
+        "pelvis"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": null
+      },
+      "rationale": "Person carries the box mid-air."
+    },
+    {
+      "event": "arrive",
+      "body_parts": [
+        "pelvis"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": null
+      },
+      "rationale": "Person arrives at the destination point."
+    },
+    {
+      "event": "place",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": null
+      },
+      "rationale": "Person places the box on the ground."
+    },
+    {
+      "event": "release",
+      "body_parts": [
+        "right_hand",
+        "left_hand"
+      ],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": null
+      },
+      "rationale": "Person releases the box."
+    }
+  ]
+}

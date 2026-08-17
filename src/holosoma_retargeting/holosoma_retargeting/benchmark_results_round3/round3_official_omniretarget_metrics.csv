@@ -1,0 +1,12 @@
+method,run_key,penetration_duration,penetration_max_depth_mm,foot_skating_duration,foot_skating_max_velocity,contact_preservation
+Original,original,0.0,0.0,0.0,0.0,1.0
+Uniform-1,uniform_1,0.025510204081632654,11.190944301523412,0.0,0.0,0.9846938775510204
+Uniform-2,uniform_2,0.0,0.0,0.0,0.0,1.0
+Always-Hand-Matched,always_hand_matched,0.0,0.0,0.0,0.0,1.0
+Random-Time mean,random_time_mean,0.002040816326530612,2.283997271133384,0.0,0.0,1.0
+Wrong-Body,wrong_body,0.0,0.0,0.0,0.0,1.0
+Semantic Weight,semantic_weight,0.0,0.0,0.0,0.0,1.0
+Weight + Refine,weight_refine,0.0,0.0,0.0,0.0,1.0
+Old Budget 10/4/2/1,old_semantic_budget,0.025510204081632654,11.190944301523412,0.0,0.0,1.0
+Budget-Base2 10/4/2,semantic_budget_base2,0.0,0.0,0.0,0.0,1.0
+Weight + Budget-Base2,weight_budget_base2,0.0,0.0,0.0,0.0,1.0

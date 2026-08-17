@@ -1,0 +1,4 @@
+method,qpos_max_abs_diff,qpos_pass,cached_actual_sqp,current_actual_sqp,sqp_pass,ordinary_abs_diff_mm,global_abs_diff_mm,part_abs_diff_mm,official_physical_max_abs_diff,compatibility_pass
+Original,0.0,True,1892,1892,True,0.0,0.0,0.0,0.0,True
+Uniform-2,0.0,True,440,440,True,0.0,0.0,0.0,0.0,True
+Legacy Semantic Weight,0.0,True,440,440,True,0.0,0.0,0.0,0.0,True

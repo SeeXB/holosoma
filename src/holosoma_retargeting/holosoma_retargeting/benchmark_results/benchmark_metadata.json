@@ -1,0 +1,54 @@
+{
+  "task_name": "sub3_largebox_003",
+  "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+  "event_triggers": {
+    "contact": 30,
+    "lift": 66,
+    "place": 162,
+    "release": 167
+  },
+  "budget_only_same_budget_uniform": "uniform_2",
+  "budget_only_actual_iterations": 422,
+  "budget_only_uniform_iteration_gap_ratio": 0.04265402843601896,
+  "budget_weight_same_budget_uniform": "uniform_2",
+  "full_low_budget_uniform_match": null,
+  "full_compute_matched_reference": "original",
+  "full_actual_iterations": 1872,
+  "full_reference_iteration_gap_ratio": 0.010683760683760684,
+  "uniform_actual_iterations": {
+    "uniform_1": 245,
+    "uniform_2": 440,
+    "uniform_3": 634
+  },
+  "fixed_scheduler": {
+    "frame0_budget": 50,
+    "critical_trigger_budget": 10,
+    "near_trigger_budget": 4,
+    "critical_phase_budget": 2,
+    "ordinary_budget": 1,
+    "near_trigger_radius": 3
+  },
+  "fixed_residual_weights": {
+    "body_weight_multiplier": {
+      "left_hand": 4.0,
+      "right_hand": 4.0,
+      "pelvis": 2.0
+    },
+    "object_neighbor_multiplier": 2.0,
+    "semantic_temporal_sigma": 2.0,
+    "phase_semantic_weight": 0.25,
+    "normalization": "mean vertex weight = 1 per frame"
+  },
+  "fixed_rescue_tolerances": {
+    "penetration": 0.001,
+    "self_collision": 0.0,
+    "joint_limit": 1e-06,
+    "foot_sticking": 0.005,
+    "hand_object": 0.025,
+    "velocity_per_frame": null
+  },
+  "interaction_distance_metric": "nearest fixed object surface sample; not exact triangle-mesh distance",
+  "penetration_violation_tolerance_m": 0.001,
+  "self_collision_metric": "not evaluated because no self-collision pairs are configured",
+  "velocity_metric": "not reported unless rescue_velocity_limit_per_frame is configured"
+}

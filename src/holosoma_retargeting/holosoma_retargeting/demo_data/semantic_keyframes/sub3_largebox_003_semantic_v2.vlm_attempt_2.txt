@@ -1,0 +1,12 @@
+```json
+{
+  "repairs": [
+    {
+      "event": "start",
+      "field": "body_parts",
+      "action": "replace",
+      "value": ["pelvis"]
+    }
+  ]
+}
+```

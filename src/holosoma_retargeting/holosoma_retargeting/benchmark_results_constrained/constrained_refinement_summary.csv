@@ -1,0 +1,2 @@
+Method,epsilon_global,Ordinary Delta vs U2 pct,Global KF Exact Delta vs U2 pct,Part Exact Delta vs U2 pct,Part Exact Improvement vs U2 pct,Local Exact Delta vs U2 pct,Edge Exact Delta vs U2 pct,Wall Time Delta vs U2 pct,Extra SQP vs U2,Condition A Ordinary,Condition B Global,Condition C Part,Condition D Physical,Condition E Acceptance,Decision
+M4 Constrained Part Refinement,0.005,0.0,0.0,0.0,-0.0,0.0,0.0,4.443426950664013,16,PASS,PASS,FAIL,PASS,FAIL,Needs Reformulation

@@ -15,7 +15,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Dict, List, Literal, Sequence
 
-import igl  # type: ignore[import-not-found]
+try:
+    import igl  # type: ignore[import-not-found]
+except ImportError:  # Not required by the robot-object evaluator path.
+    igl = None  # type: ignore[assignment]
 import mujoco  # type: ignore[import-not-found]
 import numpy as np
 import trimesh
@@ -303,6 +306,8 @@ class RetargetingEvaluator:
         joint_names: Sequence[str] | None = None,
     ):
         contact: dict[str, np.ndarray] = {}
+        if igl is None:
+            raise RuntimeError("libigl is required for signed-distance demo-contact detection")
         have_obj = self._obj_VW.shape[0] > 0
         if not have_obj:
             return contact  # no object mesh baked

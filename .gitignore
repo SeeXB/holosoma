@@ -27,6 +27,9 @@ src/holosoma/holosoma/data/robots/converted_rank*/
 # Virtual environments
 .venv/
 
+# Local secrets
+.env
+
 # other
 *.egg-info
 __pycache__

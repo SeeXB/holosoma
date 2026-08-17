@@ -1,0 +1,1961 @@
+method,run_key,frame,event,is_semantic_trigger,is_random_budget_frame,configured_budget,actual_sqp,solver_calls,allocation_reason
+Original,original,0,start,False,False,50,50,50,frame0_initialization
+Original,original,1,,False,False,10,10,10,ordinary_base
+Original,original,2,,False,False,10,10,10,ordinary_base
+Original,original,3,,False,False,10,10,10,ordinary_base
+Original,original,4,,False,False,10,10,10,ordinary_base
+Original,original,5,,False,False,10,10,10,ordinary_base
+Original,original,6,,False,False,10,10,10,ordinary_base
+Original,original,7,,False,False,10,10,10,ordinary_base
+Original,original,8,,False,False,10,10,10,ordinary_base
+Original,original,9,,False,False,10,10,10,ordinary_base
+Original,original,10,,False,False,10,10,10,ordinary_base
+Original,original,11,,False,False,10,7,7,ordinary_base
+Original,original,12,,False,False,10,10,10,ordinary_base
+Original,original,13,,False,False,10,10,10,ordinary_base
+Original,original,14,,False,False,10,10,10,ordinary_base
+Original,original,15,,False,False,10,10,10,ordinary_base
+Original,original,16,,False,False,10,6,6,ordinary_base
+Original,original,17,,False,False,10,7,7,ordinary_base
+Original,original,18,,False,False,10,9,9,ordinary_base
+Original,original,19,,False,False,10,10,10,ordinary_base
+Original,original,20,,False,False,10,10,10,ordinary_base
+Original,original,21,,False,False,10,10,10,ordinary_base
+Original,original,22,,False,False,10,10,10,ordinary_base
+Original,original,23,,False,False,10,6,6,ordinary_base
+Original,original,24,,False,False,10,10,10,ordinary_base
+Original,original,25,,False,False,10,10,10,ordinary_base
+Original,original,26,approach,True,False,10,10,10,ordinary_base
+Original,original,27,,False,False,10,6,6,ordinary_base
+Original,original,28,,False,False,10,5,5,ordinary_base
+Original,original,29,,False,False,10,9,9,ordinary_base
+Original,original,30,contact,True,False,10,10,10,ordinary_base
+Original,original,31,,False,False,10,10,10,ordinary_base
+Original,original,32,,False,False,10,4,4,ordinary_base
+Original,original,33,,False,False,10,6,6,ordinary_base
+Original,original,34,,False,False,10,5,5,ordinary_base
+Original,original,35,,False,False,10,10,10,ordinary_base
+Original,original,36,,False,False,10,10,10,ordinary_base
+Original,original,37,,False,False,10,5,5,ordinary_base
+Original,original,38,,False,False,10,10,10,ordinary_base
+Original,original,39,,False,False,10,10,10,ordinary_base
+Original,original,40,,False,False,10,10,10,ordinary_base
+Original,original,41,,False,False,10,10,10,ordinary_base
+Original,original,42,,False,False,10,10,10,ordinary_base
+Original,original,43,,False,False,10,10,10,ordinary_base
+Original,original,44,,False,False,10,10,10,ordinary_base
+Original,original,45,,False,False,10,10,10,ordinary_base
+Original,original,46,,False,False,10,10,10,ordinary_base
+Original,original,47,,False,False,10,10,10,ordinary_base
+Original,original,48,,False,False,10,4,4,ordinary_base
+Original,original,49,,False,False,10,10,10,ordinary_base
+Original,original,50,,False,False,10,10,10,ordinary_base
+Original,original,51,,False,False,10,10,10,ordinary_base
+Original,original,52,,False,False,10,10,10,ordinary_base
+Original,original,53,,False,False,10,10,10,ordinary_base
+Original,original,54,,False,False,10,10,10,ordinary_base
+Original,original,55,,False,False,10,10,10,ordinary_base
+Original,original,56,,False,False,10,10,10,ordinary_base
+Original,original,57,,False,False,10,10,10,ordinary_base
+Original,original,58,,False,False,10,10,10,ordinary_base
+Original,original,59,,False,False,10,10,10,ordinary_base
+Original,original,60,,False,False,10,5,5,ordinary_base
+Original,original,61,,False,False,10,10,10,ordinary_base
+Original,original,62,,False,False,10,10,10,ordinary_base
+Original,original,63,,False,False,10,10,10,ordinary_base
+Original,original,64,,False,False,10,10,10,ordinary_base
+Original,original,65,,False,False,10,10,10,ordinary_base
+Original,original,66,lift,True,False,10,10,10,ordinary_base
+Original,original,67,,False,False,10,10,10,ordinary_base
+Original,original,68,,False,False,10,10,10,ordinary_base
+Original,original,69,,False,False,10,10,10,ordinary_base
+Original,original,70,,False,False,10,6,6,ordinary_base
+Original,original,71,,False,False,10,10,10,ordinary_base
+Original,original,72,,False,False,10,10,10,ordinary_base
+Original,original,73,,False,False,10,10,10,ordinary_base
+Original,original,74,,False,False,10,10,10,ordinary_base
+Original,original,75,,False,False,10,10,10,ordinary_base
+Original,original,76,,False,False,10,8,8,ordinary_base
+Original,original,77,,False,False,10,3,3,ordinary_base
+Original,original,78,,False,False,10,10,10,ordinary_base
+Original,original,79,,False,False,10,10,10,ordinary_base
+Original,original,80,,False,False,10,10,10,ordinary_base
+Original,original,81,,False,False,10,10,10,ordinary_base
+Original,original,82,,False,False,10,10,10,ordinary_base
+Original,original,83,,False,False,10,10,10,ordinary_base
+Original,original,84,,False,False,10,10,10,ordinary_base
+Original,original,85,,False,False,10,10,10,ordinary_base
+Original,original,86,,False,False,10,10,10,ordinary_base
+Original,original,87,,False,False,10,10,10,ordinary_base
+Original,original,88,,False,False,10,10,10,ordinary_base
+Original,original,89,,False,False,10,10,10,ordinary_base
+Original,original,90,,False,False,10,3,3,ordinary_base
+Original,original,91,,False,False,10,10,10,ordinary_base
+Original,original,92,,False,False,10,10,10,ordinary_base
+Original,original,93,,False,False,10,10,10,ordinary_base
+Original,original,94,,False,False,10,10,10,ordinary_base
+Original,original,95,,False,False,10,6,6,ordinary_base
+Original,original,96,,False,False,10,10,10,ordinary_base
+Original,original,97,,False,False,10,10,10,ordinary_base
+Original,original,98,,False,False,10,10,10,ordinary_base
+Original,original,99,,False,False,10,10,10,ordinary_base
+Original,original,100,,False,False,10,10,10,ordinary_base
+Original,original,101,,False,False,10,10,10,ordinary_base
+Original,original,102,,False,False,10,10,10,ordinary_base
+Original,original,103,,False,False,10,10,10,ordinary_base
+Original,original,104,,False,False,10,10,10,ordinary_base
+Original,original,105,,False,False,10,10,10,ordinary_base
+Original,original,106,,False,False,10,10,10,ordinary_base
+Original,original,107,,False,False,10,10,10,ordinary_base
+Original,original,108,,False,False,10,10,10,ordinary_base
+Original,original,109,,False,False,10,10,10,ordinary_base
+Original,original,110,,False,False,10,10,10,ordinary_base
+Original,original,111,,False,False,10,10,10,ordinary_base
+Original,original,112,,False,False,10,10,10,ordinary_base
+Original,original,113,,False,False,10,10,10,ordinary_base
+Original,original,114,,False,False,10,10,10,ordinary_base
+Original,original,115,,False,False,10,10,10,ordinary_base
+Original,original,116,,False,False,10,10,10,ordinary_base
+Original,original,117,carry_mid,True,False,10,10,10,ordinary_base
+Original,original,118,,False,False,10,10,10,ordinary_base
+Original,original,119,,False,False,10,10,10,ordinary_base
+Original,original,120,,False,False,10,10,10,ordinary_base
+Original,original,121,,False,False,10,10,10,ordinary_base
+Original,original,122,,False,False,10,10,10,ordinary_base
+Original,original,123,,False,False,10,10,10,ordinary_base
+Original,original,124,,False,False,10,10,10,ordinary_base
+Original,original,125,,False,False,10,10,10,ordinary_base
+Original,original,126,,False,False,10,10,10,ordinary_base
+Original,original,127,,False,False,10,10,10,ordinary_base
+Original,original,128,,False,False,10,10,10,ordinary_base
+Original,original,129,,False,False,10,10,10,ordinary_base
+Original,original,130,,False,False,10,10,10,ordinary_base
+Original,original,131,,False,False,10,10,10,ordinary_base
+Original,original,132,,False,False,10,10,10,ordinary_base
+Original,original,133,,False,False,10,10,10,ordinary_base
+Original,original,134,,False,False,10,10,10,ordinary_base
+Original,original,135,,False,False,10,10,10,ordinary_base
+Original,original,136,,False,False,10,10,10,ordinary_base
+Original,original,137,,False,False,10,10,10,ordinary_base
+Original,original,138,,False,False,10,10,10,ordinary_base
+Original,original,139,,False,False,10,10,10,ordinary_base
+Original,original,140,,False,False,10,10,10,ordinary_base
+Original,original,141,,False,False,10,6,6,ordinary_base
+Original,original,142,,False,False,10,6,6,ordinary_base
+Original,original,143,,False,False,10,10,10,ordinary_base
+Original,original,144,,False,False,10,10,10,ordinary_base
+Original,original,145,,False,False,10,10,10,ordinary_base
+Original,original,146,,False,False,10,10,10,ordinary_base
+Original,original,147,,False,False,10,10,10,ordinary_base
+Original,original,148,,False,False,10,10,10,ordinary_base
+Original,original,149,,False,False,10,10,10,ordinary_base
+Original,original,150,,False,False,10,10,10,ordinary_base
+Original,original,151,,False,False,10,10,10,ordinary_base
+Original,original,152,,False,False,10,10,10,ordinary_base
+Original,original,153,,False,False,10,10,10,ordinary_base
+Original,original,154,,False,False,10,10,10,ordinary_base
+Original,original,155,,False,False,10,3,3,ordinary_base
+Original,original,156,,False,False,10,10,10,ordinary_base
+Original,original,157,,False,False,10,10,10,ordinary_base
+Original,original,158,,False,False,10,10,10,ordinary_base
+Original,original,159,,False,False,10,10,10,ordinary_base
+Original,original,160,arrive,True,False,10,10,10,ordinary_base
+Original,original,161,,False,False,10,10,10,ordinary_base
+Original,original,162,place,True,False,10,4,4,ordinary_base
+Original,original,163,,False,False,10,10,10,ordinary_base
+Original,original,164,,False,False,10,10,10,ordinary_base
+Original,original,165,,False,False,10,10,10,ordinary_base
+Original,original,166,,False,False,10,10,10,ordinary_base
+Original,original,167,release,True,False,10,10,10,ordinary_base
+Original,original,168,,False,False,10,10,10,ordinary_base
+Original,original,169,,False,False,10,10,10,ordinary_base
+Original,original,170,,False,False,10,3,3,ordinary_base
+Original,original,171,,False,False,10,10,10,ordinary_base
+Original,original,172,,False,False,10,10,10,ordinary_base
+Original,original,173,,False,False,10,10,10,ordinary_base
+Original,original,174,,False,False,10,10,10,ordinary_base
+Original,original,175,,False,False,10,10,10,ordinary_base
+Original,original,176,,False,False,10,10,10,ordinary_base
+Original,original,177,,False,False,10,10,10,ordinary_base
+Original,original,178,,False,False,10,10,10,ordinary_base
+Original,original,179,,False,False,10,10,10,ordinary_base
+Original,original,180,,False,False,10,10,10,ordinary_base
+Original,original,181,,False,False,10,10,10,ordinary_base
+Original,original,182,,False,False,10,10,10,ordinary_base
+Original,original,183,,False,False,10,10,10,ordinary_base
+Original,original,184,,False,False,10,10,10,ordinary_base
+Original,original,185,,False,False,10,10,10,ordinary_base
+Original,original,186,,False,False,10,10,10,ordinary_base
+Original,original,187,,False,False,10,10,10,ordinary_base
+Original,original,188,,False,False,10,10,10,ordinary_base
+Original,original,189,,False,False,10,10,10,ordinary_base
+Original,original,190,,False,False,10,10,10,ordinary_base
+Original,original,191,,False,False,10,10,10,ordinary_base
+Original,original,192,,False,False,10,10,10,ordinary_base
+Original,original,193,,False,False,10,10,10,ordinary_base
+Original,original,194,,False,False,10,10,10,ordinary_base
+Original,original,195,,False,False,10,10,10,ordinary_base
+Uniform-2,uniform_2,0,start,False,False,50,50,50,frame0_initialization
+Uniform-2,uniform_2,1,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,2,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,3,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,4,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,5,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,6,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,7,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,8,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,9,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,10,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,11,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,12,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,13,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,14,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,15,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,16,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,17,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,18,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,19,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,20,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,21,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,22,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,23,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,24,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,25,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,26,approach,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,27,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,28,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,29,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,30,contact,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,31,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,32,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,33,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,34,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,35,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,36,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,37,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,38,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,39,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,40,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,41,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,42,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,43,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,44,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,45,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,46,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,47,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,48,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,49,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,50,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,51,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,52,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,53,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,54,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,55,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,56,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,57,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,58,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,59,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,60,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,61,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,62,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,63,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,64,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,65,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,66,lift,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,67,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,68,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,69,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,70,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,71,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,72,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,73,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,74,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,75,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,76,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,77,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,78,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,79,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,80,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,81,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,82,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,83,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,84,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,85,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,86,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,87,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,88,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,89,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,90,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,91,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,92,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,93,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,94,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,95,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,96,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,97,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,98,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,99,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,100,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,101,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,102,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,103,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,104,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,105,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,106,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,107,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,108,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,109,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,110,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,111,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,112,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,113,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,114,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,115,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,116,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,117,carry_mid,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,118,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,119,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,120,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,121,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,122,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,123,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,124,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,125,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,126,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,127,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,128,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,129,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,130,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,131,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,132,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,133,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,134,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,135,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,136,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,137,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,138,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,139,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,140,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,141,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,142,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,143,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,144,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,145,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,146,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,147,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,148,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,149,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,150,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,151,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,152,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,153,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,154,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,155,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,156,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,157,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,158,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,159,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,160,arrive,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,161,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,162,place,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,163,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,164,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,165,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,166,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,167,release,True,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,168,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,169,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,170,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,171,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,172,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,173,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,174,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,175,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,176,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,177,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,178,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,179,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,180,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,181,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,182,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,183,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,184,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,185,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,186,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,187,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,188,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,189,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,190,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,191,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,192,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,193,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,194,,False,False,2,2,2,ordinary_base
+Uniform-2,uniform_2,195,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,0,start,False,False,50,50,50,frame0_initialization
+Legacy,legacy_anchor,1,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,2,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,3,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,4,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,5,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,6,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,7,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,8,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,9,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,10,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,11,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,12,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,13,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,14,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,15,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,16,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,17,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,18,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,19,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,20,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,21,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,22,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,23,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,24,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,25,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,26,approach,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,27,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,28,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,29,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,30,contact,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,31,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,32,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,33,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,34,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,35,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,36,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,37,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,38,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,39,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,40,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,41,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,42,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,43,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,44,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,45,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,46,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,47,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,48,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,49,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,50,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,51,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,52,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,53,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,54,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,55,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,56,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,57,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,58,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,59,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,60,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,61,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,62,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,63,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,64,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,65,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,66,lift,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,67,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,68,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,69,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,70,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,71,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,72,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,73,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,74,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,75,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,76,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,77,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,78,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,79,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,80,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,81,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,82,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,83,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,84,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,85,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,86,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,87,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,88,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,89,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,90,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,91,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,92,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,93,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,94,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,95,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,96,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,97,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,98,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,99,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,100,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,101,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,102,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,103,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,104,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,105,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,106,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,107,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,108,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,109,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,110,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,111,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,112,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,113,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,114,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,115,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,116,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,117,carry_mid,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,118,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,119,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,120,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,121,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,122,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,123,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,124,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,125,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,126,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,127,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,128,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,129,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,130,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,131,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,132,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,133,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,134,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,135,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,136,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,137,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,138,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,139,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,140,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,141,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,142,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,143,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,144,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,145,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,146,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,147,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,148,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,149,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,150,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,151,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,152,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,153,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,154,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,155,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,156,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,157,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,158,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,159,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,160,arrive,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,161,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,162,place,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,163,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,164,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,165,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,166,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,167,release,True,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,168,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,169,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,170,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,171,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,172,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,173,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,174,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,175,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,176,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,177,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,178,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,179,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,180,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,181,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,182,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,183,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,184,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,185,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,186,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,187,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,188,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,189,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,190,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,191,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,192,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,193,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,194,,False,False,2,2,2,ordinary_base
+Legacy,legacy_anchor,195,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,0,start,False,False,50,50,50,frame0_initialization
+Original-Budget,original_objective_semantic_budget,1,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,2,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,3,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,4,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,5,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,6,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,7,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,8,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,9,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,10,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,11,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,12,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,13,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,14,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,15,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,16,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,17,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,18,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,19,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,20,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,21,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,22,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,23,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,24,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,25,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,26,approach,True,False,4,3,3,semantic_extra
+Original-Budget,original_objective_semantic_budget,27,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,28,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,29,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,30,contact,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,31,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,32,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,33,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,34,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,35,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,36,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,37,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,38,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,39,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,40,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,41,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,42,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,43,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,44,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,45,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,46,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,47,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,48,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,49,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,50,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,51,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,52,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,53,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,54,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,55,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,56,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,57,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,58,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,59,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,60,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,61,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,62,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,63,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,64,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,65,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,66,lift,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,67,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,68,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,69,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,70,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,71,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,72,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,73,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,74,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,75,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,76,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,77,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,78,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,79,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,80,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,81,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,82,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,83,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,84,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,85,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,86,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,87,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,88,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,89,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,90,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,91,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,92,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,93,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,94,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,95,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,96,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,97,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,98,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,99,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,100,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,101,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,102,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,103,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,104,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,105,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,106,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,107,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,108,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,109,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,110,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,111,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,112,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,113,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,114,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,115,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,116,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,117,carry_mid,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,118,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,119,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,120,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,121,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,122,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,123,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,124,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,125,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,126,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,127,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,128,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,129,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,130,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,131,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,132,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,133,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,134,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,135,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,136,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,137,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,138,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,139,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,140,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,141,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,142,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,143,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,144,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,145,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,146,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,147,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,148,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,149,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,150,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,151,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,152,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,153,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,154,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,155,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,156,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,157,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,158,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,159,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,160,arrive,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,161,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,162,place,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,163,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,164,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,165,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,166,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,167,release,True,False,4,4,4,semantic_extra
+Original-Budget,original_objective_semantic_budget,168,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,169,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,170,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,171,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,172,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,173,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,174,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,175,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,176,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,177,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,178,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,179,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,180,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,181,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,182,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,183,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,184,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,185,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,186,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,187,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,188,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,189,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,190,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,191,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,192,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,193,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,194,,False,False,2,2,2,ordinary_base
+Original-Budget,original_objective_semantic_budget,195,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,0,start,False,False,50,50,50,frame0_initialization
+Semantic-Budget,semantic_budget,1,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,2,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,3,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,4,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,5,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,6,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,7,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,8,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,9,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,10,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,11,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,12,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,13,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,14,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,15,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,16,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,17,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,18,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,19,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,20,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,21,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,22,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,23,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,24,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,25,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,26,approach,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,27,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,28,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,29,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,30,contact,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,31,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,32,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,33,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,34,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,35,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,36,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,37,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,38,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,39,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,40,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,41,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,42,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,43,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,44,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,45,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,46,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,47,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,48,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,49,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,50,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,51,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,52,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,53,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,54,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,55,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,56,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,57,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,58,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,59,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,60,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,61,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,62,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,63,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,64,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,65,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,66,lift,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,67,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,68,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,69,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,70,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,71,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,72,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,73,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,74,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,75,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,76,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,77,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,78,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,79,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,80,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,81,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,82,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,83,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,84,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,85,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,86,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,87,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,88,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,89,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,90,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,91,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,92,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,93,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,94,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,95,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,96,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,97,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,98,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,99,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,100,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,101,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,102,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,103,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,104,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,105,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,106,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,107,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,108,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,109,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,110,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,111,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,112,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,113,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,114,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,115,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,116,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,117,carry_mid,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,118,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,119,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,120,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,121,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,122,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,123,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,124,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,125,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,126,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,127,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,128,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,129,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,130,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,131,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,132,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,133,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,134,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,135,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,136,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,137,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,138,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,139,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,140,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,141,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,142,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,143,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,144,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,145,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,146,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,147,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,148,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,149,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,150,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,151,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,152,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,153,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,154,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,155,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,156,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,157,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,158,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,159,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,160,arrive,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,161,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,162,place,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,163,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,164,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,165,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,166,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,167,release,True,False,4,4,4,semantic_extra
+Semantic-Budget,semantic_budget,168,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,169,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,170,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,171,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,172,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,173,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,174,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,175,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,176,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,177,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,178,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,179,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,180,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,181,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,182,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,183,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,184,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,185,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,186,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,187,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,188,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,189,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,190,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,191,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,192,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,193,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,194,,False,False,2,2,2,ordinary_base
+Semantic-Budget,semantic_budget,195,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,0,start,False,False,50,50,50,frame0_initialization
+Random-Budget seed=0,random_budget_seed_0,1,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,2,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,3,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,4,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,5,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,6,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,7,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,8,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,9,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,10,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,11,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,12,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,13,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,14,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,15,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,16,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,17,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,18,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,19,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,20,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,21,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,22,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,23,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,24,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,25,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,26,approach,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,27,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,28,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,29,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,30,contact,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,31,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,32,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,33,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,34,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,35,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,36,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,37,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,38,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,39,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,40,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,41,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,42,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,43,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,44,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,45,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,46,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,47,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,48,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,49,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,50,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,51,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,52,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,53,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,54,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,55,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,56,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,57,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,58,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,59,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,60,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,61,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,62,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,63,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,64,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,65,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,66,lift,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,67,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,68,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,69,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,70,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,71,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,72,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,73,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,74,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,75,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,76,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,77,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,78,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,79,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,80,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,81,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,82,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,83,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,84,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,85,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,86,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,87,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,88,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,89,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,90,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,91,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,92,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,93,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,94,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,95,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,96,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,97,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,98,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,99,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,100,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,101,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,102,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,103,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,104,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,105,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,106,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,107,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,108,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,109,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,110,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,111,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,112,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,113,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,114,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,115,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,116,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,117,carry_mid,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,118,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,119,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,120,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,121,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,122,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,123,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,124,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,125,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,126,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,127,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,128,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,129,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,130,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,131,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,132,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,133,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,134,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,135,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,136,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,137,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,138,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,139,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,140,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,141,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,142,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,143,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,144,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,145,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,146,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,147,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,148,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,149,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,150,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,151,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,152,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,153,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,154,,False,True,4,4,4,random_extra
+Random-Budget seed=0,random_budget_seed_0,155,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,156,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,157,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,158,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,159,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,160,arrive,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,161,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,162,place,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,163,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,164,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,165,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,166,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,167,release,True,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,168,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,169,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,170,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,171,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,172,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,173,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,174,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,175,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,176,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,177,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,178,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,179,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,180,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,181,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,182,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,183,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,184,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,185,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,186,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,187,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,188,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,189,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,190,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,191,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,192,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,193,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,194,,False,False,2,2,2,ordinary_base
+Random-Budget seed=0,random_budget_seed_0,195,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,0,start,False,False,50,50,50,frame0_initialization
+Random-Budget seed=1,random_budget_seed_1,1,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,2,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,3,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,4,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,5,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,6,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,7,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,8,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,9,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,10,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,11,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,12,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,13,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,14,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,15,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,16,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,17,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,18,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,19,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,20,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,21,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,22,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,23,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,24,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,25,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,26,approach,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,27,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,28,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,29,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,30,contact,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,31,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,32,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,33,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,34,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,35,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,36,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,37,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,38,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,39,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,40,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,41,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,42,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,43,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,44,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,45,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,46,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,47,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,48,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,49,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,50,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,51,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,52,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,53,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,54,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,55,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,56,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,57,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,58,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,59,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,60,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,61,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,62,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,63,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,64,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,65,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,66,lift,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,67,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,68,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,69,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,70,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,71,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,72,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,73,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,74,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,75,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,76,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,77,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,78,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,79,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,80,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,81,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,82,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,83,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,84,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,85,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,86,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,87,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,88,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,89,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,90,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,91,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,92,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,93,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,94,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,95,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,96,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,97,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,98,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,99,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,100,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,101,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,102,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,103,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,104,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,105,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,106,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,107,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,108,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,109,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,110,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,111,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,112,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,113,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,114,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,115,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,116,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,117,carry_mid,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,118,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,119,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,120,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,121,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,122,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,123,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,124,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,125,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,126,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,127,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,128,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,129,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,130,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,131,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,132,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,133,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,134,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,135,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,136,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,137,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,138,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,139,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,140,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,141,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,142,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,143,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,144,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,145,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,146,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,147,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,148,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,149,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,150,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,151,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,152,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,153,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,154,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,155,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,156,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,157,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,158,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,159,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,160,arrive,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,161,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,162,place,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,163,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,164,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,165,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,166,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,167,release,True,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,168,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,169,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,170,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,171,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,172,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,173,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,174,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,175,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,176,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,177,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,178,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,179,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,180,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,181,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,182,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,183,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,184,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,185,,False,True,4,4,4,random_extra
+Random-Budget seed=1,random_budget_seed_1,186,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,187,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,188,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,189,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,190,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,191,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,192,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,193,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,194,,False,False,2,2,2,ordinary_base
+Random-Budget seed=1,random_budget_seed_1,195,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,0,start,False,False,50,50,50,frame0_initialization
+Random-Budget seed=2,random_budget_seed_2,1,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,2,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,3,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,4,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,5,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,6,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,7,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,8,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,9,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,10,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,11,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,12,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,13,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,14,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,15,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,16,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,17,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,18,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,19,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,20,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,21,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,22,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,23,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,24,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,25,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,26,approach,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,27,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,28,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,29,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,30,contact,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,31,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,32,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,33,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,34,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,35,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,36,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,37,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,38,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,39,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,40,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,41,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,42,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,43,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,44,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,45,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,46,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,47,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,48,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,49,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,50,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,51,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,52,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,53,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,54,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,55,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,56,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,57,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,58,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,59,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,60,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,61,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,62,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,63,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,64,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,65,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,66,lift,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,67,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,68,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,69,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,70,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,71,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,72,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,73,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,74,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,75,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,76,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,77,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,78,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,79,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,80,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,81,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,82,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,83,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,84,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,85,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,86,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,87,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,88,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,89,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,90,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,91,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,92,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,93,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,94,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,95,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,96,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,97,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,98,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,99,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,100,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,101,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,102,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,103,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,104,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,105,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,106,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,107,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,108,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,109,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,110,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,111,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,112,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,113,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,114,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,115,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,116,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,117,carry_mid,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,118,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,119,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,120,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,121,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,122,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,123,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,124,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,125,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,126,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,127,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,128,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,129,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,130,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,131,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,132,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,133,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,134,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,135,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,136,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,137,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,138,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,139,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,140,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,141,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,142,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,143,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,144,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,145,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,146,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,147,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,148,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,149,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,150,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,151,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,152,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,153,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,154,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,155,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,156,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,157,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,158,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,159,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,160,arrive,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,161,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,162,place,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,163,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,164,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,165,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,166,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,167,release,True,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,168,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,169,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,170,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,171,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,172,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,173,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,174,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,175,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,176,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,177,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,178,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,179,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,180,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,181,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,182,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,183,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,184,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,185,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,186,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,187,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,188,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,189,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,190,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,191,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,192,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,193,,False,False,2,2,2,ordinary_base
+Random-Budget seed=2,random_budget_seed_2,194,,False,True,4,4,4,random_extra
+Random-Budget seed=2,random_budget_seed_2,195,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,0,start,False,False,50,50,50,frame0_initialization
+Random-Budget seed=3,random_budget_seed_3,1,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,2,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,3,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,4,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,5,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,6,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,7,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,8,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,9,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,10,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,11,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,12,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,13,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,14,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,15,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,16,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,17,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,18,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,19,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,20,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,21,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,22,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,23,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,24,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,25,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,26,approach,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,27,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,28,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,29,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,30,contact,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,31,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,32,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,33,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,34,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,35,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,36,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,37,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,38,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,39,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,40,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,41,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,42,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,43,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,44,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,45,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,46,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,47,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,48,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,49,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,50,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,51,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,52,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,53,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,54,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,55,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,56,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,57,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,58,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,59,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,60,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,61,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,62,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,63,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,64,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,65,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,66,lift,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,67,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,68,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,69,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,70,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,71,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,72,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,73,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,74,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,75,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,76,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,77,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,78,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,79,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,80,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,81,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,82,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,83,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,84,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,85,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,86,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,87,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,88,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,89,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,90,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,91,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,92,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,93,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,94,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,95,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,96,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,97,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,98,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,99,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,100,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,101,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,102,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,103,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,104,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,105,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,106,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,107,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,108,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,109,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,110,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,111,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,112,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,113,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,114,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,115,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,116,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,117,carry_mid,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,118,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,119,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,120,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,121,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,122,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,123,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,124,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,125,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,126,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,127,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,128,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,129,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,130,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,131,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,132,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,133,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,134,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,135,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,136,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,137,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,138,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,139,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,140,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,141,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,142,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,143,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,144,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,145,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,146,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,147,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,148,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,149,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,150,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,151,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,152,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,153,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,154,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,155,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,156,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,157,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,158,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,159,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,160,arrive,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,161,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,162,place,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,163,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,164,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,165,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,166,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,167,release,True,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,168,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,169,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,170,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,171,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,172,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,173,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,174,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,175,,False,True,4,4,4,random_extra
+Random-Budget seed=3,random_budget_seed_3,176,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,177,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,178,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,179,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,180,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,181,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,182,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,183,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,184,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,185,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,186,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,187,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,188,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,189,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,190,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,191,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,192,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,193,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,194,,False,False,2,2,2,ordinary_base
+Random-Budget seed=3,random_budget_seed_3,195,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,0,start,False,False,50,50,50,frame0_initialization
+Random-Budget seed=4,random_budget_seed_4,1,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,2,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,3,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,4,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,5,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,6,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,7,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,8,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,9,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,10,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,11,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,12,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,13,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,14,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,15,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,16,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,17,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,18,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,19,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,20,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,21,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,22,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,23,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,24,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,25,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,26,approach,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,27,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,28,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,29,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,30,contact,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,31,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,32,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,33,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,34,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,35,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,36,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,37,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,38,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,39,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,40,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,41,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,42,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,43,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,44,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,45,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,46,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,47,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,48,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,49,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,50,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,51,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,52,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,53,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,54,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,55,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,56,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,57,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,58,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,59,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,60,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,61,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,62,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,63,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,64,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,65,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,66,lift,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,67,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,68,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,69,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,70,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,71,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,72,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,73,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,74,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,75,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,76,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,77,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,78,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,79,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,80,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,81,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,82,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,83,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,84,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,85,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,86,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,87,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,88,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,89,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,90,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,91,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,92,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,93,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,94,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,95,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,96,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,97,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,98,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,99,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,100,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,101,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,102,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,103,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,104,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,105,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,106,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,107,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,108,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,109,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,110,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,111,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,112,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,113,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,114,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,115,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,116,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,117,carry_mid,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,118,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,119,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,120,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,121,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,122,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,123,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,124,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,125,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,126,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,127,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,128,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,129,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,130,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,131,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,132,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,133,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,134,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,135,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,136,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,137,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,138,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,139,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,140,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,141,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,142,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,143,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,144,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,145,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,146,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,147,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,148,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,149,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,150,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,151,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,152,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,153,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,154,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,155,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,156,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,157,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,158,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,159,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,160,arrive,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,161,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,162,place,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,163,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,164,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,165,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,166,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,167,release,True,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,168,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,169,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,170,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,171,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,172,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,173,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,174,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,175,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,176,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,177,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,178,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,179,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,180,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,181,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,182,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,183,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,184,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,185,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,186,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,187,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,188,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,189,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,190,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,191,,False,True,4,4,4,random_extra
+Random-Budget seed=4,random_budget_seed_4,192,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,193,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,194,,False,False,2,2,2,ordinary_base
+Random-Budget seed=4,random_budget_seed_4,195,,False,True,4,4,4,random_extra

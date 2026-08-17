@@ -4,6 +4,38 @@ This repository provides tools for retargeting human motion data to humanoid rob
 
 **Data Requirements**: The retargeting pipeline requires motion data in world joint positions. For custom data, you need to prepare world joint positions in shape `(T, J, 3)` where T is the number of frames and J is the number of joints, and modify `demo_joints` and `joints_mapping` defined in `config_types/data_type.py`.
 
+## Semantic Keyframes Before Retargeting
+
+The optional semantic-keyframe stage preserves the input boundary of the human-video pipeline:
+
+```text
+human video -> video-derived SMPL-X human/object trajectory -> semantic keyframes -> retargeting
+```
+
+The stage does not read a retargeted or dataset-specific `.pt` file. It takes the SMPL-X `.npz` produced from the human video, asks a vision-language model (VLM) to identify the ordered semantics of the box-carry sequence, then resolves the declarative signal rules to deterministic frame indices from that same SMPL-X trajectory. The VLM never emits frame indices or executable code.
+
+Set an OpenAI-compatible vision endpoint in `.env`:
+
+```bash
+OPENAI_BASE_URL=https://your-endpoint.example/v1
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=your-vision-model
+```
+
+Run the stage before retargeting:
+
+```bash
+python -m holosoma_retargeting.semantic_keyframes \
+    --video /path/to/sub3_largebox_003.mp4 \
+    --smplx-file /path/to/sub3_largebox_003.npz \
+    --model-dir /path/to/body_models \
+    --output semantic_keyframes/sub3_largebox_003.json
+```
+
+An installed package also provides the `holosoma-semantic-keyframes` command. The output schema remains compatible with the previous GMR semantic-keyframe JSON: each event contains a deterministic `trigger_frame` and window. Invalid VLM output is repaired through an exact field allowlist: already-valid fields and events are immutable, and any patch that includes an unrequested field is rejected locally. For auditability, the command saves every raw VLM response, the accepted declarative event plan, and the accepted repair paths next to the output file.
+
+The repository includes the migrated `sub3_largebox_003` example output under `holosoma_retargeting/demo_data/semantic_keyframes/`, including both the resolved keyframes and the accepted VLM event plan.
+
 ## Single Sequence Motion Retargeting
 
 ```bash
@@ -18,6 +50,62 @@ python examples/robot_retarget.py --data_path demo_data/climb --task-type climbi
 ```
 
 **Note**: Add `--augmentation` to run sequences with augmentation. You must first run the original sequence before adding augmentation.
+
+## Semantic-Keyframe-Aware OmniRetarget
+
+The supported semantic main line changes only the existing Laplacian residual weights and, optionally, the iteration cap at exact semantic triggers. It does not add a second objective or solver stage, lower ordinary-frame compute, or change topology, samples, and physical constraints:
+
+| Mode | SQP budget | Semantic residual weights |
+| --- | --- | --- |
+| `original` | official 50/10 | off |
+| `uniform` | frame 0 = 50, all other frames = N | off |
+| `uniform2_semantic_weight_uniform` | 50/2 | registered equal-strength Legacy weights |
+| `uniform2_original_objective_semantic_budget` | 50/2; all nonzero exact triggers 4 | off |
+| `uniform2_semantic_weight_semantic_budget` | 50/2; all nonzero exact triggers 4 | registered Legacy weights |
+| `uniform2_semantic_weight_random_budget` | 50/2; K matched random ordinary frames 4 | registered Legacy weights |
+
+The active optimizer reads a deterministic projection of `semantic_v2.json`: event name, window, trigger frame, body parts, trigger/end rules, and rationale are retained. Historical criticality fields are ignored and never affect weighting or scheduling. The JSON is not regenerated.
+
+From `src/holosoma_retargeting/holosoma_retargeting`, a Semantic Budget run is:
+
+```bash
+python examples/robot_retarget.py \
+    --task-type object_interaction \
+    --task-name sub3_largebox_003 \
+    --data-format smplh \
+    --data-path demo_data/OMOMO_new \
+    --save-dir benchmark_results_semantic_budget/runs/semantic_budget \
+    --semantic.mode uniform2_semantic_weight_semantic_budget \
+    --semantic.semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --semantic.profile-dir benchmark_results_semantic_budget/runs/semantic_budget
+```
+
+`original` and `uniform` never open the semantic JSON. For example, the strict compatibility baseline is:
+
+```bash
+python examples/robot_retarget.py \
+    --task-type object_interaction \
+    --task-name sub3_largebox_003 \
+    --data-format smplh \
+    --data-path demo_data/OMOMO_new \
+    --save-dir benchmark_results/original \
+    --semantic.mode original \
+    --semantic.profile-dir benchmark_results/original
+```
+
+Run the registered Legacy compatibility check, Semantic/Random/Original budget controls, unified evaluations, and plots with:
+
+```bash
+python examples/benchmark_semantic_budget.py \
+    --task-name sub3_largebox_003 \
+    --data-path demo_data/OMOMO_new \
+    --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --output-dir benchmark_results_semantic_budget
+```
+
+Random seeds 0–4 use the same K extra slots and exclude frame 0 plus every true trigger ±3. Use `--force` to rerun known artifacts or `--aggregate-only` to rebuild the tables and plots. Historical benchmark directories are retained as read-only experiment records.
+
+Hand/object distance is measured against the existing fixed object surface samples, so it is a reproducible surface approximation rather than exact triangle-mesh distance. The official optimizer has no velocity-limit constraint; velocity violation is therefore reported as unavailable unless `--semantic.rescue-velocity-limit-per-frame` is explicitly configured. Self-collision is likewise reported as unavailable unless collision pairs are configured. No threshold is tuned from benchmark results.
 
 ## Batch Processing for Motion Retargeting
 

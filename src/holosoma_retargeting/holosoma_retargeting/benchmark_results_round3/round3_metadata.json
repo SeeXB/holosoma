@@ -1,0 +1,1279 @@
+{
+  "task": "sub3_largebox_003",
+  "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+  "critical_events": {
+    "contact": 30,
+    "lift": 66,
+    "place": 162,
+    "release": 167
+  },
+  "ordinary_threshold_pct": 2.0,
+  "frame_partition": {
+    "ordinary_count": 169,
+    "keyframe_neighborhood_count": 26,
+    "exact_count": 4
+  },
+  "fixed_parameters": {
+    "base_budget": 2,
+    "hand_multiplier": 4,
+    "pelvis_multiplier": 2,
+    "object_neighbor_multiplier": 2,
+    "sigma": 2,
+    "phase_weight": 0.25,
+    "refine_exact_max_min": [
+      3,
+      2
+    ],
+    "refine_pm1_max_min": [
+      1,
+      1
+    ],
+    "budget_base2": [
+      10,
+      4,
+      2
+    ]
+  },
+  "precision_evaluator": "unweighted uniform Laplacian on original per-frame Delaunay topology",
+  "official_evaluator": "holosoma_retargeting.evaluation.eval_retargeting.RetargetingEvaluator",
+  "run_specs": [
+    {
+      "key": "original",
+      "label": "Original",
+      "mode": "original",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "uniform_1",
+      "label": "Uniform-1",
+      "mode": "uniform",
+      "uniform_budget": 1,
+      "seed": 0
+    },
+    {
+      "key": "uniform_2",
+      "label": "Uniform-2",
+      "mode": "uniform",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "always_hand_matched",
+      "label": "Always-Hand-Matched",
+      "mode": "uniform2_always_hand_matched",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "random_time_0",
+      "label": "Random-Time-0",
+      "mode": "uniform2_random_time_hand",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "random_time_1",
+      "label": "Random-Time-1",
+      "mode": "uniform2_random_time_hand",
+      "uniform_budget": 2,
+      "seed": 1
+    },
+    {
+      "key": "random_time_2",
+      "label": "Random-Time-2",
+      "mode": "uniform2_random_time_hand",
+      "uniform_budget": 2,
+      "seed": 2
+    },
+    {
+      "key": "random_time_3",
+      "label": "Random-Time-3",
+      "mode": "uniform2_random_time_hand",
+      "uniform_budget": 2,
+      "seed": 3
+    },
+    {
+      "key": "random_time_4",
+      "label": "Random-Time-4",
+      "mode": "uniform2_random_time_hand",
+      "uniform_budget": 2,
+      "seed": 4
+    },
+    {
+      "key": "wrong_body",
+      "label": "Wrong-Body",
+      "mode": "uniform2_wrong_body",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "semantic_weight",
+      "label": "Semantic Weight",
+      "mode": "uniform2_semantic_weight",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "weight_refine",
+      "label": "Weight + Refine",
+      "mode": "uniform2_weight_refine",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "old_semantic_budget",
+      "label": "Old Budget 10/4/2/1",
+      "mode": "budget_only",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "semantic_budget_base2",
+      "label": "Budget-Base2 10/4/2",
+      "mode": "semantic_budget_base2",
+      "uniform_budget": 2,
+      "seed": 0
+    },
+    {
+      "key": "weight_budget_base2",
+      "label": "Weight + Budget-Base2",
+      "mode": "semantic_weight_budget_base2",
+      "uniform_budget": 2,
+      "seed": 0
+    }
+  ],
+  "per_run_metadata": {
+    "original": {
+      "semantic_keyframe_path": null,
+      "random_seed": 0,
+      "weight_event_centers": {},
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "uniform_1": {
+      "semantic_keyframe_path": null,
+      "random_seed": 0,
+      "weight_event_centers": {},
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "uniform_2": {
+      "semantic_keyframe_path": null,
+      "random_seed": 0,
+      "weight_event_centers": {},
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "always_hand_matched": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 30,
+        "lift": 66,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 0.17492173082325602,
+      "always_hand_matched_target_l1": 1747.2688685430294,
+      "always_hand_matched_actual_l1": 1747.268868543029,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "random_time_0": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 137,
+        "lift": 94,
+        "place": 99,
+        "release": 55
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.093654805862636,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 1597.6420157225439,
+      "semantic_control_matched_l1": 1747.2688685430276,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "random_time_1": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 1,
+      "weight_event_centers": {
+        "contact": 79,
+        "lift": 77,
+        "place": 144,
+        "release": 179
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.3169041375856958,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 1326.8003483885539,
+      "semantic_control_matched_l1": 1747.2688685430296,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "random_time_2": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 2,
+      "weight_event_centers": {
+        "contact": 135,
+        "lift": 43,
+        "place": 27,
+        "release": 62
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 0.9949583901909163,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 1756.122553233364,
+      "semantic_control_matched_l1": 1747.2688685430276,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "random_time_3": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 3,
+      "weight_event_centers": {
+        "contact": 131,
+        "lift": 19,
+        "place": 40,
+        "release": 51
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.074755581661708,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 1625.7360262707646,
+      "semantic_control_matched_l1": 1747.2688685430312,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "random_time_4": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 4,
+      "weight_event_centers": {
+        "contact": 118,
+        "lift": 137,
+        "place": 166,
+        "release": 98
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.1615240090298953,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 1504.2899285416822,
+      "semantic_control_matched_l1": 1747.2688685430307,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "wrong_body": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 30,
+        "lift": 66,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 2.546981776195971,
+      "semantic_control_target_l1": 1747.2688685430294,
+      "semantic_control_raw_l1": 686.015457539964,
+      "semantic_control_matched_l1": 1747.26886854303,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "semantic_weight": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 30,
+        "lift": 66,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "weight_refine": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 30,
+        "lift": 66,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [
+        29,
+        30,
+        31,
+        65,
+        66,
+        67,
+        161,
+        162,
+        163,
+        166,
+        167,
+        168
+      ],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "old_semantic_budget": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "start": 0,
+        "approach": 26,
+        "contact": 30,
+        "lift": 66,
+        "carry_mid": 117,
+        "arrive": 160,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 1,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "semantic_budget_base2": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "start": 0,
+        "approach": 26,
+        "contact": 30,
+        "lift": 66,
+        "carry_mid": 117,
+        "arrive": 160,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 2,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    },
+    "weight_budget_base2": {
+      "semantic_keyframe_path": "demo_data/semantic_keyframes/sub3_largebox_003_template_keyframes.json",
+      "random_seed": 0,
+      "weight_event_centers": {
+        "contact": 30,
+        "lift": 66,
+        "place": 162,
+        "release": 167
+      },
+      "refinement_frames": [],
+      "always_hand_amplitude": 1.0,
+      "always_hand_matched_target_l1": null,
+      "always_hand_matched_actual_l1": null,
+      "semantic_control_energy_scale": 1.0,
+      "semantic_control_target_l1": null,
+      "semantic_control_raw_l1": null,
+      "semantic_control_matched_l1": null,
+      "configured_velocity_check": false,
+      "self_collision_check_configured": false,
+      "interaction_distance_metric": "nearest existing object sample (surface approximation)",
+      "scheduler": {
+        "frame0_budget": 50,
+        "critical_trigger_budget": 10,
+        "near_trigger_budget": 4,
+        "critical_phase_budget": 2,
+        "ordinary_budget": 2,
+        "near_trigger_radius": 3
+      },
+      "residual_weights": {
+        "body_weight_multiplier": {
+          "left_hand": 4.0,
+          "right_hand": 4.0,
+          "pelvis": 2.0
+        },
+        "object_neighbor_multiplier": 2.0,
+        "semantic_temporal_sigma": 2.0,
+        "phase_semantic_weight": 0.25,
+        "normalization": "mean vertex weight = 1 per frame",
+        "causal_control_energy_match": "single global scale on normalized alpha-1 deviations"
+      },
+      "precision_payload": {
+        "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
+        "topology": "per-frame original Delaunay adjacency",
+        "semantic_alpha_used": false
+      },
+      "rescue_tolerances": {
+        "penetration": 0.001,
+        "self_collision": 0.0,
+        "joint_limit": 1e-06,
+        "foot_sticking": 0.005,
+        "hand_object": 0.025,
+        "velocity_per_frame": null
+      },
+      "round2_refinement": {
+        "base_budget": 2,
+        "trigger_extra_max": 3,
+        "trigger_extra_min": 2,
+        "near_radius": 1,
+        "near_extra_max": 1,
+        "near_extra_min": 1,
+        "early_stopping": "fixed minimum, then original global-cost np.isclose"
+      },
+      "penetration_pair_policy": {
+        "expected": [
+          "foot-ground",
+          "hand-box",
+          "object-ground"
+        ],
+        "illegal": [
+          "other-body-box",
+          "robot-ground-excluding-foot",
+          "self-collision"
+        ]
+      }
+    }
+  }
+}

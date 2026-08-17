@@ -1,0 +1,2 @@
+status,reason
+not_run,"Stage A failed: Group-Balanced Part produced Ordinary +2.0310% (limit +1.0%), Global KF +8.1616% (limit +0.5%), Part -36.7156% vs U2. Per protocol, downstream stage was not run."

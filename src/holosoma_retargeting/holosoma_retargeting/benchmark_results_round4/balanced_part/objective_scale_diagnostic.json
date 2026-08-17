@@ -1,0 +1,17 @@
+{
+  "method": "Group-Balanced Additive Part",
+  "mean_E_omni": 0.9478934073546743,
+  "comparisons": [
+    {
+      "term": "E_part",
+      "mean": 1.0546004057788447,
+      "ratio_to_E_omni_symmetric": 1.1125727825473142
+    },
+    {
+      "term": "E_edge",
+      "mean": 0.0,
+      "ratio_to_E_omni_symmetric": null
+    }
+  ],
+  "more_than_one_order_of_magnitude": false
+}

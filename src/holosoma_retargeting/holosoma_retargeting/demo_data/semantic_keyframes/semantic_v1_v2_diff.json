@@ -1,0 +1,266 @@
+{
+  "events": [
+    {
+      "event": "start",
+      "v1": {
+        "window": [
+          0,
+          117
+        ],
+        "trigger_frame": 0,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          0,
+          26
+        ],
+        "trigger_frame": 0,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": 1,
+        "criticality": 0.25
+      },
+      "changed_fields": [
+        "window",
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "approach",
+      "v1": {
+        "window": [
+          26,
+          30
+        ],
+        "trigger_frame": 26,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          26,
+          30
+        ],
+        "trigger_frame": 26,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": 2,
+        "criticality": 0.5
+      },
+      "changed_fields": [
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "contact",
+      "v1": {
+        "window": [
+          30,
+          66
+        ],
+        "trigger_frame": 30,
+        "body_parts": [
+          "right_hand",
+          "left_hand"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          30,
+          66
+        ],
+        "trigger_frame": 30,
+        "body_parts": [
+          "left_hand",
+          "right_hand"
+        ],
+        "criticality_level": 3,
+        "criticality": 0.75
+      },
+      "changed_fields": [
+        "body_parts",
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "lift",
+      "v1": {
+        "window": [
+          66,
+          117
+        ],
+        "trigger_frame": 66,
+        "body_parts": [
+          "right_hand",
+          "left_hand"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          66,
+          117
+        ],
+        "trigger_frame": 66,
+        "body_parts": [
+          "left_hand",
+          "right_hand"
+        ],
+        "criticality_level": 3,
+        "criticality": 0.75
+      },
+      "changed_fields": [
+        "body_parts",
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "carry_mid",
+      "v1": {
+        "window": [
+          117,
+          160
+        ],
+        "trigger_frame": 117,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          117,
+          160
+        ],
+        "trigger_frame": 117,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": 3,
+        "criticality": 0.75
+      },
+      "changed_fields": [
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "arrive",
+      "v1": {
+        "window": [
+          160,
+          162
+        ],
+        "trigger_frame": 160,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          160,
+          162
+        ],
+        "trigger_frame": 160,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": 3,
+        "criticality": 0.75
+      },
+      "changed_fields": [
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "place",
+      "v1": {
+        "window": [
+          162,
+          167
+        ],
+        "trigger_frame": 162,
+        "body_parts": [
+          "right_hand",
+          "left_hand"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          162,
+          167
+        ],
+        "trigger_frame": 162,
+        "body_parts": [
+          "pelvis"
+        ],
+        "criticality_level": 3,
+        "criticality": 0.75
+      },
+      "changed_fields": [
+        "body_parts",
+        "criticality_level",
+        "criticality"
+      ]
+    },
+    {
+      "event": "release",
+      "v1": {
+        "window": [
+          167,
+          169
+        ],
+        "trigger_frame": 167,
+        "body_parts": [
+          "right_hand",
+          "left_hand"
+        ],
+        "criticality_level": null,
+        "criticality": null
+      },
+      "v2": {
+        "window": [
+          167,
+          191
+        ],
+        "trigger_frame": 167,
+        "body_parts": [
+          "left_hand",
+          "right_hand"
+        ],
+        "criticality_level": 4,
+        "criticality": 1.0
+      },
+      "changed_fields": [
+        "window",
+        "body_parts",
+        "criticality_level",
+        "criticality"
+      ]
+    }
+  ],
+  "any_change": true
+}

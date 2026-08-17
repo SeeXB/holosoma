@@ -1,0 +1,13 @@
+method,frame,event,configured_budget,final_budget,actual_iterations
+budget_only,30,contact,10,10,8
+budget_only,66,lift,10,10,10
+budget_only,162,place,10,10,10
+budget_only,167,release,10,10,10
+budget_weight,30,contact,10,10,10
+budget_weight,66,lift,10,10,10
+budget_weight,162,place,10,10,10
+budget_weight,167,release,10,10,10
+full,30,contact,10,10,10
+full,66,lift,10,10,10
+full,162,place,10,10,10
+full,167,release,10,10,10

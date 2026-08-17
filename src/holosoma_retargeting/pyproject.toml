@@ -41,6 +41,10 @@ dependencies = [
     "tyro",
 ]
 
+[project.scripts]
+holosoma-semantic-keyframes = "holosoma_retargeting.semantic_keyframes.cli:main"
+holosoma-semantic-budget-benchmark = "holosoma_retargeting.examples.benchmark_semantic_budget:cli"
+
 [project.optional-dependencies]
 dev = ["mypy", "ruff", "pytest"]
 
@@ -67,5 +71,6 @@ source-include = [
     "holosoma_retargeting/**/*.npy",
     "holosoma_retargeting/**/*.pt",
     "holosoma_retargeting/**/*.pkl",
+    "holosoma_retargeting/**/*.json",
     "holosoma_retargeting/**/*.md",
 ]

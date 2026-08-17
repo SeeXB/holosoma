@@ -1,0 +1,2 @@
+semantic_trigger_count,accepted_refinement_count,fallback_count,acceptance_rate,mean_part_improvement_among_accepted_pct,mean_global_change_among_accepted_pct,max_global_change_pct,mean_extra_sqp_per_trigger,pre_refinement_prefix_max_abs_diff_vs_U2
+8,0,8,0.0,0.0,0.0,0.0,2.0,0.0

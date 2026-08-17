@@ -1,0 +1,9 @@
+method,run_key,iterations,frame_count,frame_fraction
+A3 Adaptive Base,adaptive_base,1,0,0.0
+A3 Adaptive Base,adaptive_base,2,195,1.0
+A3 Adaptive Base,adaptive_base,3,0,0.0
+A3 Adaptive Base,adaptive_base,4,0,0.0
+A5 Final Semantic + Adaptive,adaptive_semantic_uniform,1,0,0.0
+A5 Final Semantic + Adaptive,adaptive_semantic_uniform,2,195,1.0
+A5 Final Semantic + Adaptive,adaptive_semantic_uniform,3,0,0.0
+A5 Final Semantic + Adaptive,adaptive_semantic_uniform,4,0,0.0

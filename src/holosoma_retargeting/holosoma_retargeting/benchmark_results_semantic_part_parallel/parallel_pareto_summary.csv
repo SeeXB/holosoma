@@ -1,0 +1,9 @@
+Method,run_key,Global Change pct,Part Improvement pct,Actual SQP,Physical Valid,Registered Feasible,Global-Part Nondominated,Compute-Part Nondominated
+B0 Original,original,0.10617852598900973,0.48983741521833696,1892,True,True,False,False
+B1 Uniform-2,uniform_2,0.0,-0.0,440,True,True,True,False
+B2 Legacy Semantic Weight,legacy_weight,0.24686170822797843,8.308732255828788,440,True,True,True,True
+B3 Raw Additive Part,raw_additive,0.09234587010087333,2.798682058222843,440,True,True,False,False
+B4 Cardinality-Balanced Part,cardinality_balanced,8.161628615549638,36.715629716791035,440,False,False,False,False
+B5 Constrained + Backtracking,constrained_backtracking,0.019842492802426743,3.1399724585323416,452,True,True,True,False
+N1 Jacobian-Balanced Additive,jacobian_balanced,4.383566971423999,31.894030122859853,440,False,False,False,False
+N2 Constrained + TR Re-solve,trust_region_resolve,0.02869367563697668,3.2471910342731842,456,True,True,True,False

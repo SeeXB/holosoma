@@ -1,0 +1,166 @@
+```json
+{
+  "events": [
+    {
+      "event": "start",
+      "body_parts": [],
+      "trigger": {
+        "primitive": "global_minimum",
+        "signal": "object_progress",
+        "threshold": null,
+        "after": null
+      },
+      "end": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "criticality_level": 1,
+      "criticality_rationale": "The person starts moving towards the box.",
+      "failure_if_inaccurate": "The person may not initiate movement correctly.",
+      "rationale": "The person begins their approach."
+    },
+    {
+      "event": "approach",
+      "body_parts": ["pelvis"],
+      "trigger": {
+        "primitive": "local_minimum",
+        "signal": "pelvis_speed",
+        "threshold": null,
+        "after": "start"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "criticality_level": 2,
+      "criticality_rationale": "Approaching the box is necessary before making contact.",
+      "failure_if_inaccurate": "The person may miss the box entirely.",
+      "rationale": "The pelvis slows down as they get closer to the box."
+    },
+    {
+      "event": "contact",
+      "body_parts": ["left_hand", "right_hand"],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "contact_enter",
+        "after": "approach"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "criticality_level": 3,
+      "criticality_rationale": "Making contact with the box is crucial for lifting.",
+      "failure_if_inaccurate": "The person may not lift the box properly.",
+      "rationale": "The hands come into contact with the box surface."
+    },
+    {
+      "event": "lift",
+      "body_parts": ["left_hand", "right_hand"],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_height",
+        "threshold": "lift_enter",
+        "after": "contact"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "criticality_level": 3,
+      "criticality_rationale": "Lifting the box is essential for carrying it.",
+      "failure_if_inaccurate": "The person may drop the box.",
+      "rationale": "The box lifts off the ground."
+    },
+    {
+      "event": "carry_mid",
+      "body_parts": ["pelvis"],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "object_progress",
+        "threshold": "moving",
+        "after": "lift"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "criticality_level": 3,
+      "criticality_rationale": "Carrying the box mid-air requires maintaining control.",
+      "failure_if_inaccurate": "The person may lose balance or drop the box.",
+      "rationale": "The pelvis moves forward while carrying the box."
+    },
+    {
+      "event": "arrive",
+      "body_parts": ["pelvis"],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_goal_distance",
+        "threshold": "near_goal",
+        "after": "carry_mid"
+      },
+      "end": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "criticality_level": 3,
+      "criticality_rationale": "Arriving at the goal position is necessary before placing the box.",
+      "failure_if_inaccurate": "The person may overshoot or undershoot the placement point.",
+      "rationale": "The pelvis approaches the target location."
+    },
+    {
+      "event": "place",
+      "body_parts": ["pelvis"],
+      "trigger": {
+        "primitive": "threshold_crossing_down",
+        "signal": "object_height",
+        "threshold": "lift_exit",
+        "after": "arrive"
+      },
+      "end": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "criticality_level": 3,
+      "criticality_rationale": "Placing the box accurately is crucial for completing the task.",
+      "failure_if_inaccurate": "The person may not place the box correctly.",
+      "rationale": "The pelvis stops near the target location."
+    },
+    {
+      "event": "release",
+      "body_parts": ["left_hand", "right_hand"],
+      "trigger": {
+        "primitive": "threshold_crossing_up",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": "released",
+        "after": "place"
+      },
+      "end": {
+        "primitive": "global_maximum",
+        "signal": "max_hand_box_surface_distance",
+        "threshold": null,
+        "after": "release"
+      },
+      "criticality_level": 4,
+      "criticality_rationale": "Releasing the box completes the task successfully.",
+      "failure_if_inaccurate": "The person may fail to complete the task.",
+      "rationale": "The hands move away from the box."
+    }
+  ]
+}
+```
