@@ -1,10 +1,11 @@
 """Configuration for semantic-keyframe-aware OmniRetarget runs.
 
 The active research path is deliberately small: a Uniform-2 base, the
-registered Legacy residual weighting, and an optional exact-trigger 2 -> 4
-budget.  Older non-criticality modes remain readable so historical commands
-and cached artifacts can still be inspected, but criticality/Edge/adaptive
-ablation modes are no longer accepted here.
+registered four-event Legacy residual weighting, a distinct full-event
+residual weighting, and optional exact-trigger refinement budgets.  Older
+non-criticality modes remain readable so historical commands and cached
+artifacts can still be inspected, but criticality/Edge/adaptive ablation modes
+are no longer accepted here.
 """
 
 from __future__ import annotations
@@ -20,9 +21,19 @@ SemanticMode = Literal[
     "uniform2_semantic_weight_uniform",
     "uniform2_semantic_weight_semantic_budget",
     "uniform2_semantic_weight_random_budget",
+    "uniform2_semantic_weight_full_event",
+    "uniform2_semantic_weight_full_event_approach_body_only",
+    "uniform2_semantic_weight_full_event_transition_truncated",
+    "uniform2_semantic_weight_full_event_transition_truncated_budget",
+    "uniform2_semantic_weight_full_event_budget",
+    "uniform2_semantic_weight_full_event_random_budget",
     "uniform2_original_objective_semantic_budget",
 ]
 ACTIVE_SEMANTIC_MODES = tuple(str(mode) for mode in get_args(SemanticMode))
+FINAL_SEMANTIC_MODE: SemanticMode = (
+    "uniform2_semantic_weight_full_event_transition_truncated_budget"
+)
+FINAL_SEMANTIC_EXACT_TRIGGER_BUDGET = 4
 
 
 @dataclass
@@ -30,10 +41,13 @@ class SemanticRetargetingConfig:
     """Fixed semantic runtime configuration.
 
     ``uniform2_semantic_weight_uniform`` is the immutable Legacy anchor.  The
-    two weighted budget modes use the exact same objective and differ only in
-    where their seven (for the registered sequence) extra 2-iteration slots
-    are placed.  ``uniform2_original_objective_semantic_budget`` uses the same
-    semantic timing allocation without residual weighting.
+    historical weighted budget modes retain that same four-event objective.
+    The full-event modes instead consume every event and body-part assignment
+    from the deterministic semantic plan, without name-based filtering.
+    ``uniform2_original_objective_semantic_budget`` uses the same semantic
+    timing allocation without residual weighting.  The registered final
+    experiment recipe is transition-truncated full-event weighting with an
+    exact-trigger budget of four; defaults remain backward-compatible.
     """
 
     mode: SemanticMode = "original"
@@ -48,9 +62,14 @@ class SemanticRetargetingConfig:
     near_trigger_radius: int = 3
     round2_base_budget: int = 2
 
-    # This round is pre-registered at exactly 2 -> 4; it is not a tuning knob.
+    # Registered refinement curve. Arbitrary values remain invalid.
     exact_trigger_budget: int = 4
     random_exclusion_radius: int = 3
+
+    # Optional profiling-only frames.  These frames do not alter the budget
+    # plan or any solver parameter; they only retain accepted SQP iterates for
+    # nonlinear post-solve diagnostics.
+    diagnostic_iteration_frames: tuple[int, ...] = ()
 
     # Registered Legacy weighting constants.  These must not drift.
     semantic_temporal_sigma: float = 2.0
@@ -96,18 +115,55 @@ class SemanticRetargetingConfig:
             "uniform2_semantic_weight_uniform",
             "uniform2_semantic_weight_semantic_budget",
             "uniform2_semantic_weight_random_budget",
+            "uniform2_semantic_weight_full_event",
+            "uniform2_semantic_weight_full_event_approach_body_only",
+            "uniform2_semantic_weight_full_event_transition_truncated",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
+            "uniform2_semantic_weight_full_event_budget",
+            "uniform2_semantic_weight_full_event_random_budget",
+        }
+
+    @property
+    def uses_full_event_weights(self) -> bool:
+        return self.mode in {
+            "uniform2_semantic_weight_full_event",
+            "uniform2_semantic_weight_full_event_approach_body_only",
+            "uniform2_semantic_weight_full_event_transition_truncated",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
+            "uniform2_semantic_weight_full_event_budget",
+            "uniform2_semantic_weight_full_event_random_budget",
+        }
+
+    @property
+    def body_only_weight_events(self) -> tuple[str, ...]:
+        """Events whose body residual must not spill into object neighbors."""
+        if self.mode == "uniform2_semantic_weight_full_event_approach_body_only":
+            return ("approach",)
+        return ()
+
+    @property
+    def uses_transition_truncated_weight_support(self) -> bool:
+        """Whether event weights are causal and stop at the next transition."""
+        return self.mode in {
+            "uniform2_semantic_weight_full_event_transition_truncated",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
         }
 
     @property
     def uses_exact_semantic_budget(self) -> bool:
         return self.mode in {
             "uniform2_semantic_weight_semantic_budget",
+            "uniform2_semantic_weight_full_event_budget",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
             "uniform2_original_objective_semantic_budget",
         }
 
     @property
     def uses_random_exact_budget(self) -> bool:
-        return self.mode == "uniform2_semantic_weight_random_budget"
+        return self.mode in {
+            "uniform2_semantic_weight_random_budget",
+            "uniform2_semantic_weight_full_event_random_budget",
+        }
 
     @property
     def is_uniform2_mainline(self) -> bool:
@@ -115,6 +171,12 @@ class SemanticRetargetingConfig:
             "uniform2_semantic_weight_uniform",
             "uniform2_semantic_weight_semantic_budget",
             "uniform2_semantic_weight_random_budget",
+            "uniform2_semantic_weight_full_event",
+            "uniform2_semantic_weight_full_event_approach_body_only",
+            "uniform2_semantic_weight_full_event_transition_truncated",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
+            "uniform2_semantic_weight_full_event_budget",
+            "uniform2_semantic_weight_full_event_random_budget",
             "uniform2_original_objective_semantic_budget",
         }
 
@@ -136,8 +198,8 @@ class SemanticRetargetingConfig:
             raise ValueError("frame0_budget is registered at 50")
         if self.round2_base_budget != 2:
             raise ValueError("round2_base_budget is registered at 2")
-        if self.exact_trigger_budget != 4:
-            raise ValueError("exact_trigger_budget is registered at 4")
+        if self.exact_trigger_budget not in {2, 4, 6, 8, 10}:
+            raise ValueError("exact_trigger_budget must be one of {2, 4, 6, 8, 10}")
         if self.random_exclusion_radius != 3:
             raise ValueError("random_exclusion_radius is registered at 3")
         if self.semantic_temporal_sigma != 2.0:
@@ -148,10 +210,20 @@ class SemanticRetargetingConfig:
             raise ValueError("object_neighbor_multiplier is registered at 2.0")
         if self.random_seed < 0:
             raise ValueError("random_seed must be non-negative")
+        if any(frame < 0 for frame in self.diagnostic_iteration_frames):
+            raise ValueError("diagnostic_iteration_frames must be non-negative")
+        if len(set(self.diagnostic_iteration_frames)) != len(self.diagnostic_iteration_frames):
+            raise ValueError("diagnostic_iteration_frames must be unique")
         if self.mode in {
             "uniform2_semantic_weight_uniform",
             "uniform2_semantic_weight_semantic_budget",
             "uniform2_semantic_weight_random_budget",
+            "uniform2_semantic_weight_full_event",
+            "uniform2_semantic_weight_full_event_approach_body_only",
+            "uniform2_semantic_weight_full_event_transition_truncated",
+            "uniform2_semantic_weight_full_event_transition_truncated_budget",
+            "uniform2_semantic_weight_full_event_budget",
+            "uniform2_semantic_weight_full_event_random_budget",
             "uniform2_original_objective_semantic_budget",
         } and self.semantic_keyframe_path is None:
             raise ValueError(f"semantic_keyframe_path is required for mode={self.mode!r}")

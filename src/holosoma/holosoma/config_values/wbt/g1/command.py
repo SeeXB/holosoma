@@ -42,6 +42,15 @@ motion_config_w_object = replace(
     motion_file="holosoma/data/motions/g1_29dof/whole_body_tracking/sub3_largebox_003_mj_w_obj.npz",
 )
 
+motion_config_w_object_transition_truncated_b4 = replace(
+    motion_config_w_object,
+    motion_file=(
+        "src/holosoma_retargeting/holosoma_retargeting/"
+        "benchmark_results_full_event_transition_truncation/rl/"
+        "transition_truncated_b4_mj_fps50_w_obj.npz"
+    ),
+)
+
 g1_29dof_wbt_command = CommandManagerCfg(
     params={},
     setup_terms={
@@ -76,7 +85,21 @@ g1_29dof_wbt_command_w_object = replace(
     },
 )
 
+g1_29dof_wbt_command_w_object_transition_truncated_b4 = replace(
+    g1_29dof_wbt_command_w_object,
+    setup_terms={
+        "motion_command": CommandTermCfg(
+            func="holosoma.managers.command.terms.wbt:MotionCommand",
+            params={
+                "motion_config": motion_config_w_object_transition_truncated_b4,
+            },
+        )
+    },
+)
+
 __all__ = [
     "g1_29dof_wbt_command",
     "g1_29dof_wbt_command_w_object",
+    "g1_29dof_wbt_command_w_object_transition_truncated_b4",
+    "motion_config_w_object_transition_truncated_b4",
 ]

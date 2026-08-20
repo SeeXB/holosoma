@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from holosoma_retargeting.config_types.semantic import SemanticRetargetingConfig
+from holosoma_retargeting.config_types.semantic import (
+    FINAL_SEMANTIC_EXACT_TRIGGER_BUDGET,
+    FINAL_SEMANTIC_MODE,
+    SemanticRetargetingConfig,
+)
 from holosoma_retargeting.semantic_keyframes.precision import PrecisionPayload, evaluate_precision
 from holosoma_retargeting.semantic_keyframes.runtime import (
     SemanticEvent,
@@ -23,6 +28,7 @@ from holosoma_retargeting.semantic_keyframes.runtime import (
     scale_semantic_weight_result,
     spatiotemporal_semantic_context,
 )
+from holosoma_retargeting.src.interaction_mesh_retargeter import InteractionMeshRetargeter
 
 
 def _event(
@@ -113,9 +119,214 @@ def test_scheduler_compatibility_and_fixed_uniform2_budget() -> None:
     assert uniform.budgets.tolist() == [50] + [2] * 11
     for mode in (
         "uniform2_semantic_weight_uniform",
+        "uniform2_semantic_weight_full_event",
     ):
         plan = make_budget_plan(12, [event], SemanticRetargetingConfig(mode=mode))
         assert plan.budgets.tolist() == [50] + [2] * 11
+
+
+@pytest.mark.parametrize("budget", (2, 4, 6, 8, 10))
+def test_registered_exact_trigger_budgets_are_valid(budget: int) -> None:
+    config = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_budget",
+        semantic_keyframe_path=Path("semantic.json"),
+        exact_trigger_budget=budget,
+    )
+    config.validate()
+
+
+def test_iteration_diagnostic_frames_are_profiling_only() -> None:
+    event = _event("contact", 4, 2, 8)
+    plain = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_budget",
+        semantic_keyframe_path=Path("semantic.json"),
+        exact_trigger_budget=6,
+    )
+    diagnostic = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_budget",
+        semantic_keyframe_path=Path("semantic.json"),
+        exact_trigger_budget=6,
+        diagnostic_iteration_frames=(3, 7),
+    )
+    diagnostic.validate()
+    assert make_budget_plan(12, [event], diagnostic).budgets.tolist() == make_budget_plan(
+        12,
+        [event],
+        plain,
+    ).budgets.tolist()
+
+
+@pytest.mark.parametrize("frames", ((-1,), (3, 3)))
+def test_invalid_iteration_diagnostic_frames_are_rejected(frames: tuple[int, ...]) -> None:
+    config = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event",
+        semantic_keyframe_path=Path("semantic.json"),
+        diagnostic_iteration_frames=frames,
+    )
+    with pytest.raises(ValueError, match="diagnostic_iteration_frames"):
+        config.validate()
+
+
+def test_full_event_weight_support_is_unfiltered_and_legacy_stays_four_event() -> None:
+    events = [
+        _event("start", 0, 0, 2, ["pelvis"]),
+        _event("approach", 10, 8, 12, ["pelvis"]),
+        _event("contact", 30, 28, 35, ["left_hand", "right_hand"]),
+        _event("lift", 50, 48, 60, ["left_hand", "right_hand"]),
+        _event("carry_mid", 60, 58, 65, ["pelvis"]),
+        _event("arrive", 66, 65, 68, ["pelvis"]),
+        _event("place", 70, 68, 74, ["pelvis"]),
+        _event("release", 75, 74, 79, ["left_hand", "right_hand"]),
+    ]
+    legacy_owner = SimpleNamespace(
+        semantic_config=SemanticRetargetingConfig(mode="uniform2_semantic_weight_uniform")
+    )
+    full_owner = SimpleNamespace(
+        semantic_config=SemanticRetargetingConfig(mode="uniform2_semantic_weight_full_event")
+    )
+    approach_body_only_owner = SimpleNamespace(
+        semantic_config=SemanticRetargetingConfig(
+            mode="uniform2_semantic_weight_full_event_approach_body_only"
+        )
+    )
+    legacy = InteractionMeshRetargeter._weight_events_for_run(legacy_owner, events, 80)
+    full = InteractionMeshRetargeter._weight_events_for_run(full_owner, events, 80)
+    approach_body_only = InteractionMeshRetargeter._weight_events_for_run(
+        approach_body_only_owner, events, 80
+    )
+    assert [event.name for event in legacy] == ["contact", "lift", "place", "release"]
+    assert full == events
+    assert approach_body_only == events
+
+
+def test_approach_body_only_weights_pelvis_without_object_neighbor_spillover() -> None:
+    adjacency = [[3], [], [], [0], []]
+    mapping = resolve_body_vertex_mapping(["Pelvis", "L_Wrist", "R_Wrist"], ["pelvis"])
+    approach = [_event("approach", 10, 8, 12, ["pelvis"])]
+    full = build_semantic_vertex_weight_result(
+        frame_idx=10,
+        events=approach,
+        body_mapping=mapping,
+        adjacency=adjacency,
+        num_human_vertices=3,
+        num_vertices=5,
+        config=SemanticRetargetingConfig(mode="uniform2_semantic_weight_full_event"),
+    )
+    body_only_config = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_approach_body_only"
+    )
+    body_only = build_semantic_vertex_weight_result(
+        frame_idx=10,
+        events=approach,
+        body_mapping=mapping,
+        adjacency=adjacency,
+        num_human_vertices=3,
+        num_vertices=5,
+        config=body_only_config,
+    )
+
+    assert body_only_config.body_only_weight_events == ("approach",)
+    assert body_only.weights.mean() == pytest.approx(1.0, abs=1e-12)
+    assert body_only.weights[0] > body_only.weights[3]
+    assert body_only.weights[3] == pytest.approx(body_only.weights[4])
+    assert body_only.boosted_vertex_count == 1
+    assert full.weights[3] > full.weights[4]
+    assert full.boosted_vertex_count == 2
+
+    # The exception is event-specific: other events still propagate from the
+    # same pelvis body vertex to its directly connected object neighbor.
+    contact = build_semantic_vertex_weight_result(
+        frame_idx=10,
+        events=[_event("contact", 10, 8, 12, ["pelvis"])],
+        body_mapping=mapping,
+        adjacency=adjacency,
+        num_human_vertices=3,
+        num_vertices=5,
+        config=body_only_config,
+    )
+    assert contact.weights[3] > contact.weights[4]
+    assert contact.boosted_vertex_count == 2
+
+
+def test_transition_truncation_is_generic_causal_and_next_trigger_exclusive() -> None:
+    events = [
+        _event("start", 0, 0, 26, ["pelvis"]),
+        _event("approach", 26, 26, 30, ["pelvis"]),
+        _event("contact", 30, 30, 66, ["left_hand"]),
+    ]
+    config = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_transition_truncated"
+    )
+    adjacency = [[], [], [], [], []]
+    mapping = resolve_body_vertex_mapping(
+        ["Pelvis", "L_Wrist", "R_Wrist"], ["pelvis", "left_hand"]
+    )
+
+    def weights(frame: int) -> np.ndarray:
+        return build_semantic_vertex_weight_result(
+            frame_idx=frame,
+            events=events,
+            body_mapping=mapping,
+            adjacency=adjacency,
+            num_human_vertices=3,
+            num_vertices=5,
+            config=config,
+        ).weights
+
+    # No anticipatory approach tail: start owns frame 25.
+    assert weights(25)[0] > weights(25)[1]
+    # Approach owns exactly 26..29 and retains pelvis multiplier=2.
+    assert weights(26)[0] > weights(26)[1]
+    assert weights(29)[0] > weights(29)[1]
+    # Contact owns its trigger frame; approach cannot cross the transition.
+    assert weights(30)[1] > weights(30)[0]
+    context = spatiotemporal_semantic_context(
+        30,
+        events,
+        transition_truncated=True,
+    )
+    assert context.active_events == ("contact",)
+    assert context.body_parts == ("left_hand",)
+    assert config.body_weight_multiplier["pelvis"] == 2.0
+
+    plan = make_budget_plan(80, events, config)
+    assert plan.budgets.tolist() == [50] + [2] * 79
+
+    budget = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_transition_truncated_budget",
+        exact_trigger_budget=10,
+    )
+    budget_plan = make_budget_plan(80, events, budget)
+    assert budget.uses_transition_truncated_weight_support
+    assert budget_plan.extra_budget_frames == (26, 30)
+    assert budget_plan.budgets[26] == budget_plan.budgets[30] == 10
+    assert budget_plan.budgets[29] == budget_plan.budgets[31] == 2
+    assert int(budget_plan.budgets.sum()) == 50 + 77 * 2 + 2 * 10
+
+
+def test_registered_final_semantic_recipe_is_transition_truncated_b4() -> None:
+    assert FINAL_SEMANTIC_MODE == (
+        "uniform2_semantic_weight_full_event_transition_truncated_budget"
+    )
+    assert FINAL_SEMANTIC_EXACT_TRIGGER_BUDGET == 4
+    config = SemanticRetargetingConfig(
+        mode=FINAL_SEMANTIC_MODE,
+        exact_trigger_budget=FINAL_SEMANTIC_EXACT_TRIGGER_BUDGET,
+    )
+    assert config.uses_transition_truncated_weight_support
+    assert config.uses_exact_semantic_budget
+    assert config.is_uniform2_mainline
+
+
+@pytest.mark.parametrize("budget", (1, 3, 5, 12))
+def test_unregistered_exact_trigger_budgets_are_rejected(budget: int) -> None:
+    config = SemanticRetargetingConfig(
+        mode="uniform2_semantic_weight_full_event_budget",
+        semantic_keyframe_path=Path("semantic.json"),
+        exact_trigger_budget=budget,
+    )
+    with pytest.raises(ValueError, match="one of"):
+        config.validate()
 
 
 @pytest.mark.parametrize(
@@ -238,6 +449,51 @@ def test_exact_semantic_and_random_budget_are_compute_matched() -> None:
         for trigger in (0, 10, 30, 50)
     )
     assert all(random.allocation_reasons[frame] == "random_extra" for frame in random.extra_budget_frames)
+
+
+def test_full_event_b2_is_uniform2_and_b10_random_is_compute_matched() -> None:
+    events = [
+        _event("start", 0, 0, 2, ["pelvis"]),
+        _event("approach", 10, 8, 12, ["pelvis"]),
+        _event("contact", 30, 28, 35, ["left_hand", "right_hand"]),
+        _event("carry_mid", 50, 48, 60, ["pelvis"]),
+    ]
+    full_b2 = make_budget_plan(
+        80,
+        events,
+        SemanticRetargetingConfig(
+            mode="uniform2_semantic_weight_full_event",
+            exact_trigger_budget=2,
+        ),
+    )
+    semantic_b10 = make_budget_plan(
+        80,
+        events,
+        SemanticRetargetingConfig(
+            mode="uniform2_semantic_weight_full_event_budget",
+            exact_trigger_budget=10,
+        ),
+    )
+    random_b10 = make_budget_plan(
+        80,
+        events,
+        SemanticRetargetingConfig(
+            mode="uniform2_semantic_weight_full_event_random_budget",
+            exact_trigger_budget=10,
+            random_seed=4,
+        ),
+    )
+    assert full_b2.semantic_trigger_frames == (10, 30, 50)
+    assert full_b2.extra_budget_frames == ()
+    assert full_b2.budgets.tolist() == [50] + [2] * 79
+    assert semantic_b10.extra_budget_frames == (10, 30, 50)
+    assert int(semantic_b10.budgets.sum()) == int(random_b10.budgets.sum())
+    assert len(random_b10.extra_budget_frames) == 3
+    assert all(
+        abs(frame - trigger) > 3
+        for frame in random_b10.extra_budget_frames
+        for trigger in (0, 10, 30, 50)
+    )
 
 
 def test_random_time_control_preserves_window_and_temporal_integral() -> None:

@@ -63,6 +63,17 @@ The supported semantic main line changes only the existing Laplacian residual we
 | `uniform2_original_objective_semantic_budget` | 50/2; all nonzero exact triggers 4 | off |
 | `uniform2_semantic_weight_semantic_budget` | 50/2; all nonzero exact triggers 4 | registered Legacy weights |
 | `uniform2_semantic_weight_random_budget` | 50/2; K matched random ordinary frames 4 | registered Legacy weights |
+| `uniform2_semantic_weight_full_event` | 50/2 | all projected events and JSON body parts |
+| `uniform2_semantic_weight_full_event_approach_body_only` | 50/2 | full-event weights, but approach weights pelvis only and never object neighbors |
+| `uniform2_semantic_weight_full_event_transition_truncated` | 50/2 | each event owns `[trigger, min(end, next trigger - 1)]` |
+| `uniform2_semantic_weight_full_event_transition_truncated_budget` | 50/2; nonzero exact triggers N | transition-truncated full-event weights |
+| `uniform2_semantic_weight_full_event_budget` | 50/2; nonzero exact triggers N | all projected events and JSON body parts |
+| `uniform2_semantic_weight_full_event_random_budget` | 50/2; K matched random ordinary frames N | all projected events and JSON body parts |
+
+For the full-event refinement modes, `N` is restricted to the registered set
+`{2, 4, 6, 8, 10}`. The historical `uniform2_semantic_weight_uniform` mode
+continues to use only contact/lift/place/release and remains trajectory-level
+backward compatible.
 
 The active optimizer reads a deterministic projection of `semantic_v2.json`: event name, window, trigger frame, body parts, trigger/end rules, and rationale are retained. Historical criticality fields are ignored and never affect weighting or scheduling. The JSON is not regenerated.
 
@@ -104,6 +115,73 @@ python examples/benchmark_semantic_budget.py \
 ```
 
 Random seeds 0–4 use the same K extra slots and exclude frame 0 plus every true trigger ±3. Use `--force` to rerun known artifacts or `--aggregate-only` to rebuild the tables and plots. Historical benchmark directories are retained as read-only experiment records.
+
+Run the registered Full-Event refinement curve with:
+
+```bash
+python examples/benchmark_full_event_semantic_budget.py \
+    --task-name sub3_largebox_003 \
+    --data-path demo_data/OMOMO_new \
+    --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --output-dir benchmark_results_full_event_semantic_budget
+```
+
+Every actual solve at a nonzero semantic trigger is logged with unweighted
+Part, Local, Edge, and global Laplacian errors. The registered frame-34
+physical diagnostic additionally records the unchanged MuJoCo 0.1 m distance
+query, shoulder-box signed distance, illegal penetration, and q-update norm at
+each accepted iterate. Intermediate physical failures do not stop the fixed
+2/4/6/8/10 curve, and no fallback trajectory is substituted. Trace-evaluation
+overhead is excluded from the reported retargeting wall time.
+
+Run the causal approach body-only validation with:
+
+```bash
+python examples/benchmark_full_event_approach_body_only.py \
+    --task-name sub3_largebox_003 \
+    --data-path demo_data/OMOMO_new \
+    --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --output-dir benchmark_results_full_event_approach_body_only
+```
+
+On the registered sequence, the realized interaction-mesh topology has zero
+direct pelvis-to-object edges at every active approach frame. Consequently,
+this body-only intervention is exactly trajectory-equivalent to FullEvent-B2;
+the diagnostic is retained to make that null result and its topology cause
+reproducible.
+
+Run the generic transition-truncation diagnostic with:
+
+```bash
+python examples/benchmark_full_event_transition_truncation.py \
+    --task-name sub3_largebox_003 \
+    --data-path demo_data/OMOMO_new \
+    --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --output-dir benchmark_results_full_event_transition_truncation
+```
+
+This policy uses the same rule for every event: spatial weighting starts at
+the event trigger and ends at the earlier of its window end or the frame
+before the next event trigger. On the registered sequence it removes the
+frame-34 penetration while retaining the fixed 440-solve budget; the complete
+semantic-quality tradeoff is recorded in the benchmark report.
+
+Run the B2/B4/B6/B8/B10 exact-trigger budget curve with:
+
+```bash
+python examples/benchmark_transition_truncation_budget_curve.py \
+    --task-name sub3_largebox_003 \
+    --data-path demo_data/OMOMO_new \
+    --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
+    --output-dir benchmark_results_full_event_transition_truncation
+```
+
+The registered final recipe is
+`uniform2_semantic_weight_full_event_transition_truncated_budget` with
+`exact_trigger_budget=4`: frame 0 uses 50 iterations, the seven nonzero
+semantic triggers use at most 4, and every ordinary frame uses 2. B4 is the
+lowest-compute point within 0.1% of the best feasible All-event Part error on
+the registered curve and preserves zero official penetration.
 
 Hand/object distance is measured against the existing fixed object surface samples, so it is a reproducible surface approximation rather than exact triangle-mesh distance. The official optimizer has no velocity-limit constraint; velocity violation is therefore reported as unavailable unless `--semantic.rescue-velocity-limit-per-frame` is explicitly configured. Self-collision is likewise reported as unavailable unless collision pairs are configured. No threshold is tuned from benchmark results.
 

@@ -11,6 +11,7 @@ from loguru import logger
 from holosoma.config_types.reward import RewardTermCfg
 from holosoma.managers.command.terms.wbt import MotionCommand
 from holosoma.managers.reward.base import RewardTermBase
+from holosoma.managers.reward.semantic_keyframes import get_semantic_keyframe_runtime
 from holosoma.utils.rotations import quat_error_magnitude
 
 if TYPE_CHECKING:
@@ -124,6 +125,36 @@ def object_global_ref_orientation_error_exp(env: WholeBodyTrackingManager, sigma
     motion_command = _get_motion_command_and_assert_type(env)
     error = quat_error_magnitude(motion_command.object_quat_w, motion_command.simulator_object_quat_w) ** 2
     return torch.exp(-error / sigma**2)
+
+
+# ================================================================================================
+# Task-agnostic semantic-keyframe rewards
+# ================================================================================================
+
+
+def _semantic_reward_config(env: WholeBodyTrackingManager):
+    semantic_config = env.reward_manager.cfg.semantic_keyframe
+    if semantic_config is None:
+        raise RuntimeError("Semantic reward term configured without reward.semantic_keyframe config")
+    return semantic_config
+
+
+def semantic_keyframe_part_tracking(env: WholeBodyTrackingManager) -> torch.Tensor:
+    """Track the declared semantic body parts near transition-truncated keyframes."""
+    config = _semantic_reward_config(env)
+    return get_semantic_keyframe_runtime(env, config).evaluate().part_reward
+
+
+def semantic_keyframe_relative_geometry(env: WholeBodyTrackingManager) -> torch.Tensor:
+    """Preserve body-to-external-entity geometry near semantic keyframes."""
+    config = _semantic_reward_config(env)
+    return get_semantic_keyframe_runtime(env, config).evaluate().rel_reward
+
+
+def semantic_keyframe_dynamics(env: WholeBodyTrackingManager) -> torch.Tensor:
+    """Track declared semantic-body linear and angular reference dynamics."""
+    config = _semantic_reward_config(env)
+    return get_semantic_keyframe_runtime(env, config).evaluate().dyn_reward
 
 
 # ================================================================================================

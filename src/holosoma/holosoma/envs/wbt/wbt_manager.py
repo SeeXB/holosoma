@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 
 import torch
-
 from holosoma.envs.base_task.base_task import BaseTask
 
 # from holosoma.envs.legged_base_task.legged_robot_base import LeggedRobotBase
@@ -78,6 +77,10 @@ class WholeBodyTrackingManager(BaseTask):
         motion_command = self.command_manager.get_state("motion_command")
         motion_command.update_metrics()
         self.log_dict.update(motion_command.metrics)
+        semantic_runtime = getattr(self, "_semantic_keyframe_reward_runtime", None)
+        if semantic_runtime is not None and semantic_runtime.config.enabled:
+            self.log_dict.update(semantic_runtime.logging_metrics())
+            self.log_dict.update(self.reward_manager.latest_metrics)
 
     def reset_all(self):
         # If reset_all is called several times, clear buffer in motion_command

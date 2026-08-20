@@ -44,6 +44,11 @@ dependencies = [
 [project.scripts]
 holosoma-semantic-keyframes = "holosoma_retargeting.semantic_keyframes.cli:main"
 holosoma-semantic-budget-benchmark = "holosoma_retargeting.examples.benchmark_semantic_budget:cli"
+holosoma-full-event-budget-benchmark = "holosoma_retargeting.examples.benchmark_full_event_semantic_budget:cli"
+holosoma-approach-body-only-benchmark = "holosoma_retargeting.examples.benchmark_full_event_approach_body_only:cli"
+holosoma-transition-truncation-benchmark = "holosoma_retargeting.examples.benchmark_full_event_transition_truncation:cli"
+holosoma-transition-budget-curve = "holosoma_retargeting.examples.benchmark_transition_truncation_budget_curve:cli"
+holosoma-render-mujoco-comparison = "holosoma_retargeting.examples.render_mujoco_trajectory_comparison:cli"
 
 [project.optional-dependencies]
 dev = ["mypy", "ruff", "pytest"]

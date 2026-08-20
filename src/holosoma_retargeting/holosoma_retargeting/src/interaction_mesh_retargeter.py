@@ -5,7 +5,7 @@ import time
 import warnings
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Callable
 
 import cvxpy as cp  # type: ignore[import-not-found]
 import mujoco  # type: ignore[import-not-found]
@@ -26,7 +26,7 @@ except ImportError:  # Visualization is optional for headless benchmark runs.
 
 from holosoma_retargeting.config_types.retargeter import FootLockConfig, SelfCollisionConfig
 from holosoma_retargeting.config_types.semantic import SemanticRetargetingConfig
-from holosoma_retargeting.semantic_keyframes.profiling import write_run_artifacts
+from holosoma_retargeting.semantic_keyframes.profiling import write_rows_csv, write_run_artifacts
 from holosoma_retargeting.semantic_keyframes.runtime import (
     BodyVertexMapping,
     SemanticEvent,
@@ -739,6 +739,97 @@ class InteractionMeshRetargeter:
             "semantic_cross_edge_count": len(semantic_edges),
         }
 
+    def _semantic_iteration_metrics(
+        self,
+        q: np.ndarray,
+        target_laplacian: np.ndarray,
+        adj_list: list[list[int]],
+        obj_pts_local: np.ndarray,
+        source_vertices: np.ndarray,
+        event: SemanticEvent,
+        body_mapping: BodyVertexMapping,
+    ) -> dict[str, float | int | None]:
+        """Evaluate an accepted SQP iterate with the method-independent metrics."""
+        body_indices = tuple(
+            dict.fromkeys(
+                body_mapping.indices[part]
+                for part in event.body_parts
+                if part in body_mapping.indices
+            )
+        )
+        if not body_indices:
+            raise ValueError(f"event {event.name!r} has no evaluable body vertices")
+
+        target_vertices = self._target_interaction_vertices(q, obj_pts_local)
+        final_laplacian = calculate_laplacian_coordinates(target_vertices, adj_list)
+        residual = np.linalg.norm(final_laplacian - target_laplacian, axis=1)
+        body_array = np.asarray(body_indices, dtype=np.int64)
+
+        local_indices = set(body_indices)
+        semantic_edges: set[tuple[int, int]] = set()
+        num_body_vertices = len(self.laplacian_match_links)
+        for body_idx in body_indices:
+            for neighbor_idx in adj_list[body_idx]:
+                neighbor = int(neighbor_idx)
+                if num_body_vertices <= neighbor < len(target_vertices):
+                    local_indices.add(neighbor)
+                    semantic_edges.add((body_idx, neighbor))
+
+        edge_errors = [
+            float(
+                np.linalg.norm(
+                    (target_vertices[body_idx] - target_vertices[object_idx])
+                    - (source_vertices[body_idx] - source_vertices[object_idx])
+                )
+            )
+            for body_idx, object_idx in sorted(semantic_edges)
+        ]
+        return {
+            "global_laplacian_error": float(np.mean(residual)),
+            "part_error": float(np.mean(residual[body_array])),
+            "local_error": float(
+                np.mean(residual[np.asarray(sorted(local_indices), dtype=np.int64)])
+            ),
+            "edge_error": float(np.mean(edge_errors)) if edge_errors else None,
+            "part_vertex_count": len(body_indices),
+            "edge_count": len(edge_errors),
+        }
+
+    def _named_geom_pair_signed_distance(
+        self,
+        q: np.ndarray,
+        geom_name_a: str,
+        geom_name_b: str,
+    ) -> float:
+        """Return an exact MuJoCo signed distance for a named diagnostic pair."""
+        geom_a = mujoco.mj_name2id(
+            self.robot_model,
+            mujoco.mjtObj.mjOBJ_GEOM,
+            geom_name_a,
+        )
+        geom_b = mujoco.mj_name2id(
+            self.robot_model,
+            mujoco.mjtObj.mjOBJ_GEOM,
+            geom_name_b,
+        )
+        if geom_a < 0 or geom_b < 0:
+            raise ValueError(
+                f"diagnostic geom pair not found: {geom_name_a!r}, {geom_name_b!r}"
+            )
+        self.robot_data.qpos[:] = q
+        mujoco.mj_forward(self.robot_model, self.robot_data)
+        fromto = np.zeros(6, dtype=float)
+        return float(
+            mujoco.mj_geomDistance(
+                self.robot_model,
+                self.robot_data,
+                geom_a,
+                geom_b,
+                float(self.collision_detection_threshold),
+                fromto,
+            )
+        )
+
     def _rescue_reasons(self, metrics: dict[str, Any], interaction_relevant: bool) -> list[str]:
         config = self.semantic_config
         reasons: list[str] = []
@@ -784,10 +875,12 @@ class InteractionMeshRetargeter:
         events: list[SemanticEvent],
         num_frames: int,
     ) -> list[SemanticEvent]:
-        """Return the immutable equal-strength Legacy objective support."""
+        """Return the registered Legacy or deterministic full-event support."""
         del num_frames
         if not self.semantic_config.uses_semantic_weights:
             return []
+        if self.semantic_config.uses_full_event_weights:
+            return list(events)
         registered = set(self.semantic_config.legacy_weight_events)
         return [event for event in events if event.name in registered]
 
@@ -1044,6 +1137,8 @@ class InteractionMeshRetargeter:
         target_interaction_vertices: list[np.ndarray] = []
         semantic_edge_zero_frames: list[int] = []
         base_qpos_frames: list[np.ndarray] = []
+        semantic_iteration_trace: list[dict[str, Any]] = []
+        iteration_trace_diagnostic_time = 0.0
 
         print(f"\nStarting motion retargeting for {num_frames} frames in mode={config.mode}...")
 
@@ -1087,6 +1182,7 @@ class InteractionMeshRetargeter:
                     sigma=config.semantic_temporal_sigma,
                     phase_weight=config.phase_semantic_weight,
                     kernel_cutoff=config.semantic_kernel_cutoff,
+                    transition_truncated=config.uses_transition_truncated_weight_support,
                 )
                 part_indices = tuple(
                     dict.fromkeys(
@@ -1172,6 +1268,42 @@ class InteractionMeshRetargeter:
                     q_nominal_list[i, self.q_a_indices] if q_nominal_list is not None else None
                 )
                 iteration_diagnostics: tuple[dict[str, Any], ...] = ()
+                exact_trace_events = [
+                    event for event in events if i > 0 and event.trigger_frame == i
+                ]
+                is_diagnostic_trace_frame = i in config.diagnostic_iteration_frames
+                if is_diagnostic_trace_frame and not exact_trace_events and events:
+                    exact_trace_events = [
+                        min(events, key=lambda event: abs(event.trigger_frame - i))
+                    ]
+                trace_events = (
+                    exact_trace_events
+                    if config.uses_full_event_weights
+                    and (exact_trace_events or is_diagnostic_trace_frame)
+                    else []
+                )
+                trace_kind = (
+                    "exact_trigger"
+                    if any(event.trigger_frame == i for event in trace_events)
+                    else "diagnostic_frame"
+                )
+                trace_iterates: list[tuple[int, np.ndarray, float, float, float]] = []
+                trace_previous_q = np.array(q, copy=True)
+
+                def record_trace_iterate(iteration: int, q_iterate: np.ndarray, iterate_cost: float) -> None:
+                    nonlocal trace_previous_q
+                    update = np.asarray(q_iterate) - trace_previous_q
+                    trace_iterates.append(
+                        (
+                            iteration,
+                            np.array(q_iterate, copy=True),
+                            iterate_cost,
+                            float(np.linalg.norm(update)),
+                            float(np.max(np.abs(update), initial=0.0)),
+                        )
+                    )
+                    trace_previous_q = np.array(q_iterate, copy=True)
+
                 q, cost, actual_iterations = self.iterate(
                     q_locked=q_locked_list[i],
                     q_n=q,
@@ -1187,8 +1319,68 @@ class InteractionMeshRetargeter:
                     frame_idx=i,
                     vertex_residual_weights=vertex_weights,
                     return_iterations=True,
+                    iteration_observer=record_trace_iterate if trace_events else None,
                 )
                 optimization_time = time.perf_counter() - optimization_start
+                frame_trace_start = time.perf_counter()
+                for (
+                    iteration,
+                    q_iterate,
+                    iterate_cost,
+                    q_update_l2_norm,
+                    q_update_max_abs,
+                ) in trace_iterates:
+                    physical_trace: dict[str, Any] = {}
+                    if is_diagnostic_trace_frame:
+                        penetration_trace, _ = self._penetration_audit(q_iterate, i)
+                        shoulder_box_distance = self._named_geom_pair_signed_distance(
+                            q_iterate,
+                            "left_shoulder_yaw_link",
+                            "largebox",
+                        )
+                        physical_trace = {
+                            "distance_query_threshold": float(
+                                self.collision_detection_threshold
+                            ),
+                            "shoulder_box_signed_distance": shoulder_box_distance,
+                            "shoulder_box_penetration_depth": max(
+                                0.0,
+                                -shoulder_box_distance,
+                            ),
+                            "max_illegal_penetration_depth": float(
+                                penetration_trace["illegal_penetration_depth"] or 0.0
+                            ),
+                            "illegal_penetration_pair_count": int(
+                                penetration_trace["illegal_penetration_pair_count"] or 0
+                            ),
+                        }
+                    for event in trace_events:
+                        semantic_iteration_trace.append(
+                            {
+                                "mode": config.mode,
+                                "frame": i,
+                                "event": event.name,
+                                "body_parts": event.body_parts,
+                                "trace_kind": trace_kind,
+                                "configured_budget": base_budget,
+                                "iteration": iteration,
+                                "cost": iterate_cost,
+                                "q_update_l2_norm": q_update_l2_norm,
+                                "q_update_max_abs": q_update_max_abs,
+                                **physical_trace,
+                                **self._semantic_iteration_metrics(
+                                    q_iterate,
+                                    target_laplacian,
+                                    adj_list,
+                                    obj_pts_i,
+                                    np.asarray(source_vertices, dtype=np.float64),
+                                    event,
+                                    body_mapping,
+                                ),
+                            }
+                        )
+                frame_trace_time = time.perf_counter() - frame_trace_start
+                iteration_trace_diagnostic_time += frame_trace_time
                 registered_base_budget = (
                     base_budget
                     if i == 0 or not config.is_uniform2_mainline
@@ -1342,7 +1534,7 @@ class InteractionMeshRetargeter:
                             else "ordinary_base"
                         ),
                         "semantic_body_parts": profile_body_parts,
-                        "frame_wall_time": time.perf_counter() - frame_start,
+                        "frame_wall_time": time.perf_counter() - frame_start - frame_trace_time,
                         "mesh_time": mesh_time,
                         "optimization_time": optimization_time,
                         "collision_check_time": collision_check_time,
@@ -1421,7 +1613,7 @@ class InteractionMeshRetargeter:
         )
         print("Saving results to path:", dest_res_path)
 
-        total_wall_time = time.perf_counter() - run_start
+        total_wall_time = time.perf_counter() - run_start - iteration_trace_diagnostic_time
         if self._semantic_config_explicit:
             destination = Path(dest_res_path)
             profile_dir = config.profile_dir or destination.parent / f"{destination.stem}_profile"
@@ -1504,6 +1696,15 @@ class InteractionMeshRetargeter:
                         "components": config.semantic_weight_components,
                         "event_strength": "uniform; criticality fields ignored",
                         "normalization": "mean vertex weight = 1 per frame",
+                        "body_only_weight_events": list(config.body_only_weight_events),
+                        "object_neighbor_propagation": (
+                            "disabled only for body_only_weight_events; unchanged for all other events"
+                        ),
+                        "temporal_support_policy": (
+                            "trigger <= frame <= event end and frame < next event trigger"
+                            if config.uses_transition_truncated_weight_support
+                            else "symmetric Gaussian plus inclusive event phase window"
+                        ),
                         "causal_control_energy_match": "single global scale on normalized alpha-1 deviations",
                         "edge_policy": (
                             "cross body-object Delaunay edge endpoints, multiplier 2; "
@@ -1511,9 +1712,31 @@ class InteractionMeshRetargeter:
                         ),
                     },
                     "semantic_weighting_mainline": {
-                        "solver_change": "Legacy residual reweighting only; no additive objective",
+                        "solver_change": "registered residual reweighting only; no additive objective",
+                        "weight_support": (
+                            "all deterministic projected events"
+                            if config.uses_full_event_weights
+                            else "historical contact/lift/place/release"
+                            if config.uses_semantic_weights
+                            else "none"
+                        ),
+                        "approach_weight_policy": (
+                            "pelvis body-only; no approach contribution to object-neighbor vertices"
+                            if "approach" in config.body_only_weight_events
+                            else "standard body plus object-neighbor propagation"
+                        ),
+                        "transition_truncated_weight_support": (
+                            config.uses_transition_truncated_weight_support
+                        ),
                         "edge_zero_frames": semantic_edge_zero_frames,
-                        "compute_policy": "fixed Uniform-2 plus optional exact-frame 2->4 budget",
+                        "compute_policy": (
+                            "fixed Uniform-2 plus optional registered exact-trigger budget "
+                            f"{config.exact_trigger_budget}"
+                        ),
+                        "iteration_trace_diagnostic_time_excluded_s": iteration_trace_diagnostic_time,
+                        "diagnostic_iteration_frames": list(
+                            config.diagnostic_iteration_frames
+                        ),
                     },
                     "precision_payload": {
                         "residual": "unweighted uniform-Laplacian norm per interaction-mesh vertex",
@@ -1538,6 +1761,11 @@ class InteractionMeshRetargeter:
                     },
                 },
             )
+            if semantic_iteration_trace:
+                write_rows_csv(
+                    profile_dir / "semantic_iteration_trace.csv",
+                    semantic_iteration_trace,
+                )
         if self.visualize:
             from viser_utils import create_motion_control_sliders  # type: ignore[import-not-found]  # noqa: PLC0415
 
@@ -1951,6 +2179,7 @@ class InteractionMeshRetargeter:
         vertex_residual_weights: np.ndarray | None = None,
         return_iterations: bool = False,
         return_diagnostics: bool = False,
+        iteration_observer: Callable[[int, np.ndarray, float], None] | None = None,
     ):
         """Iterate the solver for multiple iterations."""
         if min_iterations < 1 or min_iterations > n_iter:
@@ -1981,6 +2210,8 @@ class InteractionMeshRetargeter:
             else:
                 q_n, cost = iteration_result
             actual_iterations += 1
+            if iteration_observer is not None:
+                iteration_observer(actual_iterations, q_n, float(cost))
             if actual_iterations >= min_iterations and np.isclose(cost, last_cost):
                 break
             last_cost = cost

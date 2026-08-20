@@ -7,6 +7,12 @@ from holosoma.config_values.wbt.g1.reward import (
     g1_29dof_wbt_fast_sac_reward,
     g1_29dof_wbt_reward,
     g1_29dof_wbt_reward_w_object,
+    g1_29dof_wbt_semantic_keyframe_reward,
+    g1_29dof_wbt_semantic_reward,
+    g1_29dof_wbt_w_object_semantic_e1_part_reward,
+    g1_29dof_wbt_w_object_semantic_e2_part_rel_reward,
+    g1_29dof_wbt_w_object_semantic_keyframe_reward,
+    g1_29dof_wbt_w_object_semantic_reward,
 )
 from holosoma.utils.config_registry import ConfigRegistry
 
@@ -20,6 +26,21 @@ REWARD_REGISTRY.add("g1_29dof_loco_fast_sac", g1_29dof_loco_fast_sac)
 REWARD_REGISTRY.add("g1_29dof_wbt", g1_29dof_wbt_reward)
 REWARD_REGISTRY.add("g1_29dof_wbt_w_object", g1_29dof_wbt_reward_w_object)
 REWARD_REGISTRY.add("g1_29dof_wbt_fast_sac", g1_29dof_wbt_fast_sac_reward)
+REWARD_REGISTRY.add("g1_29dof_wbt_semantic_keyframe", g1_29dof_wbt_semantic_keyframe_reward)
+REWARD_REGISTRY.add("g1_29dof_wbt_semantic_reward", g1_29dof_wbt_semantic_reward)
+REWARD_REGISTRY.add("g1_29dof_wbt_w_object_semantic_reward", g1_29dof_wbt_w_object_semantic_reward)
+REWARD_REGISTRY.add(
+    "g1_29dof_wbt_w_object_semantic_e1_part",
+    g1_29dof_wbt_w_object_semantic_e1_part_reward,
+)
+REWARD_REGISTRY.add(
+    "g1_29dof_wbt_w_object_semantic_e2_part_rel",
+    g1_29dof_wbt_w_object_semantic_e2_part_rel_reward,
+)
+REWARD_REGISTRY.add(
+    "g1_29dof_wbt_w_object_semantic_keyframe",
+    g1_29dof_wbt_w_object_semantic_keyframe_reward,
+)
 
 from holosoma.utils.config_registry import (  # noqa: E402
     deprecated_defaults_alias as _deprecated_defaults_alias,

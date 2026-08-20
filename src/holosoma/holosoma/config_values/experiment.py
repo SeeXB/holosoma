@@ -9,6 +9,15 @@ from holosoma.config_values.wbt.g1.experiment import (
     g1_29dof_wbt_fast_sac,
     g1_29dof_wbt_fast_sac_w_object,
     g1_29dof_wbt_w_object,
+    g1_29dof_wbt_w_object_semantic_e0_base,
+    g1_29dof_wbt_w_object_semantic_e1_part,
+    g1_29dof_wbt_w_object_semantic_e2_part_rel,
+    g1_29dof_wbt_w_object_semantic_keyframe,
+    g1_29dof_wbt_w_object_semantic_r0_u2_omni,
+    g1_29dof_wbt_w_object_semantic_r1_b4_omni,
+    g1_29dof_wbt_w_object_semantic_r2_b4_part,
+    g1_29dof_wbt_w_object_semantic_r3_b4_part_rel,
+    g1_29dof_wbt_w_object_semantic_r4_b4_full,
 )
 from holosoma.utils.config_registry import ConfigRegistry
 
@@ -22,6 +31,21 @@ EXPERIMENT_REGISTRY.add("g1_29dof_wbt", g1_29dof_wbt)
 EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object", g1_29dof_wbt_w_object)
 EXPERIMENT_REGISTRY.add("g1_29dof_wbt_fast_sac", g1_29dof_wbt_fast_sac)
 EXPERIMENT_REGISTRY.add("g1_29dof_wbt_fast_sac_w_object", g1_29dof_wbt_fast_sac_w_object)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_e0_base", g1_29dof_wbt_w_object_semantic_e0_base)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_e1_part", g1_29dof_wbt_w_object_semantic_e1_part)
+EXPERIMENT_REGISTRY.add(
+    "g1_29dof_wbt_w_object_semantic_e2_part_rel",
+    g1_29dof_wbt_w_object_semantic_e2_part_rel,
+)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_keyframe", g1_29dof_wbt_w_object_semantic_keyframe)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_r0_u2_omni", g1_29dof_wbt_w_object_semantic_r0_u2_omni)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_r1_b4_omni", g1_29dof_wbt_w_object_semantic_r1_b4_omni)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_r2_b4_part", g1_29dof_wbt_w_object_semantic_r2_b4_part)
+EXPERIMENT_REGISTRY.add(
+    "g1_29dof_wbt_w_object_semantic_r3_b4_part_rel",
+    g1_29dof_wbt_w_object_semantic_r3_b4_part_rel,
+)
+EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_semantic_r4_b4_full", g1_29dof_wbt_w_object_semantic_r4_b4_full)
 
 
 def get_annotated_experiment_config() -> type:

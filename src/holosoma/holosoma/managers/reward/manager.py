@@ -3,13 +3,87 @@
 from __future__ import annotations
 
 import importlib
+import math
+from dataclasses import dataclass
 from typing import Any
 
 import torch
 
 from holosoma.config_types.reward import RewardManagerCfg, RewardTermCfg
+from holosoma.managers.reward.semantic_keyframes import get_semantic_keyframe_runtime
 
 from .base import RewardTermBase
+
+
+def _is_semantic_term(term_cfg: RewardTermCfg) -> bool:
+    return "semantic" in term_cfg.tags
+
+
+def compute_base_positive_reward_budget(cfg: RewardManagerCfg) -> float:
+    """Sum original positive bounded tracking weights in a semantic preset.
+
+    Semantic presets retain the original WBT term set, whose positive terms are
+    normalized exponential tracking rewards. Semantic-tagged terms are excluded
+    defensively so they can never inflate the inherited budget.
+    """
+    budget = sum(
+        float(term_cfg.weight)
+        for term_cfg in cfg.terms.values()
+        if term_cfg.weight > 0.0 and not _is_semantic_term(term_cfg)
+    )
+    if not math.isfinite(budget) or budget <= 0.0:
+        raise ValueError(f"Base positive reward budget must be finite and positive, got {budget}")
+    return budget
+
+
+@dataclass(frozen=True)
+class FixedBudgetAllocation:
+    """Per-environment decomposition before the manager's common ``dt`` scale."""
+
+    base_positive: torch.Tensor
+    penalty: torch.Tensor
+    activity: torch.Tensor
+    semantic_quality: torch.Tensor
+    alpha: torch.Tensor
+    base_contribution: torch.Tensor
+    semantic_contribution: torch.Tensor
+    positive_total: torch.Tensor
+    total: torch.Tensor
+
+
+def allocate_fixed_positive_budget(
+    base_positive: torch.Tensor,
+    penalty: torch.Tensor,
+    activity: torch.Tensor,
+    semantic_quality: torch.Tensor,
+    positive_budget: float,
+) -> FixedBudgetAllocation:
+    """Redistribute, rather than enlarge, the original positive reward budget."""
+    if not math.isfinite(positive_budget) or positive_budget <= 0.0:
+        raise ValueError("positive_budget must be finite and positive")
+    if not (
+        base_positive.shape == penalty.shape == activity.shape == semantic_quality.shape
+    ):
+        raise ValueError("All fixed-budget inputs must have identical shapes")
+    if torch.any((activity < 0.0) | (activity > 1.0)):
+        raise ValueError("semantic activity must lie in [0, 1]")
+
+    scale = positive_budget / (positive_budget + activity)
+    alpha = activity / (positive_budget + activity)
+    base_contribution = scale * base_positive
+    semantic_contribution = scale * activity * semantic_quality
+    positive_total = base_contribution + semantic_contribution
+    return FixedBudgetAllocation(
+        base_positive=base_positive,
+        penalty=penalty,
+        activity=activity,
+        semantic_quality=semantic_quality,
+        alpha=alpha,
+        base_contribution=base_contribution,
+        semantic_contribution=semantic_contribution,
+        positive_total=positive_total,
+        total=penalty + positive_total,
+    )
 
 
 class RewardManager:
@@ -35,6 +109,10 @@ class RewardManager:
         self.env = env
         self.device = device
         self.logger = getattr(env, "logger", None)
+        self.latest_metrics: dict[str, torch.Tensor] = {}
+        self.base_positive_reward_budget: float | None = None
+        if self.cfg.semantic_keyframe is not None and self.cfg.semantic_keyframe.enabled:
+            self.base_positive_reward_budget = compute_base_positive_reward_budget(self.cfg)
 
         # Storage for resolved functions and stateful terms
         self._term_funcs: dict[str, Any] = {}
@@ -145,8 +223,12 @@ class RewardManager:
         torch.Tensor
             Net reward tensor with shape ``[num_envs]``.
         """
+        if self.cfg.semantic_keyframe is not None and self.cfg.semantic_keyframe.enabled:
+            return self._compute_fixed_budget_semantic(dt)
+
         # Reset computation
         self._reward_buf[:] = 0.0
+        self.latest_metrics = {}
 
         # Iterate over all reward terms
         for term_name, term_cfg in zip(self._term_names, self._term_cfgs):
@@ -181,6 +263,90 @@ class RewardManager:
         if self.cfg.only_positive_rewards:
             self._reward_buf[:] = torch.clip(self._reward_buf, min=0.0)
 
+        return self._reward_buf
+
+    def _compute_fixed_budget_semantic(self, dt: float) -> torch.Tensor:
+        """Apply task-agnostic semantic preference inside the inherited budget.
+
+        Negative terms are evaluated and accumulated exactly as in the baseline.
+        Only original positive bounded tracking terms receive the common budget
+        factor. Consequently ``A=0`` is numerically identical to the baseline,
+        while a perfect semantic/base state never exceeds ``W_pos``.
+        """
+        semantic_cfg = self.cfg.semantic_keyframe
+        if semantic_cfg is None or not semantic_cfg.enabled:
+            raise RuntimeError("Fixed-budget semantic path requires an enabled semantic config")
+        if self.base_positive_reward_budget is None:
+            raise RuntimeError("Fixed-budget semantic path has no inherited positive budget")
+
+        evaluated: dict[str, torch.Tensor] = {}
+        base_positive = torch.zeros_like(self._reward_buf)
+        penalty = torch.zeros_like(self._reward_buf)
+        for term_name, term_cfg in zip(self._term_names, self._term_cfgs):
+            if term_name in self._term_instances:
+                rew_raw = self._term_instances[term_name](self.env, **term_cfg.params)
+            else:
+                rew_raw = self._term_funcs[term_name](self.env, **term_cfg.params)
+            if rew_raw.shape[0] != self.env.num_envs:
+                raise ValueError(
+                    f"Reward term '{term_name}' returned wrong shape. "
+                    f"Expected [{self.env.num_envs}], got {rew_raw.shape}"
+                )
+            evaluated[term_name] = rew_raw
+            self._episode_sums_raw[term_name] += rew_raw
+            if _is_semantic_term(term_cfg):
+                continue
+            weighted = rew_raw * term_cfg.weight
+            if term_cfg.weight > 0.0:
+                base_positive += weighted
+            else:
+                penalty += weighted
+
+        runtime_output = get_semantic_keyframe_runtime(self.env, semantic_cfg).evaluate()
+        # An empty valid-objective set cannot express a semantic preference. In
+        # that degenerate case use zero effective activity and recover baseline.
+        effective_activity = runtime_output.active_gate * (runtime_output.valid_objective_count > 0).to(
+            runtime_output.active_gate.dtype
+        )
+        allocation = allocate_fixed_positive_budget(
+            base_positive=base_positive,
+            penalty=penalty,
+            activity=effective_activity,
+            semantic_quality=runtime_output.combined_reward,
+            positive_budget=self.base_positive_reward_budget,
+        )
+        common_scale = self.base_positive_reward_budget / (
+            self.base_positive_reward_budget + effective_activity
+        )
+        for term_name, term_cfg in zip(self._term_names, self._term_cfgs):
+            if _is_semantic_term(term_cfg):
+                # Kept only for backward-compatible custom configs. Semantic
+                # magnitude is determined by equal valid-objective averaging,
+                # never by a RewardTerm weight.
+                continue
+            actual = evaluated[term_name] * term_cfg.weight
+            if term_cfg.weight > 0.0:
+                actual = actual * common_scale
+            self._episode_sums[term_name] += actual * dt
+
+        self._reward_buf[:] = allocation.total * dt
+        if self.cfg.only_positive_rewards:
+            self._reward_buf[:] = torch.clip(self._reward_buf, min=0.0)
+        self.latest_metrics = {
+            "semantic/activity": allocation.activity,
+            "semantic/alpha": allocation.alpha,
+            "semantic/part": runtime_output.part_reward,
+            "semantic/rel": runtime_output.rel_reward,
+            "semantic/dyn": runtime_output.dyn_reward,
+            "semantic/combined": runtime_output.combined_reward,
+            "semantic/valid_objective_count": runtime_output.valid_objective_count,
+            "reward/base_positive": allocation.base_positive,
+            "reward/base_contribution": allocation.base_contribution,
+            "reward/semantic_contribution": allocation.semantic_contribution,
+            "reward/positive_total": allocation.positive_total,
+            "reward/penalty": allocation.penalty,
+            "reward/total": allocation.total,
+        }
         return self._reward_buf
 
     def reset(self, env_ids: torch.Tensor | None = None) -> dict[str, dict[str, torch.Tensor]]:

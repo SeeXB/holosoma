@@ -477,6 +477,7 @@ def spatiotemporal_semantic_context(
     sigma: float = 2.0,
     phase_weight: float = 0.25,
     kernel_cutoff: float = 1e-3,
+    transition_truncated: bool = False,
 ) -> SpatiotemporalSemanticContext:
     """Compute the dominant Legacy weight strength and active body-part union."""
     if sigma <= 0:
@@ -489,6 +490,10 @@ def spatiotemporal_semantic_context(
         tau = math.exp(-(distance * distance) / (2.0 * sigma * sigma))
         phase = phase_weight if event.start_frame <= frame_idx <= event.end_frame else 0.0
         importance = event.confidence * max(tau, phase)
+        if transition_truncated and not _event_inside_transition_support(
+            frame_idx, event, events
+        ):
+            importance = 0.0
         candidates.append((event, tau, importance))
     if not candidates:
         return SpatiotemporalSemanticContext(frame_idx, None, (), (), 0.0, 0.0)
@@ -506,6 +511,28 @@ def spatiotemporal_semantic_context(
         tau=float(dominant_tau),
         semantic_importance=float(importance),
     )
+
+
+def _event_inside_transition_support(
+    frame_idx: int,
+    event: SemanticEvent,
+    events: Sequence[SemanticEvent],
+) -> bool:
+    """Return whether an event owns this frame before the next transition.
+
+    The support is causal and window-bounded: ``trigger <= frame <= end``.
+    A later event trigger is an exclusive upper bound, so the new event owns
+    its transition frame.  Looking up the next greater trigger rather than an
+    event name keeps the policy generic and deterministic.
+    """
+    if frame_idx < event.trigger_frame or frame_idx > event.end_frame:
+        return False
+    next_triggers = [
+        other.trigger_frame
+        for other in events
+        if other.trigger_frame > event.trigger_frame
+    ]
+    return not next_triggers or frame_idx < min(next_triggers)
 
 
 
@@ -580,7 +607,12 @@ def build_semantic_vertex_weight_result(
     deduplicated_overlaps: set[tuple[int, int]] = set()
     components = config.semantic_weight_components
     sigma = config.semantic_temporal_sigma
+    body_only_events = set(config.body_only_weight_events)
     for event in events:
+        if config.uses_transition_truncated_weight_support and not _event_inside_transition_support(
+            frame_idx, event, events
+        ):
+            continue
         distance = frame_idx - event.trigger_frame
         trigger_weight = math.exp(-(distance * distance) / (2.0 * sigma * sigma))
         phase_weight = config.phase_semantic_weight if event.start_frame <= frame_idx <= event.end_frame else 0.0
@@ -592,11 +624,15 @@ def build_semantic_vertex_weight_result(
             multiplier = config.body_weight_multiplier.get(body_part)
             if vertex_idx is None or multiplier is None:
                 continue
-            object_neighbors = [
-                int(neighbor_idx)
-                for neighbor_idx in adjacency[vertex_idx]
-                if num_human_vertices <= int(neighbor_idx) < num_vertices
-            ]
+            object_neighbors = (
+                []
+                if event.name in body_only_events
+                else [
+                    int(neighbor_idx)
+                    for neighbor_idx in adjacency[vertex_idx]
+                    if num_human_vertices <= int(neighbor_idx) < num_vertices
+                ]
+            )
             if components in {"part", "part_edge"}:
                 alpha[vertex_idx] = max(
                     alpha[vertex_idx],

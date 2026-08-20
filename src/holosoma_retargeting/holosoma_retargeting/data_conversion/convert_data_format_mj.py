@@ -137,7 +137,15 @@ class MotionLoader:
         """Loads the motion from the csv file."""
         if self.motion_file.endswith(".npz"):
             data = np.load(self.motion_file)
-            self.input_fps = round(1 / data.get("fps", 1 / self.input_fps))
+            if "fps" in data:
+                stored_fps = float(np.asarray(data["fps"]).reshape(-1)[0])
+                if not np.isfinite(stored_fps) or stored_fps <= 0.0:
+                    raise ValueError(f"Invalid fps metadata in {self.motion_file}: {stored_fps}")
+                # Historical retargeting files stored frame dt under the key
+                # ``fps``; current files correctly store frames/second.  Accept
+                # both encodings explicitly so 30/50 Hz metadata is never
+                # inverted into zero by integer rounding.
+                self.input_fps = round(1.0 / stored_fps) if stored_fps <= 1.0 else round(stored_fps)
             self.input_dt = 1.0 / self.input_fps
             motion = torch.from_numpy(data["qpos"]).to(torch.float32)
         else:

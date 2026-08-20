@@ -2,8 +2,21 @@
 *.py[cod]
 # Log files
 *.log
+MUJOCO_LOG.TXT
 * ONNX files
 *.onnx
+
+# Generated video assets
+*.mp4
+*.avi
+*.mov
+*.mkv
+src/holosoma_retargeting/holosoma_retargeting/benchmark_results_*/videos/
+
+# Local generated experiment artifacts
+src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_approach_body_only/
+src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_semantic_budget/
+src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_transition_truncation/
 
 # IDE files
 .idea/

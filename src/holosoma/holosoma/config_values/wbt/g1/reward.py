@@ -1,6 +1,8 @@
 """Whole Body Tracking reward presets for the G1 robot."""
 
-from holosoma.config_types.reward import RewardManagerCfg, RewardTermCfg
+from dataclasses import replace
+
+from holosoma.config_types.reward import RewardManagerCfg, RewardTermCfg, SemanticKeyframeRewardCfg
 
 g1_29dof_wbt_reward = RewardManagerCfg(
     terms={
@@ -110,4 +112,64 @@ g1_29dof_wbt_reward_w_object = RewardManagerCfg(
     }
 )
 
-__all__ = ["g1_29dof_wbt_fast_sac_reward", "g1_29dof_wbt_reward", "g1_29dof_wbt_reward_w_object"]
+
+# Fixed semantic timing/mapping configuration shared by all three normalized
+# objectives; it contains no event-name-dependent or reward-magnitude parameter.
+semantic_keyframe_config = SemanticKeyframeRewardCfg(
+    enabled=True,
+    semantic_file=(
+        "src/holosoma_retargeting/holosoma_retargeting/demo_data/"
+        "semantic_keyframes/sub3_largebox_003_semantic_v2.json"
+    ),
+    semantic_fps=30.0,
+    sigma_time=0.12,
+)
+
+semantic_part_only_config = replace(semantic_keyframe_config, enable_rel=False, enable_dyn=False)
+semantic_part_rel_config = replace(semantic_keyframe_config, enable_dyn=False)
+
+
+# Ablations retain the exact baseline term set and differ only in which valid
+# normalized semantic objectives participate in the fixed-budget average. The
+# original object preset above remains untouched for reproducibility.
+g1_29dof_wbt_w_object_semantic_e1_part_reward = RewardManagerCfg(
+    terms={**g1_29dof_wbt_reward_w_object.terms},
+    semantic_keyframe=semantic_part_only_config,
+)
+
+g1_29dof_wbt_w_object_semantic_e2_part_rel_reward = RewardManagerCfg(
+    terms={**g1_29dof_wbt_reward_w_object.terms},
+    semantic_keyframe=semantic_part_rel_config,
+)
+
+g1_29dof_wbt_w_object_semantic_keyframe_reward = RewardManagerCfg(
+    terms={**g1_29dof_wbt_reward_w_object.terms},
+    semantic_keyframe=semantic_keyframe_config,
+)
+
+# The robot-only form uses exactly the same runtime. With no tracked external
+# entity its relative-geometry objective is INVALID and excluded from averaging.
+g1_29dof_wbt_semantic_keyframe_reward = RewardManagerCfg(
+    terms={**g1_29dof_wbt_reward.terms},
+    semantic_keyframe=semantic_keyframe_config,
+)
+
+# Final paper-facing aliases. Legacy names above remain registered so existing
+# launch commands continue to work, but both resolve to the fixed-budget method.
+g1_29dof_wbt_semantic_reward = g1_29dof_wbt_semantic_keyframe_reward
+g1_29dof_wbt_w_object_semantic_reward = g1_29dof_wbt_w_object_semantic_keyframe_reward
+
+__all__ = [
+    "g1_29dof_wbt_fast_sac_reward",
+    "g1_29dof_wbt_reward",
+    "g1_29dof_wbt_reward_w_object",
+    "g1_29dof_wbt_semantic_keyframe_reward",
+    "g1_29dof_wbt_semantic_reward",
+    "g1_29dof_wbt_w_object_semantic_e1_part_reward",
+    "g1_29dof_wbt_w_object_semantic_e2_part_rel_reward",
+    "g1_29dof_wbt_w_object_semantic_keyframe_reward",
+    "g1_29dof_wbt_w_object_semantic_reward",
+    "semantic_keyframe_config",
+    "semantic_part_only_config",
+    "semantic_part_rel_config",
+]

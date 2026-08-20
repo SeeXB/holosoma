@@ -178,11 +178,51 @@ g1_29dof_wbt_fast_sac_w_object = replace(
     scene=scene.g1_29dof_wbt_object_scene,
 )
 
+# Fixed first-round PPO ablations.  E0 selects the registered B4 reference;
+# E1--E3 differ from it only in reward terms.  PPO, seed, environment count,
+# randomization, termination, and curriculum are inherited unchanged.
+g1_29dof_wbt_w_object_semantic_e0_base = replace(
+    g1_29dof_wbt_w_object,
+    command=command.g1_29dof_wbt_command_w_object_transition_truncated_b4,
+)
+
+g1_29dof_wbt_w_object_semantic_e1_part = replace(
+    g1_29dof_wbt_w_object_semantic_e0_base,
+    reward=reward.g1_29dof_wbt_w_object_semantic_e1_part_reward,
+)
+
+g1_29dof_wbt_w_object_semantic_e2_part_rel = replace(
+    g1_29dof_wbt_w_object_semantic_e0_base,
+    reward=reward.g1_29dof_wbt_w_object_semantic_e2_part_rel_reward,
+)
+
+g1_29dof_wbt_w_object_semantic_keyframe = replace(
+    g1_29dof_wbt_w_object_semantic_e0_base,
+    reward=reward.g1_29dof_wbt_w_object_semantic_keyframe_reward,
+)
+
+# Final fixed-budget experiment matrix. R0 uses the registered U2 reference;
+# R1--R4 use B4 and differ only in semantic objective availability.
+g1_29dof_wbt_w_object_semantic_r0_u2_omni = g1_29dof_wbt_w_object
+g1_29dof_wbt_w_object_semantic_r1_b4_omni = g1_29dof_wbt_w_object_semantic_e0_base
+g1_29dof_wbt_w_object_semantic_r2_b4_part = g1_29dof_wbt_w_object_semantic_e1_part
+g1_29dof_wbt_w_object_semantic_r3_b4_part_rel = g1_29dof_wbt_w_object_semantic_e2_part_rel
+g1_29dof_wbt_w_object_semantic_r4_b4_full = g1_29dof_wbt_w_object_semantic_keyframe
+
 __all__ = [
     "g1_29dof_wbt",
     "g1_29dof_wbt_fast_sac",
     "g1_29dof_wbt_fast_sac_w_object",
     "g1_29dof_wbt_w_object",
+    "g1_29dof_wbt_w_object_semantic_e0_base",
+    "g1_29dof_wbt_w_object_semantic_e1_part",
+    "g1_29dof_wbt_w_object_semantic_e2_part_rel",
+    "g1_29dof_wbt_w_object_semantic_keyframe",
+    "g1_29dof_wbt_w_object_semantic_r0_u2_omni",
+    "g1_29dof_wbt_w_object_semantic_r1_b4_omni",
+    "g1_29dof_wbt_w_object_semantic_r2_b4_part",
+    "g1_29dof_wbt_w_object_semantic_r3_b4_part_rel",
+    "g1_29dof_wbt_w_object_semantic_r4_b4_full",
 ]
 
 """
