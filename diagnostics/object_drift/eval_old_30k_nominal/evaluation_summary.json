@@ -1,0 +1,96 @@
+{
+  "checkpoint": "logs/WholeBodyTracking/20260818_184353-g1_29dof_wbt_manager-locomotion/model_29999.pt",
+  "reference_motion": "src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_transition_truncation/rl/transition_truncated_b4_mj_fps50_w_obj.npz",
+  "reference_frame_count": 325,
+  "fps": 50,
+  "nominal_conditions": {
+    "domain_randomization": false,
+    "initial_pose_noise": false,
+    "actor_observation_noise": false,
+    "start_at_timestep_zero": true,
+    "adaptive_timestep_sampling": false,
+    "nominal_object_mass_kg": 0.1
+  },
+  "strict_original_termination": {
+    "object_position_threshold_m": 0.25,
+    "object_orientation_threshold_rad": 0.8,
+    "completed_episodes": 4,
+    "full_motion_successes": 0,
+    "motion_frames_reached": [153, 145, 115, 149],
+    "mean_motion_frame_reached": 140.5,
+    "max_motion_frame_reached": 153,
+    "failure_reason_each_episode": "bad_object_ori",
+    "object_position_error_at_failure_m": [
+      0.05759218707680702,
+      0.10370945185422897,
+      0.08517671376466751,
+      0.09995252639055252
+    ],
+    "object_orientation_error_at_failure_rad": [
+      0.8023079633712769,
+      0.8036248087882996,
+      0.8023339509963989,
+      0.8047298192977905
+    ],
+    "actual_max_lift_m": [
+      0.6338077187538147,
+      0.6356572508811951,
+      0.6227731704711914,
+      0.6218303442001343
+    ]
+  },
+  "initial_recorded_alignment": {
+    "motion_frame": 1,
+    "object_position_error_m": 0.0021677862387150526,
+    "torso_actual_minus_reference_xyz_m": [
+      0.0050386786460876465,
+      0.0031748414039611816,
+      -0.008259296417236328
+    ],
+    "torso_position_error_norm_m": 0.01018252782523632
+  },
+  "all_tracking_termination_disabled_primary_evaluation": {
+    "tracking_termination_disabled": true,
+    "motion_frame_range": [1, 324],
+    "resets_during_motion": 0,
+    "task_success": false,
+    "actual_max_lift_m": 0.6793055534362793,
+    "closest_xy_distance_to_final_target_m": 0.007290092762559652,
+    "closest_target_motion_frame": 215,
+    "object_height_at_closest_target_m": 0.7916809320449829,
+    "final_target_object_height_m": 0.18313615024089813,
+    "actual_final_object_position_xyz_m": [
+      1.418809413909912,
+      -1.858032464981079,
+      0.18369559943675995
+    ],
+    "reference_final_object_position_xyz_m": [
+      0.3003110885620117,
+      -0.9000723361968994,
+      0.18313615024089813
+    ],
+    "final_object_xy_error_m": 1.4726595878601074,
+    "final_object_position_error_m": 1.472659707069397,
+    "actual_final_torso_height_m": 0.08422176539897919,
+    "outcome": "The box passes the target while still airborne, lands far beyond it, and the robot falls. No correct place-and-release occurs."
+  },
+  "object_termination_disabled_diagnostic": {
+    "object_thresholds_used": 999.0,
+    "robot_termination_unchanged": true,
+    "motion_frame_reached": 227,
+    "failure_reason": "bad_motion_body_pos:left_wrist_yaw_link",
+    "left_wrist_z_error_m": 0.2545663118362427,
+    "actual_max_lift_m": 0.6585102081298828,
+    "actual_xy_displacement_m": 1.3913520574569702,
+    "reference_full_xy_displacement_m": 1.4432627071972373,
+    "actual_minus_reference_object_xyz_at_failure_m": [
+      0.05199792981147766,
+      -0.030125975608825684,
+      0.1546311378479004
+    ],
+    "object_position_error_at_failure_m": 0.16589799523353577,
+    "object_orientation_error_at_failure_rad": 0.7620413303375244,
+    "first_original_orientation_threshold_crossing_frame": 153
+  },
+  "conclusion": "With all tracking termination disabled, the 30k policy contacts, lifts, and carries the box near the target, but then sends it far past the goal and falls. It does not correctly complete the place-and-release task. The original early-termination runs are retained only to diagnose which tracking thresholds would have fired."
+}

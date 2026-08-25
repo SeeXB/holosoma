@@ -538,6 +538,90 @@ def load_smplx_signals(path: Path, model_dir: Path) -> tuple[dict[str, np.ndarra
     return signals, thresholds
 
 
+def load_retargeting_bundle_signals(
+    path: Path,
+) -> tuple[dict[str, np.ndarray], dict[str, float], float]:
+    """Compute semantic signals from an explicit joint/object trajectory bundle.
+
+    This is the dataset-independent counterpart to :func:`load_smplx_signals`.
+    It consumes named joints plus an aligned metric object trajectory and never
+    opens an OMOMO/InterMimic tensor.  The signal definitions and quantile
+    thresholds intentionally match the existing semantic-plan resolver.
+    """
+    with np.load(path, allow_pickle=False) as data:
+        required = {
+            "human_joints",
+            "object_poses_wxyz_xyz",
+            "smplh_joint_names",
+            "frame_ids",
+            "fps",
+        }
+        missing = sorted(required.difference(data.files))
+        if missing:
+            raise ValueError(f"retargeting bundle is missing keys: {missing}")
+        joints = np.asarray(data["human_joints"], dtype=np.float64)
+        object_poses = np.asarray(data["object_poses_wxyz_xyz"], dtype=np.float64)
+        names = [str(value) for value in np.asarray(data["smplh_joint_names"]).tolist()]
+        frame_ids = np.asarray(data["frame_ids"])
+        fps = float(np.asarray(data["fps"]).item())
+    if joints.ndim != 3 or joints.shape[2] != 3:
+        raise ValueError(f"human_joints must have shape [T,J,3], got {joints.shape}")
+    if object_poses.shape != (len(joints), 7) or frame_ids.shape != (len(joints),):
+        raise ValueError("human joints, object poses, and frame IDs must have identical frame counts")
+    if len(names) != joints.shape[1] or len(set(names)) != len(names):
+        raise ValueError("smplh_joint_names must uniquely name every joint column")
+    if not np.isfinite(joints).all() or not np.isfinite(object_poses).all():
+        raise ValueError("retargeting bundle contains NaN/Inf")
+    if not np.isfinite(fps) or fps <= 0.0:
+        raise ValueError(f"invalid bundle fps: {fps}")
+    for name in ("L_Middle3", "R_Middle3", "Pelvis"):
+        if name not in names:
+            raise ValueError(f"retargeting bundle lacks required joint {name!r}")
+
+    left_hand = joints[:, names.index("L_Middle3")]
+    right_hand = joints[:, names.index("R_Middle3")]
+    pelvis = joints[:, names.index("Pelvis")]
+    obj = object_poses[:, 4:7]
+    dist_l = np.linalg.norm(left_hand - obj, axis=1)
+    dist_r = np.linalg.norm(right_hand - obj, axis=1)
+
+    def speed(track: np.ndarray) -> np.ndarray:
+        return np.linalg.norm(np.gradient(track, axis=0), axis=1) * fps
+
+    obj_delta = obj - obj[0]
+    path_dir = obj[-1] - obj[0]
+    norm = max(float(np.linalg.norm(path_dir)), 1e-6)
+    progress = np.clip(obj_delta @ (path_dir / norm) / norm, 0.0, 1.0)
+    signals = {
+        # Historical names say "surface" although the registered resolver uses
+        # the canonical object-frame origin.  Keep names/semantics stable here.
+        "left_hand_box_surface_distance": dist_l,
+        "right_hand_box_surface_distance": dist_r,
+        "min_hand_box_surface_distance": np.minimum(dist_l, dist_r),
+        "max_hand_box_surface_distance": np.maximum(dist_l, dist_r),
+        "pelvis_box_distance": np.linalg.norm(pelvis - obj, axis=1),
+        "object_height": obj[:, 2] - obj[0, 2],
+        "object_speed": speed(obj),
+        "object_progress": progress,
+        "object_goal_distance": np.linalg.norm(obj - obj[-1], axis=1),
+        "hand_mean_speed": 0.5 * (speed(left_hand) + speed(right_hand)),
+        "pelvis_speed": speed(pelvis),
+    }
+    thresholds = {
+        "contact_enter": float(np.quantile(signals["max_hand_box_surface_distance"], 0.18)),
+        "contact_exit": float(np.quantile(signals["min_hand_box_surface_distance"], 0.72)),
+        "lift_enter": float(np.quantile(signals["object_height"], 0.72)),
+        "lift_exit": float(np.quantile(signals["object_height"], 0.30)),
+        "near_goal": float(np.quantile(signals["object_goal_distance"], 0.18)),
+        "released": float(np.quantile(signals["min_hand_box_surface_distance"], 0.80)),
+        "moving": float(np.quantile(signals["object_speed"], 0.65)),
+        "still": float(np.quantile(signals["object_speed"], 0.25)),
+        "approach_distance": float(np.quantile(signals["pelvis_box_distance"], 0.45)),
+        "approach_speed": float(np.quantile(signals["pelvis_speed"], 0.55)),
+    }
+    return signals, thresholds, fps
+
+
 def _rule_frame(
     rule: dict[str, Any],
     signals: dict[str, np.ndarray],

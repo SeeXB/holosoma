@@ -19,6 +19,12 @@ class TaskConfig:
     # "multi_boxes" for climbing, "ground" for robot_only
     object_name: str | None = None
 
+    # Optional explicit assets for reconstructed objects.  These overrides keep
+    # dataset-derived meshes and poses out of the legacy built-in asset lookup.
+    object_mesh_file: Path | None = None
+    object_urdf_file: Path | None = None
+    scene_xml_file: Path | None = None
+
     # Ground meshgrid (robot_only task)
     ground_size: int = 15
     ground_range: tuple[float, float] = (-1.0, 1.0)

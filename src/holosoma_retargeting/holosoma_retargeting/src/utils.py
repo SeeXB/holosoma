@@ -46,6 +46,59 @@ def load_intermimic_data(file_path):
     return human_joints, object_poses
 
 
+def load_cari4d_retargeting_data(file_path):
+    """Load a canonical CARI4D retargeting bundle without legacy fallbacks.
+
+    The bundle is produced by ``tools/export_cari4d_retargeting_input.py``.
+    Its explicit schema avoids overloading InterMimic's opaque 591-column
+    tensor and carries the human height needed for robot scaling.
+    """
+    path = Path(file_path)
+    if path.suffix != ".npz":
+        raise ValueError(f"CARI4D retargeting input must be .npz, got: {path}")
+    with np.load(path, allow_pickle=False) as data:
+        required = {
+            "human_joints",
+            "object_poses_wxyz_xyz",
+            "human_height_m",
+            "fps",
+            "frame_ids",
+        }
+        missing = sorted(required.difference(data.files))
+        if missing:
+            raise ValueError(f"CARI4D bundle is missing keys: {missing}")
+        human_joints = np.asarray(data["human_joints"], dtype=np.float64)
+        object_poses = np.asarray(data["object_poses_wxyz_xyz"], dtype=np.float64)
+        frame_ids = np.asarray(data["frame_ids"])
+        human_height = float(np.asarray(data["human_height_m"]).item())
+        fps = float(np.asarray(data["fps"]).item())
+
+    if human_joints.ndim != 3 or human_joints.shape[1:] != (52, 3):
+        raise ValueError(f"human_joints must have shape [T,52,3], got {human_joints.shape}")
+    if object_poses.shape != (human_joints.shape[0], 7):
+        raise ValueError(
+            "object_poses_wxyz_xyz must have shape [T,7] aligned to human_joints, "
+            f"got {object_poses.shape}"
+        )
+    if frame_ids.shape != (human_joints.shape[0],):
+        raise ValueError(f"frame_ids must have shape [T], got {frame_ids.shape}")
+    if len(np.unique(frame_ids)) != len(frame_ids) or np.any(np.diff(frame_ids) <= 0):
+        raise ValueError("frame_ids must be unique and strictly increasing")
+    if not np.isfinite(human_joints).all() or not np.isfinite(object_poses).all():
+        raise ValueError("CARI4D bundle contains NaN/Inf")
+    if not np.isfinite(human_height) or human_height <= 0.0:
+        raise ValueError(f"Invalid human_height_m: {human_height}")
+    if not np.isfinite(fps) or fps <= 0.0:
+        raise ValueError(f"Invalid fps: {fps}")
+    quaternion_norms = np.linalg.norm(object_poses[:, :4], axis=1)
+    if not np.allclose(quaternion_norms, 1.0, atol=1e-4):
+        raise ValueError(
+            "object_poses_wxyz_xyz contains non-unit quaternions; "
+            f"norm range={quaternion_norms.min():.6f}..{quaternion_norms.max():.6f}"
+        )
+    return human_joints, object_poses, human_height
+
+
 def calculate_scale_factor(task_name, robot_height):
     """Calculate scale factor based on human height."""
     with open("demo_data/height_dict.pkl", "rb") as f:

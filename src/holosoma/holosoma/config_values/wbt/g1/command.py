@@ -14,6 +14,14 @@ init_pose_config = NoiseToInitialPoseConfig(
     object_pos=[0.05, 0.05, 0.0],
 )
 
+init_pose_config_w_object = replace(
+    init_pose_config,
+    # Planar object noise comes from the sampled root translation below; keep
+    # only explicit object-local noise in this vector.
+    object_pos=[0.0, 0.0, 0.0],
+    share_object_xy_noise_with_root=True,
+)
+
 motion_config = MotionConfig(
     motion_file="holosoma/data/motions/g1_29dof/whole_body_tracking/sub3_largebox_003_mj.npz",
     body_names_to_track=[
@@ -40,6 +48,7 @@ motion_config = MotionConfig(
 motion_config_w_object = replace(
     motion_config,
     motion_file="holosoma/data/motions/g1_29dof/whole_body_tracking/sub3_largebox_003_mj_w_obj.npz",
+    noise_to_initial_pose=init_pose_config_w_object,
 )
 
 motion_config_w_object_transition_truncated_b4 = replace(

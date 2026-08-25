@@ -38,6 +38,7 @@ from holosoma_retargeting.src.utils import (  # noqa: E402
     estimate_human_orientation,
     extract_foot_sticking_sequence_velocity,
     extract_object_first_moving_frame,
+    load_cari4d_retargeting_data,
     load_intermimic_data,
     load_object_data,
     preprocess_motion_data,
@@ -116,9 +117,14 @@ def create_task_constants(
     elif task_type == "object_interaction":
         obj_name = task_config.object_name or "largebox"
         task_constants.OBJECT_NAME = obj_name
-        task_constants.OBJECT_URDF_FILE = f"models/{obj_name}/{obj_name}.urdf"
-        task_constants.OBJECT_MESH_FILE = f"models/{obj_name}/{obj_name}.obj"
+        task_constants.OBJECT_URDF_FILE = str(
+            task_config.object_urdf_file or Path(f"models/{obj_name}/{obj_name}.urdf")
+        )
+        task_constants.OBJECT_MESH_FILE = str(
+            task_config.object_mesh_file or Path(f"models/{obj_name}/{obj_name}.obj")
+        )
         task_constants.OBJECT_URDF_TEMPLATE = f"models/templates/{obj_name}.urdf.jinja"
+        task_constants.SCENE_XML_FILE = str(task_config.scene_xml_file) if task_config.scene_xml_file else ""
     elif task_type == "climbing":
         obj_name = task_config.object_name or "multi_boxes"
         task_constants.OBJECT_NAME = obj_name
@@ -152,8 +158,8 @@ def validate_config(cfg: RetargetingConfig) -> None:
     # Task-specific format requirements
     if cfg.task_type == "climbing" and cfg.data_format not in (None, "mocap"):
         raise ValueError("Climbing task requires 'mocap' data format")
-    if cfg.task_type == "object_interaction" and cfg.data_format not in (None, "smplh"):
-        raise ValueError("Object interaction requires 'smplh' data format")
+    if cfg.task_type == "object_interaction" and cfg.data_format not in (None, "smplh", "cari4d"):
+        raise ValueError("Object interaction requires 'smplh' or strict 'cari4d' data format")
     # robot_only accepts any format in the registry (already validated above)
 
 
@@ -254,12 +260,19 @@ def load_motion_data(
         object_poses = np.tile(np.array([[1, 0, 0, 0, 0, 0, 0]]), (num_frames, 1))
 
     elif task_type == "object_interaction":
-        pt_path = data_path / f"{task_name}.pt"
-        if not pt_path.exists():
-            raise FileNotFoundError(f"InterMimic data file not found: {pt_path}")
+        if data_format == "cari4d":
+            npz_path = data_path / f"{task_name}.npz"
+            if not npz_path.exists():
+                raise FileNotFoundError(f"CARI4D retargeting bundle not found: {npz_path}")
+            human_joints, object_poses, human_height = load_cari4d_retargeting_data(npz_path)
+            smpl_scale = constants.ROBOT_HEIGHT / human_height
+        else:
+            pt_path = data_path / f"{task_name}.pt"
+            if not pt_path.exists():
+                raise FileNotFoundError(f"InterMimic data file not found: {pt_path}")
 
-        human_joints, object_poses = load_intermimic_data(str(pt_path))
-        smpl_scale = calculate_scale_factor(task_name, constants.ROBOT_HEIGHT)
+            human_joints, object_poses = load_intermimic_data(str(pt_path))
+            smpl_scale = calculate_scale_factor(task_name, constants.ROBOT_HEIGHT)
 
     elif task_type == "climbing":
         task_dir = data_path / task_name

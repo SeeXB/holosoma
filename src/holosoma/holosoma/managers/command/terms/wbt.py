@@ -742,9 +742,10 @@ class MotionCommand(CommandTermBase):
         target_dof_vel = dof_vel
 
         # 1.2.3 root_pos
-        target_root_pos = root_pos + (
+        root_pos_delta = (
             torch.rand(root_pos.shape, device=self.device) - 0.5
         ) * 2 * root_pos_noise.unsqueeze(0)  # (num_envs, 3)
+        target_root_pos = root_pos + root_pos_delta
 
         # 1.2.4 root_rot
         rand_sample_rpy = (torch.rand((len(env_ids), 3), device=self.device) - 0.5) * 2 * root_rot_noise_rpy
@@ -785,6 +786,11 @@ class MotionCommand(CommandTermBase):
             )
             obj_pos_noise = obj_pos_noise * self.init_pose_cfg.overall_noise_scale  # (3,)
             target_obj_pos = obj_pos + (torch.rand(obj_pos.shape, device=self.device) - 0.5) * 2 * obj_pos_noise
+            if self.init_pose_cfg.share_object_xy_noise_with_root:
+                # A common planar translation preserves the grasp/contact geometry
+                # encoded by the reference motion.  Independent z noise remains
+                # available through object_pos[2].
+                target_obj_pos[:, :2] = obj_pos[:, :2] + root_pos_delta[:, :2]
 
             object_states = torch.cat(
                 [target_obj_pos, obj_ori, obj_lin_vel, torch.zeros_like(obj_lin_vel)], dim=-1

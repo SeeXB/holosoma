@@ -1,0 +1,24 @@
+{
+  "source_actual": "/home/zongyouyu/sxb/holosoma/logs/WholeBodyTracking/20260820_120156-g1_29dof_wbt_manager-eval/actual_full_clip.npz",
+  "source_reference": "/home/zongyouyu/sxb/holosoma/src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_transition_truncation/rl/transition_truncated_b4_mj_fps50_w_obj.npz",
+  "frame_range": [
+    2,
+    324
+  ],
+  "frame_count": 323,
+  "fps": 50,
+  "frame29_actual_minus_reference_torso_xyz_m": [
+    0.052990853786468506,
+    -0.25490063428878784,
+    -0.00485992431640625
+  ],
+  "frame29_actual_minus_reference_object_xyz_m": [
+    0.035740554332733154,
+    -0.1689954400062561,
+    -0.0005595684051513672
+  ],
+  "max_abs_torso_y_error_m": -0.4305049479007721,
+  "max_abs_torso_y_error_frame": 221,
+  "max_abs_object_y_error_m": -0.33216404914855957,
+  "max_abs_object_y_error_frame": 249
+}

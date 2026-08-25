@@ -302,6 +302,7 @@ TOE_NAMES_BY_FORMAT = {
     "smplh": ["L_Toe", "R_Toe"],
     "mocap": ["LeftToeBase", "RightToeBase"],
     "smplx": ["L_Foot", "R_Foot"],
+    "cari4d": ["L_Toe", "R_Toe"],
 }
 
 
@@ -328,7 +329,15 @@ DEMO_JOINTS_REGISTRY: dict[str, list[str]] = {
     "smplh": SMPLH_DEMO_JOINTS,
     "mocap": MOCAP_DEMO_JOINTS,
     "smplx": SMPLX_DEMO_JOINTS,
+    # CARI4D bundles use the same explicit 52-joint order as SMPL-H, but a
+    # distinct format name prevents accidental fallback to legacy OMOMO .pt.
+    "cari4d": SMPLH_DEMO_JOINTS,
 }
+
+# CARI4D joint semantics are SMPL-H semantics.  Copy the mappings so callers
+# can select the strict CARI4D loader without changing the optimizer topology.
+JOINTS_MAPPINGS[("cari4d", "g1")] = dict(JOINTS_MAPPINGS[("smplh", "g1")])
+JOINTS_MAPPINGS[("cari4d", "t1")] = dict(JOINTS_MAPPINGS[("smplh", "t1")])
 
 # Type alias for data formats - use str to allow dynamic data formats via DEMO_JOINTS_REGISTRY
 # No need to update this when adding new formats - just add to DEMO_JOINTS_REGISTRY above

@@ -1,0 +1,72 @@
+{
+  "checkpoint": "logs/WholeBodyTracking/20260822_191449-g1_29dof_wbt_manager-b4_omni_shared_xy_default/model_29999.pt",
+  "reference_motion": "src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_transition_truncation/rl/transition_truncated_b4_mj_fps50_w_obj.npz",
+  "reference_frame_count": 325,
+  "fps": 50,
+  "training_curve": {
+    "final_iteration": 29999,
+    "final_env_average_episode_length": 359.3476257324219,
+    "last_100_iteration_mean": 368.17703826904295,
+    "last_500_iteration_mean": 366.8150471191406,
+    "peak_env_average_episode_length": 419.1649169921875,
+    "peak_iteration": 28473
+  },
+  "strict_nominal_0p1kg": {
+    "domain_randomization": false,
+    "initial_pose_noise": false,
+    "actor_observation_noise": false,
+    "original_bad_tracking_termination": true,
+    "motion_frame_range": [1, 324],
+    "resets_during_motion": 0,
+    "bad_tracking_counts": {
+      "bad_ref_pos": 0,
+      "bad_ref_ori": 0,
+      "bad_motion_body_pos": 0,
+      "bad_object_pos": 0,
+      "bad_object_ori": 0
+    },
+    "actual_object_max_height_m": 0.8513339,
+    "actual_object_lift_m": 0.6663777,
+    "max_object_position_error_m": 0.22121747,
+    "max_object_position_error_frame": 237,
+    "max_object_orientation_error_rad": 0.26002842,
+    "max_object_orientation_error_frame": 66,
+    "final_object_position_error_m": 0.12825271,
+    "final_object_xy_error_m": 0.12825151,
+    "final_object_orientation_error_rad": 0.0742221,
+    "actual_final_object_position_xyz_m": [0.19495921, -0.9732121, 0.18369588],
+    "reference_final_object_position_xyz_m": [0.3003111, -0.90007234, 0.18313615],
+    "actual_final_torso_position_xyz_m": [0.49895462, -0.803674, 0.7830434],
+    "task_success": true
+  },
+  "strict_fixed_2p5kg": {
+    "object_mass_kg": 2.5,
+    "domain_randomization_except_fixed_object_mass": false,
+    "initial_pose_noise": false,
+    "actor_observation_noise": false,
+    "original_bad_tracking_termination": true,
+    "motion_frame_range": [1, 324],
+    "resets_during_motion": 0,
+    "bad_tracking_counts": {
+      "bad_ref_pos": 0,
+      "bad_ref_ori": 0,
+      "bad_motion_body_pos": 0,
+      "bad_object_pos": 0,
+      "bad_object_ori": 0
+    },
+    "actual_object_max_height_m": 0.82307076,
+    "actual_object_lift_m": 0.63811463,
+    "max_object_position_error_m": 0.13511832,
+    "max_object_position_error_frame": 64,
+    "max_object_orientation_error_rad": 0.45113158,
+    "max_object_orientation_error_frame": 104,
+    "final_object_position_error_m": 0.03503848,
+    "final_object_xy_error_m": 0.0347637,
+    "final_object_orientation_error_rad": 0.05270518,
+    "actual_final_object_position_xyz_m": [0.29919228, -0.86532664, 0.18751566],
+    "reference_final_object_position_xyz_m": [0.3003111, -0.90007234, 0.18313615],
+    "actual_final_torso_position_xyz_m": [0.53005153, -0.65503216, 0.77855086],
+    "task_success": true
+  },
+  "conclusion": "The latest 30k policy completes the full pick-carry-place motion under the original bad-tracking termination in both nominal 0.1 kg and fixed 2.5 kg tests. These are deterministic single-rollout validations, not a domain-randomized success-rate estimate."
+}

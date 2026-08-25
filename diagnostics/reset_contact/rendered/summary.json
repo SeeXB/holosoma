@@ -1,0 +1,238 @@
+{
+  "input": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/training_style_reset_samples.npz",
+  "sample_count": 256,
+  "lifted_candidate_count": 146,
+  "selected_count": 8,
+  "all_samples_relative_xy_offset_cm": {
+    "mean": 5.173007965087891,
+    "p50": 5.185340404510498,
+    "p90": 8.147425651550293,
+    "max": 11.51346492767334
+  },
+  "lifted_samples_hand_box_gap": {
+    "candidate_count": 146,
+    "either_hand_gap_gt_1cm_percent": 84.24657534246576,
+    "either_hand_gap_gt_2cm_percent": 79.45205479452055,
+    "both_hands_gap_gt_2cm_percent": 7.534246575342466,
+    "max_positive_gap_cm": 17.372713797635274,
+    "min_penetration_cm": -13.1063452898751
+  },
+  "selected": [
+    {
+      "rank": 1,
+      "sample_index": 42,
+      "motion_frame": 190,
+      "relative_reset_offset_xyz_m": [
+        -0.09621059894561768,
+        -0.041876763105392456,
+        0.008792757987976074
+      ],
+      "reference_hand_center_distance_m": [
+        0.25739971569531245,
+        0.2663295921642799
+      ],
+      "reset_hand_center_distance_m": [
+        0.35232164654087367,
+        0.2513666695982815
+      ],
+      "reference_hand_box_signed_distance_m": [
+        0.00353613991664475,
+        0.0
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.07257260767924927,
+        0.0
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_01_frame_190.png"
+    },
+    {
+      "rank": 2,
+      "sample_index": 145,
+      "motion_frame": 107,
+      "relative_reset_offset_xyz_m": [
+        -0.08031171560287476,
+        0.0673317015171051,
+        0.00827854871749878
+      ],
+      "reference_hand_center_distance_m": [
+        0.26876171773994867,
+        0.2559203092134239
+      ],
+      "reset_hand_center_distance_m": [
+        0.3137733158007415,
+        0.20033504934248633
+      ],
+      "reference_hand_box_signed_distance_m": [
+        -0.0010141078845852234,
+        -0.0002478569028877539
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.05748197344958878,
+        -0.052039004705037625
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_02_frame_107.png"
+    },
+    {
+      "rank": 3,
+      "sample_index": 189,
+      "motion_frame": 163,
+      "relative_reset_offset_xyz_m": [
+        -0.04743221402168274,
+        0.08757083863019943,
+        -0.005629599094390869
+      ],
+      "reference_hand_center_distance_m": [
+        0.26840981943223663,
+        0.258950258630834
+      ],
+      "reset_hand_center_distance_m": [
+        0.2702754651233115,
+        0.2283075029284873
+      ],
+      "reference_hand_box_signed_distance_m": [
+        -0.0006911425155444166,
+        -0.0001983529140382368
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.03659155700513253,
+        -0.012338378440225214
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_03_frame_163.png"
+    },
+    {
+      "rank": 4,
+      "sample_index": 81,
+      "motion_frame": 62,
+      "relative_reset_offset_xyz_m": [
+        0.070465087890625,
+        0.06394118070602417,
+        -0.0016551017761230469
+      ],
+      "reference_hand_center_distance_m": [
+        0.24523079983717677,
+        0.24564388363731157
+      ],
+      "reset_hand_center_distance_m": [
+        0.17427946323209784,
+        0.3941244084367496
+      ],
+      "reference_hand_box_signed_distance_m": [
+        -0.0001489965524140774,
+        0.0009076869233802734
+      ],
+      "reset_hand_box_signed_distance_m": [
+        -0.02865984288250128,
+        0.17372713797635275
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_04_frame_062.png"
+    },
+    {
+      "rank": 5,
+      "sample_index": 6,
+      "motion_frame": 151,
+      "relative_reset_offset_xyz_m": [
+        0.05620020627975464,
+        -0.07057960331439972,
+        0.007291078567504883
+      ],
+      "reference_hand_center_distance_m": [
+        0.2666269161928685,
+        0.25710920344630633
+      ],
+      "reset_hand_center_distance_m": [
+        0.32143257028738526,
+        0.2864992346473725
+      ],
+      "reference_hand_box_signed_distance_m": [
+        -0.0007410444234622261,
+        -4.823261506067088e-07
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.054409214779087854,
+        0.015853185048077575
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_05_frame_151.png"
+    },
+    {
+      "rank": 6,
+      "sample_index": 57,
+      "motion_frame": 234,
+      "relative_reset_offset_xyz_m": [
+        -0.08421123027801514,
+        -0.019335567951202393,
+        0.005323052406311035
+      ],
+      "reference_hand_center_distance_m": [
+        0.24525156225794606,
+        0.2445610955222634
+      ],
+      "reset_hand_center_distance_m": [
+        0.21931316657226957,
+        0.32791836388223344
+      ],
+      "reference_hand_box_signed_distance_m": [
+        0.0036402445106234775,
+        0.0019095493093791891
+      ],
+      "reset_hand_box_signed_distance_m": [
+        -0.026202773435374648,
+        0.10486777851454304
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_06_frame_234.png"
+    },
+    {
+      "rank": 7,
+      "sample_index": 199,
+      "motion_frame": 214,
+      "relative_reset_offset_xyz_m": [
+        -0.074485182762146,
+        0.041468024253845215,
+        -0.0078391432762146
+      ],
+      "reference_hand_center_distance_m": [
+        0.25503673735692445,
+        0.2521824337031222
+      ],
+      "reset_hand_center_distance_m": [
+        0.3382172476547184,
+        0.16847967860993687
+      ],
+      "reference_hand_box_signed_distance_m": [
+        0.004093665768741541,
+        0.0008057034098620455
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.09004290261266293,
+        -0.07892063872287233
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_07_frame_214.png"
+    },
+    {
+      "rank": 8,
+      "sample_index": 7,
+      "motion_frame": 83,
+      "relative_reset_offset_xyz_m": [
+        0.06927663087844849,
+        -0.049044132232666016,
+        -0.00854349136352539
+      ],
+      "reference_hand_center_distance_m": [
+        0.25825287645311945,
+        0.2583912606795382
+      ],
+      "reset_hand_center_distance_m": [
+        0.28983297312411066,
+        0.30032409910309094
+      ],
+      "reference_hand_box_signed_distance_m": [
+        0.0022176301118474436,
+        0.0007609871271949413
+      ],
+      "reset_hand_box_signed_distance_m": [
+        0.008096501605045284,
+        0.041370499151321814
+      ],
+      "image": "/home/zongyouyu/sxb/holosoma/diagnostics/reset_contact/rendered/reset_sample_08_frame_083.png"
+    }
+  ]
+}

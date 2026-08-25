@@ -63,6 +63,14 @@ class NoiseToInitialPoseConfig:
     object_pos: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     """noise scale for object position x, y, z."""
 
+    share_object_xy_noise_with_root: bool = False
+    """Apply the sampled robot-root XY translation to the object as well.
+
+    This preserves the robot--object relative XY pose at reset.  The object's
+    z noise remains controlled by ``object_pos`` so that ground contact is not
+    changed implicitly.
+    """
+
 
 @dataclass(frozen=True)
 class MotionConfig:
