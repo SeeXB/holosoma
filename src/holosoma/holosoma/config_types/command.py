@@ -111,6 +111,20 @@ class MotionConfig:
     use_adaptive_timesteps_sampler: bool = False
     """During training, whether to prioritize training on motion segments where the robot fails often."""
 
+    sampling_mode: str = "original_adaptive"
+    """Reference-timestep sampler mode.
+
+    ``original_adaptive`` preserves the historical Holosoma sampler.  The two
+    semantic modes use semantic transitions only for reset-time reference
+    sampling; they never alter rewards or termination.
+    """
+
+    semantic_file: str = ""
+    """Semantic event JSON used by the semantic sampling modes."""
+
+    semantic_fps: float | None = None
+    """Optional semantic JSON FPS override; metadata is preferred and checked."""
+
     start_at_timestep_zero_prob: float = 0.0
     """Probability of starting at timestep zero."""
 

@@ -1,0 +1,8 @@
+transition_id,transition_name_for_log,num_failures,failure_rate
+0,start->approach,0,0.0
+1,approach->contact,0,0.0
+2,contact->lift,0,0.0
+3,lift->carry_mid,0,0.0
+4,carry_mid->arrive,0,0.0
+5,arrive->place,0,0.0
+6,place->release,0,0.0

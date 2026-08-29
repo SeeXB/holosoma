@@ -1,0 +1,4 @@
+mode,samples,frame_min,frame_max,global_uniform_fraction,transition_histogram
+original_adaptive,10000,0,324,0.0,
+semantic_uniform,10000,0,324,0.1013,"1251,1294,1334,1236,1298,1272,1302"
+semantic_adaptive,10000,0,324,0.0947,"8336,104,116,134,133,124,106"

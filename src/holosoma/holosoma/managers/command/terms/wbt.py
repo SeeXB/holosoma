@@ -12,6 +12,10 @@ from loguru import logger
 from holosoma.config_types.command import MotionConfig, NoiseToInitialPoseConfig
 from holosoma.envs.wbt.wbt_manager import WholeBodyTrackingManager
 from holosoma.managers.command.base import CommandTermBase
+from holosoma.managers.command.semantic_transition_sampler import (
+    SAMPLING_MODES,
+    SemanticTransitionSampler,
+)
 from holosoma.simulator.shared.object_registry import ObjectType
 from holosoma.utils.file_cache import cached_open
 from holosoma.utils.path import resolve_data_file_path
@@ -548,6 +552,19 @@ class MotionCommand(CommandTermBase):
         else:
             self.motion_cfg = MotionConfig(**cfg.params["motion_config"])
         self.init_pose_cfg: NoiseToInitialPoseConfig = self.motion_cfg.noise_to_initial_pose
+        if self.motion_cfg.sampling_mode not in SAMPLING_MODES:
+            raise ValueError(
+                f"Unknown motion sampling_mode={self.motion_cfg.sampling_mode!r}; "
+                f"expected one of {SAMPLING_MODES}"
+            )
+        self._uses_original_adaptive = (
+            self.motion_cfg.sampling_mode == "original_adaptive"
+            and self.motion_cfg.use_adaptive_timesteps_sampler
+        )
+        self._uses_semantic_sampling = self.motion_cfg.sampling_mode in {
+            "semantic_uniform",
+            "semantic_adaptive",
+        }
 
     def setup(self) -> None:
         self.num_envs = self._env.num_envs
@@ -603,10 +620,26 @@ class MotionCommand(CommandTermBase):
                 raise RuntimeError("Set 'has_object' to true, but loaded no rigid bodies in the scene.")
             self.object_name = rigid_object_names[0]
 
-        # 4. get the adaptive timesteps sampler
-        if self.motion_cfg.use_adaptive_timesteps_sampler:
+        # 4. get the historical or semantic timestep sampler.  Keep the
+        # historical path separate so original_adaptive remains unchanged.
+        if self._uses_original_adaptive:
             self.adaptive_timesteps_sampler = AdaptiveTimestepsSampler(
                 self.motion.time_step_total, self.device, int(1 / (self._env.dt))
+            )
+        if self._uses_semantic_sampling:
+            if self.motion.num_motions != 1:
+                raise ValueError("Semantic sampling currently requires one motion_file, not a motion_dir")
+            motion_fps = self.motion.fps
+            if hasattr(motion_fps, "item"):
+                motion_fps = motion_fps.item()
+            self.semantic_transition_sampler = SemanticTransitionSampler(
+                motion_time_step_total=self.motion.time_step_total,
+                num_envs=self.num_envs,
+                device=self.device,
+                motion_fps=float(motion_fps),
+                semantic_file=self.motion_cfg.semantic_file,
+                semantic_fps=self.motion_cfg.semantic_fps,
+                sampling_mode=self.motion_cfg.sampling_mode,
             )
 
         # 5. metrics
@@ -627,9 +660,24 @@ class MotionCommand(CommandTermBase):
         n = env_ids.numel()
         num_motions = self.motion.num_motions
 
-        # 0. Sample the time steps (and, for the adaptive sampler, the motion id).
+        # 0. Resolve the previous semantic assignment and sample the next
+        # reference timestep.  Semantic information is confined to this reset
+        # path; reward and termination managers remain untouched.
         adaptive_global_idx = None
-        if self.motion_cfg.use_adaptive_timesteps_sampler:
+        semantic_transition_ids = None
+        if self._uses_semantic_sampling:
+            if not self._env.is_evaluating:
+                terminated = self._env.termination_manager.terminated[env_ids]
+                timeouts = self._env.termination_manager.time_outs[env_ids]
+                self.semantic_transition_sampler.resolve_before_reset(
+                    env_ids,
+                    terminated=terminated,
+                    timeouts=timeouts,
+                    current_steps=self.time_steps[env_ids],
+                )
+                adaptive_global_idx, semantic_transition_ids, _ = self.semantic_transition_sampler.sample(n)
+            phase = torch.zeros(n, device=self.device)
+        elif self._uses_original_adaptive:
             # Match BeyondMimic behavior: update failed bins from environments
             # that terminated before this reset, then sample new phases.
             # Gate the failure-stat update on training mode so evaluation episodes
@@ -649,14 +697,22 @@ class MotionCommand(CommandTermBase):
         else:
             phase = torch.rand(n, device=self.device)
 
-        if self._env.is_evaluating:
+        if self._env.is_evaluating and not self._uses_semantic_sampling:
             # Eval forces every env through the uniform/else branch below, which
             # indexes `phase`, so it must be a real zero tensor even when the
             # adaptive sampler left it as None.
             phase = torch.zeros(n, device=self.device)
             adaptive_global_idx = None  # eval starts every env at its motion's first frame
 
-        if adaptive_global_idx is not None:
+        if self._uses_semantic_sampling and not self._env.is_evaluating:
+            self.motion_ids[env_ids] = 0
+            start_idx = self.motion.motion_start_idx[self.motion_ids[env_ids]]
+            end_idx = self.motion.motion_end_idx[self.motion_ids[env_ids]]
+            assert adaptive_global_idx is not None
+            assert semantic_transition_ids is not None
+            self.time_steps[env_ids] = adaptive_global_idx.clamp(start_idx, end_idx - 1)
+            self.semantic_transition_sampler.assign(env_ids, semantic_transition_ids)
+        elif adaptive_global_idx is not None:
             # Map global frame index -> (motion_id, time_step). searchsorted on the
             # per-motion end indices yields the clip whose [start, end) contains it.
             motion_ids = torch.searchsorted(self.motion.motion_end_idx, adaptive_global_idx, right=True)
@@ -665,7 +721,7 @@ class MotionCommand(CommandTermBase):
             start_idx = self.motion.motion_start_idx[motion_ids]
             end_idx = self.motion.motion_end_idx[motion_ids]
             self.time_steps[env_ids] = adaptive_global_idx.clamp(start_idx, end_idx - 1)
-        else:
+        elif not self._uses_semantic_sampling:
             # Uniform path (or eval): randomly assign each env to a motion, sample
             # a phase within that motion's range.
             self.motion_ids[env_ids] = torch.randint(0, num_motions, (n,), device=self.device)
@@ -673,6 +729,14 @@ class MotionCommand(CommandTermBase):
             end_idx = self.motion.motion_end_idx[self.motion_ids[env_ids]]
             motion_len = end_idx - start_idx
             self.time_steps[env_ids] = start_idx + (phase * (motion_len - 1).float()).long()
+        else:
+            # Evaluation retains the historical deterministic first-frame
+            # behavior and intentionally does not collect transition stats.
+            self.motion_ids[env_ids] = 0
+            start_idx = self.motion.motion_start_idx[self.motion_ids[env_ids]]
+            end_idx = self.motion.motion_end_idx[self.motion_ids[env_ids]]
+            self.time_steps[env_ids] = start_idx
+            self.semantic_transition_sampler.clear_assignment(env_ids)
 
         # Handle start_at_timestep_zero_prob (reset to start of assigned motion)
         prob = self.motion_cfg.start_at_timestep_zero_prob
@@ -814,11 +878,18 @@ class MotionCommand(CommandTermBase):
 
         self.time_steps += advance_mask.long()
 
+        if self._uses_semantic_sampling and not self._env.is_evaluating:
+            self.semantic_transition_sampler.mark_reached(
+                torch.arange(self.num_envs, device=self.device), self.time_steps
+            )
+
         # BeyondMimic-style behavior: when the clip ends, resample motion and
         # reset robot/object state without terminating the whole episode.
         per_motion_end = self.motion.motion_end_idx[self.motion_ids]
         ended_env_ids = torch.where(self.time_steps >= per_motion_end)[0]
         if ended_env_ids.numel() > 0:
+            if self._uses_semantic_sampling and not self._env.is_evaluating:
+                self.semantic_transition_sampler.mark_motion_end(ended_env_ids, self.time_steps[ended_env_ids])
             self.reset(ended_env_ids)
             # Flush the mutated root/dof state into the simulator so that
             # rigid-body positions are up-to-date for downstream consumers
@@ -879,7 +950,7 @@ class MotionCommand(CommandTermBase):
 
         ### 1.3 update the adaptive timesteps sampler (training only — eval episodes
         ### must not decay/fold failure stats into the training sampler).
-        if self.motion_cfg.use_adaptive_timesteps_sampler and not self._env.is_evaluating:
+        if self._uses_original_adaptive and not self._env.is_evaluating:
             self.adaptive_timesteps_sampler.update_bin_failed_count()
 
     @property
@@ -1063,8 +1134,15 @@ class MotionCommand(CommandTermBase):
         )  # type: ignore[arg-type]
         self.body_quat_relative_w[:, :, 0] = 1.0
 
-        if self.motion_cfg.use_adaptive_timesteps_sampler:
+        if self._uses_original_adaptive:
             self.adaptive_timesteps_sampler.init_buffers()
+        if self._uses_semantic_sampling:
+            # ``WholeBodyTrackingManager.reset_all`` can be called more than
+            # once (for example by an evaluator).  Clear assignments but keep
+            # accumulated transition statistics across ordinary training resets.
+            self.semantic_transition_sampler.assigned_transition_id.fill_(-1)
+            self.semantic_transition_sampler.assigned_target_step.fill_(-1)
+            self.semantic_transition_sampler.transition_resolved.fill_(False)
 
     def update_metrics(self):
         """Update the metrics. After action, before step() is called."""
@@ -1091,7 +1169,7 @@ class MotionCommand(CommandTermBase):
         self.metrics["motion/error_joint_pos"] = torch.norm(self.joint_pos - self.robot_joint_pos, dim=-1)
         self.metrics["motion/error_joint_vel"] = torch.norm(self.joint_vel - self.robot_joint_vel, dim=-1)
 
-        if self.motion_cfg.use_adaptive_timesteps_sampler:
+        if self._uses_original_adaptive:
             self.adaptive_timesteps_sampler.get_stats()
             self.metrics["motion/adaptive_timesteps_sampler_entropy"] = self.adaptive_timesteps_sampler.metrics[
                 "sampling_entropy"
@@ -1102,6 +1180,8 @@ class MotionCommand(CommandTermBase):
             self.metrics["motion/adaptive_timesteps_sampler_top1_bin"] = self.adaptive_timesteps_sampler.metrics[
                 "sampling_top1_bin"
             ]
+        if self._uses_semantic_sampling:
+            self.metrics.update(self.semantic_transition_sampler.metrics())
 
     #########################################################################################
     ## Internal helpers
