@@ -5,7 +5,7 @@ config. They default to "all registered free bodies", so a preset stays object-c
 and no-ops cleanly on a robot-only scene.
 
 - ``randomize_object_rigid_body_mass_startup`` / ``..._material_startup`` /
-  ``..._inertia_startup`` — startup physics DR on free bodies, cross-backend (IsaacSim /
+  ``..._com_startup`` / ``..._inertia_startup`` — startup physics DR on free bodies, cross-backend (IsaacSim /
   IsaacGym / MuJoCo), each branch addressing the object's own bodies/geoms (mirrors the robot
   mass/friction DR in ``locomotion.py``).
 - ``jitter_object_pose_on_reset`` — opt-in reset-time pose jitter on free bodies.
@@ -452,6 +452,116 @@ def randomize_object_rigid_body_mass_startup(
 
     raise RandomizerNotSupportedError(
         f"randomize_object_rigid_body_mass_startup does not support {type(simulator).__name__}."
+    )
+
+
+@mujoco_required_field("body_ipos")
+def randomize_object_rigid_body_com_startup(
+    env,
+    env_ids: Sequence[int] | torch.Tensor | None = None,
+    *,
+    sampler: TermSampler,
+    com_distribution_params: dict[str, DistributionLike],
+    object_names: Sequence[str] | None = None,
+    enabled: bool = True,
+    **_,
+) -> None:
+    """Add a per-axis center-of-mass offset to each free rigid object.
+
+    ``com_distribution_params`` maps ``x``, ``y`` and ``z`` to distribution
+    ranges in metres.  One offset is sampled per ``(environment, object,
+    axis)`` and added to the object's authored COM.  This is a startup term:
+    repeated calls would add another offset, so configurations must register
+    it only in ``setup_terms``.
+
+    The implementation is aligned across IsaacGym, IsaacSim and MuJoCo.  An
+    object's descendant bodies share the same offset, which preserves their
+    relative inertial frames and matches the single-free-body assets used by
+    object WBT.
+    """
+    if not enabled:
+        return
+
+    unknown_axes = set(com_distribution_params) - {"x", "y", "z"}
+    if unknown_axes:
+        raise ValueError(f"Unknown object COM axes: {sorted(unknown_axes)}")
+
+    idx = _ensure_env_ids_tensor(env, env_ids)
+    if idx.numel() == 0:
+        return
+
+    names = _resolve_object_names(env, object_names)
+    if not names:
+        return
+
+    axis_ranges = [com_distribution_params.get(axis, (0.0, 0.0)) for axis in ("x", "y", "z")]
+    simulator = env.simulator
+    sim_type = simulator.get_simulator_type()
+
+    if sim_type == SimulatorType.ISAACGYM:
+        gym = simulator.gym
+        object_ids = torch.arange(len(names))[None, :]
+        draws = torch.stack(
+            [
+                sampler.draw(spec, env_ids=idx, coords=(axis, object_ids), device="cpu")
+                for axis, spec in enumerate(axis_ranges)
+            ],
+            dim=-1,
+        )  # [n_env, n_object, xyz]
+        for env_offset, env_id in enumerate(idx.tolist()):
+            env_ptr = simulator.envs[env_id]
+            for object_offset, name in enumerate(names):
+                actor = simulator.object_handles[name][env_id]
+                body_props = gym.get_actor_rigid_body_properties(env_ptr, actor)
+                bias = draws[env_offset, object_offset]
+                for prop in body_props:
+                    prop.com.x += float(bias[0])
+                    prop.com.y += float(bias[1])
+                    prop.com.z += float(bias[2])
+                gym.set_actor_rigid_body_properties(env_ptr, actor, body_props, recomputeInertia=False)
+        return
+
+    if sim_type == SimulatorType.ISAACSIM:
+        object_ids = torch.arange(len(names))[None, :]
+        draws = torch.stack(
+            [
+                sampler.draw(spec, env_ids=idx, coords=(axis, object_ids), device=env.device)
+                for axis, spec in enumerate(axis_ranges)
+            ],
+            dim=-1,
+        )  # [n_env, n_object, xyz]
+        env_ids_cpu = idx.to(device="cpu", dtype=torch.long)
+        for object_offset, name in enumerate(names):
+            asset = simulator.scene[name]
+            coms = asset.root_physx_view.get_coms()
+            bias = draws[:, object_offset].to(coms.device)
+            view_env_ids = idx.to(device=coms.device, dtype=torch.long)
+            if coms.ndim == 2:  # RigidObject: [env, xyz + quaternion]
+                coms[view_env_ids, :3] += bias
+            else:  # Defensive multi-body layout: [env, body, xyz + quaternion]
+                coms[view_env_ids, :, :3] += bias[:, None, :]
+            asset.root_physx_view.set_coms(coms, env_ids_cpu)
+        return
+
+    if sim_type == SimulatorType.MUJOCO:
+        from holosoma.simulator.mujoco.backends.randomization import randomize_field
+
+        ranges = {axis: spec for axis, spec in enumerate(axis_ranges)}
+        for name in names:
+            randomize_field(
+                simulator,
+                field=getattr(randomize_object_rigid_body_com_startup, MUJOCO_FIELD_ATTR),
+                ranges=ranges,
+                sampler=sampler,
+                env_ids=idx,
+                entity_ids=torch.tensor(_mujoco_object_body_ids(simulator, name), device=simulator.sim_device),
+                operation="add",
+                shared_across_entities=True,
+            )
+        return
+
+    raise RandomizerNotSupportedError(
+        f"randomize_object_rigid_body_com_startup does not support {type(simulator).__name__}."
     )
 
 

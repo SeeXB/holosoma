@@ -6,6 +6,8 @@ import cv2
 import wandb
 from loguru import logger
 
+from holosoma.utils.wandb_utils import wandb_file_uploads_enabled
+
 
 def _is_wandb_available() -> bool:
     """Check if wandb is initialized and ready for logging.
@@ -145,7 +147,9 @@ def create_video(video_frames, fps, save_dir, output_format="mp4", wandb_logging
     timestamp = int(time.time())
     episode_str = f"episode_{episode_id}_" if episode_id is not None else ""
 
-    if wandb_logging and _is_wandb_available():
+    upload_to_wandb = wandb_logging and wandb_file_uploads_enabled() and _is_wandb_available()
+
+    if upload_to_wandb:
         # Wandb path: use temp files, upload, then cleanup
         temp_id = str(uuid.uuid4())[:8]
         temp_raw = save_dir / f"temp_raw_{timestamp}_{temp_id}.mp4"
@@ -207,7 +211,7 @@ def create_video(video_frames, fps, save_dir, output_format="mp4", wandb_logging
         logger.info(f"Successfully saved video file: {final_video}")
 
         # Step 3: Handle wandb upload if requested
-        if wandb_logging and _is_wandb_available():
+        if upload_to_wandb:
             wandb.log({"Training rollout": wandb.Video(str(final_video), format="mp4")})
 
         # Step 4: Cleanup temp files if needed

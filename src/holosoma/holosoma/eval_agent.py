@@ -16,7 +16,7 @@ from holosoma.utils.eval_utils import (
     load_checkpoint,
     load_saved_experiment_config,
 )
-from holosoma.utils.experiment_paths import get_experiment_dir, get_timestamp
+from holosoma.utils.experiment_paths import get_eval_log_dir, get_timestamp
 from holosoma.utils.helpers import get_class
 from holosoma.utils.sim_utils import (
     close_simulation_app,
@@ -34,7 +34,7 @@ def run_eval_with_tyro(
     # Use shared simulation environment setup
     env, device, simulation_app = setup_simulation_environment(tyro_config)
 
-    eval_log_dir = get_experiment_dir(tyro_config.logger, tyro_config.training, get_timestamp(), task_name="eval")
+    eval_log_dir = get_eval_log_dir(tyro_config.logger, tyro_config.training, get_timestamp())
     eval_log_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Saving eval logs to {eval_log_dir}")

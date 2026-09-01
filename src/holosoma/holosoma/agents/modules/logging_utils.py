@@ -17,6 +17,7 @@ from rich.panel import Panel
 from torch.utils.tensorboard import SummaryWriter
 
 from holosoma.utils.average_meters import TensorAverageMeterDict
+from holosoma.utils.wandb_utils import wandb_file_uploads_enabled
 
 console = Console()
 
@@ -441,6 +442,6 @@ class LoggingHelper:
 
     def save_to_wandb(self, file_path: str) -> None:
         """Saves file to wandb if run is initialized."""
-        if wandb.run is None:
+        if wandb.run is None or not wandb_file_uploads_enabled():
             return
         wandb.save(file_path, base_path=self.log_dir)

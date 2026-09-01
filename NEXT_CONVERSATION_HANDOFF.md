@@ -1,6 +1,6 @@
 # Holosoma Semantic Retargeting / WBT 交接文档
 
-> 更新时间：2026-08-26（Asia/Shanghai）
+> 更新时间：2026-09-02（Asia/Shanghai）
 > 下一位助手：开始工作前请完整阅读本文。仓库中有大量已经完成的因果实验和本地结果，不要从头重跑，也不要删除未提交的实验产物。
 
 ## 1. 当前仓库和 Git 状态
@@ -518,8 +518,84 @@ diagnostics/object_drift/eval_b4_original_reward_30k_nominal/
 本轮 Git 只应包含源码、wrapper、测试、轻量文档/诊断脚本以及本文。明确排除：
 
 - `outputs/`、训练 `logs/`、视频、checkpoint、NPZ 大数据、模型权重；
+- 所有后续 eval session、rollout、summary 和视频统一写入 `exp/eval/`；`runs/` 是废弃目录，启动脚本统一放在 `scripts/`。不要再把评测产物写到 `outputs/` 或 `diagnostics/`。物理 rollout 必须关闭实时相机，先记录 NPZ，再离线生成视频。
 - 整个本地 `third_party/` checkout 和其中虚拟环境；
 - `tools/__pycache__`、`tests/**/__pycache__`；
 - `.env` 及任何 Hugging Face token。
 
 工作区还显示已跟踪的 `THIRD_PARTY_LICENSES` 与 `uv.lock` 被删除；这两项与当前功能无关且删除来源不明确，本次不要提交其删除，也不要在没有用户确认时做 destructive restore。下一位助手看到它们仍 dirty 是预期现象。
+
+### 13.6 CARI4D 箱体旋转稳定化（2026-08-27，覆盖 12.1/13.2 的“不要继续修改”旧决定）
+
+用户后来明确授权修改 CARI4D 源码以稳定箱体旋转。本轮在独立 checkout `third_party/CARI4D_pristine`（base commit `71fa7cbe...`）只修改了：
+
+```text
+estimater.py
+prep/fp_behave.py
+```
+
+V1 在每 30 帧 FoundationPose reinit 时选择离上一帧最近的旋转候选，并在最近候选仍超过 10° 时沿用上一帧旋转，消除了 84°–179° 的 symmetry flip；但用户目检仍发现 reinit 之间有左右摆动。V2 在完整 196-frame pose sequence 上增加 21-frame、polyorder=1 的 zero-phase quaternion/SO(3) smoothing，并在最终 joint optimization 使用 `opt_rot=False`，防止 optimizer 重新放大旋转噪声；object translation、human pose、contact 与 penetration 仍照常优化。
+
+V2 正式结果：
+
+```text
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_staging_1024/fp-hy3d-track-sam3-reinit30-rotstable-smooth21/
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_run/output/coconet_sam3_reinit30_rotstable_smooth21_1024/
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_run/output/opt_sam3_reinit30_rotstable_smooth21_1024/
+```
+
+最终视频为 H.264/yuv420p、1280×256、30 fps、196 frames；3000-step 日志以 `all done` 退出。rotation delta p95/max 从 V1 的 `6.14°/12.96°` 降到 `2.34°/2.77°`，总旋转路径从 `379.16°` 降到 `146.64°`（OMOMO reference `138.64°`）；decoded silhouette IoU mean 为 `0.612754`，V1 为 `0.616445`。最终 PTH 相对锁定输入的最大旋转差仅 `0.000023°`。
+
+用户验证入口：
+
+```text
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_run/output/rotation_stabilization_v2_old_vs_smooth21_step3000.mp4
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_run/output/rotation_stabilization_v2_object_focus.mp4
+exp/omomo_cari4d/sub03_largebox3/cari4d_pristine_run/output/opt_sam3_reinit30_rotstable_smooth21_1024/cari4d-release+step031397_demo_sam3_r30_rs_s21-hy3d3-optv2/OMOMO_Sub03_largebox_003+step003000.mp4
+exp/omomo_cari4d/sub03_largebox3/audit_contact_sheets/rotation_smooth21_step3000_object_overlay_every6.png
+```
+
+完整路径、hash 和机器可读指标见 `exp/omomo_cari4d/sub03_largebox3/FINAL_REPORT.md`、`sam3/RUN_SUMMARY.json`、`sam3/final_tracking_metrics.json`。两个新增行为均默认关闭，不影响 CARI4D 原行为；启用参数是 `--stabilize_reinit_rotation --smooth_track_rotations --rotation_smoothing_window 21 --rotation_smoothing_polyorder 1`。
+
+### 13.7 Paper-DR robustness eval 与 RL 当前状态（2026-09-02）
+
+本轮已完成 Paper-DR robustness 评测，并将评测入口整理到 `scripts/`：
+
+```text
+scripts/eval_paper_dr_robustness.sh
+scripts/eval_paper_dr_robustness_instrumentation.py
+scripts/multienv_recording_instrumentation.py
+scripts/analyze_paper_dr_robustness.py
+```
+
+其中 `scripts/multienv_recording_instrumentation.py` 是原先放在废弃 `runs/eval/` 下的 all-environment recorder 的正式归位；Paper-DR wrapper 不再依赖 `runs/`。`locomotion.apply_pushes` 增加了显式 eval push opt-in，默认 eval 行为仍保持关闭，robustness protocol 才会打开论文中的 push。
+
+训练完成的 checkpoint 与 W&B run：
+
+```text
+Omni baseline (original_adaptive): logs/WholeBodyTracking/20260827_145241-b4_omni_paperdr_supported_s42-locomotion/model_29999.pt
+S1 semantic_uniform:              logs/WholeBodyTracking/20260829_225620-b4_s1_semantic_uniform_paperdr_s42-locomotion/model_29999.pt
+S2 semantic_adaptive:             logs/WholeBodyTracking/20260829_225647-b4_s2_semantic_adaptive_paperdr_s42-locomotion/model_29999.pt
+W&B run IDs: Omni=424fhe5j, S1=2f73w97w, S2=0ktg4iqz
+```
+
+三者使用同一 Omni reward/PPO 与 Paper-DR 物理随机化；S1/S2 的差别是 semantic transition reset sampler（uniform vs adaptive）。标准评测固定 B4 reference `exp/benchmark_results_full_event_transition_truncation/rl/transition_truncated_b4_mj_fps50_w_obj.npz`、seed 42、32 个并行环境、每环境前 10 个完整 episode（320 个 episode/model）、324 个有效 motion frames、6.48 s horizon。评测时开启论文 push（1–3 s 间隔，最大线速度 0.3 m/s、角速度 0.78 rad/s），关闭 initial-pose noise；object termination threshold 为 position 1.0 m、orientation π/4。论文所述 shape ±10% 尚未在当前 simulator setup 实现，`paper_shape_scale_implemented=false`，不应误称为已覆盖。
+
+最终统一报告与 JSON：
+
+```text
+exp/eval/paper_dr_robustness/PAPER_DR_ROBUSTNESS_REPORT.md
+exp/eval/paper_dr_robustness/paper_dr_robustness_results.json
+```
+
+结果（每项 320/320，SR=100%）：
+
+| model | object position RMSE | object orientation RMSE | tracked-body position RMSE | push events |
+|---|---:|---:|---:|---:|
+| Omni baseline | 0.0810 m | 6.12° | 0.0478 m | 966 |
+| S1 semantic_uniform | 0.0775 m | 5.51° | 0.0462 m | 968 |
+| S2 semantic_adaptive | 0.0701 m | 5.13° | 0.0445 m | 968 |
+
+三者都没有有效 motion frame 上的早停 tracking failure。原始 terminal snapshot 中少量 `bad_object_pos`/`bad_object_ori` 是 clip 完成后 command 已回到 frame 0、而 PhysX 状态尚未同步造成的一拍 stale flag；分析器已按最后一个有效 motion frame 判定成功，并单独记录 stale 计数（Omni 1、S1 2、S2 1），不能把它们计为失败。
+
+本次提交只应包含源码、测试、评测/启动脚本和上述轻量报告；训练日志、checkpoint、raw rollout NPZ、视频、`outputs/`、`third_party/` 和 `.env` 留在本机并由 `.gitignore` 排除。当前仍存在旧 benchmark 结果迁移产生的大量 tracked deletion，以及 `THIRD_PARTY_LICENSES`、`uv.lock` 删除；这些不属于本次 RL success 提交，未纳入 stage。

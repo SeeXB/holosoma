@@ -20,6 +20,11 @@ from holosoma.utils.eval_utils import (
 )
 from holosoma.utils.helpers import get_class
 from holosoma.utils.sim_utils import close_simulation_app
+from holosoma.utils.wandb_utils import (
+    configure_wandb_uploads,
+    metrics_only_wandb_settings,
+    wandb_file_uploads_enabled,
+)
 
 
 class TrainingContext:
@@ -208,6 +213,9 @@ def train(tyro_config: ExperimentConfig, training_context: TrainingContext | Non
                 "Logger config must be WandbLoggerConfig when type is wandb"
             )
             wandb_cfg = logger_cfg
+            configure_wandb_uploads(metrics_only=wandb_cfg.metrics_only)
+            if wandb_cfg.metrics_only:
+                logger.info("W&B metrics-only mode: uploading chart history only; auxiliary files stay local")
             # Use training config for project/name, fallback to logger config, then defaults
             default_project = tyro_config.training.project or wandb_cfg.project or "default_project"
             default_run_name = (
@@ -222,10 +230,13 @@ def train(tyro_config: ExperimentConfig, training_context: TrainingContext | Non
             wandb_kwargs: dict[str, Any] = {
                 "project": wandb_cfg.project or default_project,
                 "name": wandb_cfg.name or default_run_name,
-                "config": dataclasses.asdict(tyro_config),
                 "dir": str(wandb_dir),
                 "mode": wandb_cfg.mode,
             }
+            if wandb_cfg.metrics_only:
+                wandb_kwargs["settings"] = metrics_only_wandb_settings(wandb)
+            else:
+                wandb_kwargs["config"] = dataclasses.asdict(tyro_config)
             wandb_entity = os.getenv("WANDB_ENTITY") or wandb_cfg.entity
             if wandb_entity:
                 wandb_kwargs["entity"] = wandb_entity
@@ -275,7 +286,7 @@ def train(tyro_config: ExperimentConfig, training_context: TrainingContext | Non
             logger.info(f"Saving config file to {experiment_save_dir}")
             config_path = experiment_save_dir / CONFIG_NAME
             tyro_config.save_config(str(config_path))
-            if wandb_enabled:
+            if wandb_enabled and wandb_file_uploads_enabled():
                 wandb.save(str(config_path), base_path=experiment_save_dir)
 
         algo_class = get_class(tyro_config.algo._target_)

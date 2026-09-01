@@ -171,6 +171,8 @@ def annotate_panel(
     step: int,
     seconds: float,
     delta_y: float | None = None,
+    object_ori_deg: float | None = None,
+    object_pos_cm: float | None = None,
 ) -> np.ndarray:
     image = Image.fromarray(frame)
     draw = ImageDraw.Draw(image, "RGBA")
@@ -182,10 +184,14 @@ def annotate_panel(
     draw.rounded_rectangle((14, height - 49, 310, height - 13), 8, fill=(7, 11, 17, 195))
     draw.text((26, height - 44), status, font=font(17), fill=(238, 242, 247, 255))
     if delta_y is not None:
-        status = f"torso actual-ref y: {delta_y * 100:+.1f} cm"
+        if object_ori_deg is None or object_pos_cm is None:
+            status = f"torso actual-ref y: {delta_y * 100:+.1f} cm"
+        else:
+            status = f"box pose error: {object_ori_deg:.2f} deg / 45 deg, position {object_pos_cm:.1f} cm"
         bbox = draw.textbbox((0, 0), status, font=font(17, bold=True))
         box_width = bbox[2] - bbox[0] + 24
-        color = (215, 60, 55, 220) if abs(delta_y) >= 0.15 else (26, 121, 82, 210)
+        failed = object_ori_deg is not None and object_ori_deg > 45.0
+        color = (215, 60, 55, 220) if failed or abs(delta_y) >= 0.15 else (26, 121, 82, 210)
         draw.rounded_rectangle(
             (width - box_width - 14, height - 49, width - 14, height - 13),
             8,
@@ -286,7 +292,7 @@ def main() -> None:
     parser.add_argument("--actual", type=Path, required=True)
     parser.add_argument("--reference", type=Path, default=DEFAULT_REFERENCE)
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "diagnostics/object_drift/videos")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "runs/eval/object_drift")
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
     args = parser.parse_args()
@@ -313,6 +319,8 @@ def main() -> None:
     act_torso = np.asarray(actual["actual_torso_pos_w"][indices])
     ref_object = np.asarray(actual["reference_object_pos_w"][indices])
     act_object = np.asarray(actual["object_pos_w"][indices])
+    object_ori_deg = np.degrees(np.asarray(actual["object_ori_error_rad"][indices]))
+    object_pos_cm = 100.0 * np.asarray(actual["object_pos_error_m"][indices])
 
     reference_encoder = RawVideoEncoder(output_dir / "reference_fixed_world.mp4", args.width, args.height, fps)
     actual_encoder = RawVideoEncoder(output_dir / "actual_fixed_world.mp4", args.width, args.height, fps)
@@ -338,6 +346,8 @@ def main() -> None:
                 int(step),
                 step / fps,
                 float(delta_y),
+                float(object_ori_deg[i]),
+                float(object_pos_cm[i]),
             )
             pair = np.concatenate((ref_frame, actual_frame), axis=1)
             reference_encoder.write(ref_frame)

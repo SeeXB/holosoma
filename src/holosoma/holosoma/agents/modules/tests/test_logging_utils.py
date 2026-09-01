@@ -167,8 +167,8 @@ def test_wandb_logging(prefixed_logging_helper, mock_wandb):
     assert logged_data["global_step"] == 0
 
 
-def test_save_checkpoint_artifact(prefixed_logging_helper, mock_wandb, tmp_path):
-    """Test that checkpoints are properly saved and logged to wandb."""
+def test_save_checkpoint_artifact_is_local_only_by_default(prefixed_logging_helper, mock_wandb, tmp_path):
+    """Metrics-only W&B runs must keep checkpoints local."""
     # Create a temporary directory for the test
     log_dir = tmp_path / "test_logs"
     log_dir.mkdir()
@@ -181,7 +181,19 @@ def test_save_checkpoint_artifact(prefixed_logging_helper, mock_wandb, tmp_path)
     # Save checkpoint
     prefixed_logging_helper.save_checkpoint_artifact(state_dict, str(checkpoint_path))
 
-    # Verify wandb.save was called with correct path
-    mock_wandb.save.assert_called_once()
-    assert mock_wandb.save.call_args[0][0] == str(checkpoint_path)
-    assert mock_wandb.save.call_args[1]["base_path"] == str(log_dir)
+    assert checkpoint_path.is_file()
+    mock_wandb.save.assert_not_called()
+
+
+def test_save_checkpoint_artifact_can_use_legacy_file_uploads(prefixed_logging_helper, mock_wandb, tmp_path):
+    """The explicit non-metrics-only mode retains the legacy upload path."""
+
+    log_dir = tmp_path / "test_logs"
+    log_dir.mkdir()
+    prefixed_logging_helper.log_dir = str(log_dir)
+    checkpoint_path = log_dir / "checkpoint.pt"
+
+    with patch("holosoma.agents.modules.logging_utils.wandb_file_uploads_enabled", return_value=True):
+        prefixed_logging_helper.save_checkpoint_artifact({"test_param": torch.tensor([1.0])}, str(checkpoint_path))
+
+    mock_wandb.save.assert_called_once_with(str(checkpoint_path), base_path=str(log_dir))

@@ -32,6 +32,12 @@ Thumbs.db
 # Experiment logs
 logs
 logs_eval
+/runs/
+
+# Local experiment/runtime checkouts (keep source reports under exp/ trackable)
+/outputs/
+/third_party/
+/exp/eval/**/rollout*.npz
 
 # Isaacsim Converted Files
 src/holosoma/holosoma/data/robots/converted/

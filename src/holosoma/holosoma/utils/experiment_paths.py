@@ -99,7 +99,7 @@ def get_video_dir(experiment_dir: Path) -> Path:
 def get_eval_log_dir(
     logger_config: LoggerConfig, training_config: TrainingConfig, eval_timestamp: str | None = None
 ) -> Path:
-    """Compute evaluation log directory from logger and training config.
+    """Compute an evaluation session directory below ``exp/eval``.
 
     Parameters
     ----------
@@ -118,13 +118,18 @@ def get_eval_log_dir(
     if eval_timestamp is None:
         eval_timestamp = get_timestamp()
 
-    base_dir = Path(logger_config.base_dir).parent / "logs_eval"
+    # Evaluation artifacts are intentionally kept separate from training logs.
+    # Keep this root stable even when a checkpoint's saved logger configuration
+    # points at a legacy ``logs`` directory.
+    base_dir = Path("exp") / "eval" / "sessions"
 
     # Use training config for project, with fallback to logger config
     project: str | None = training_config.project
     if not project and hasattr(logger_config, "project"):
         project = logger_config.project
 
+    name = training_config.name or getattr(logger_config, "name", None) or "run"
+    session_name = f"{eval_timestamp}-{name}-eval"
     if project:
-        return base_dir / project / eval_timestamp
-    return base_dir / eval_timestamp
+        return base_dir / project / session_name
+    return base_dir / session_name

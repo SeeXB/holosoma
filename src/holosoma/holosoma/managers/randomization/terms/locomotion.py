@@ -1075,9 +1075,16 @@ def apply_pushes(
     enabled: bool | None = None,
     push_interval_s: Sequence[float] | None = None,
     max_push_vel: Sequence[float] | None = None,
+    allow_during_eval: bool = False,
     **_,
 ) -> None:
-    """Apply random pushes based on the current schedule."""
+    """Apply random pushes based on the current schedule.
+
+    Training keeps the historical behavior of suppressing pushes while the
+    environment is in evaluation mode.  A robustness protocol can opt in to
+    the paper's published push perturbation through the explicit
+    ``allow_during_eval`` parameter, without changing existing evaluations.
+    """
     state = env.randomization_manager.get_state("push_randomizer_state")
     if state is None:
         raise AttributeError("PushRandomizerState is not registered with the randomization manager.")
@@ -1085,7 +1092,10 @@ def apply_pushes(
     state.configure(enabled=enabled, push_interval_s=push_interval_s, max_push_vel=max_push_vel)
     env._push_robots_enabled = state.enabled
 
-    if env.is_evaluating or not state.enabled:
+    # A dedicated robustness instrumentation may opt in before the first eval
+    # step without needing to address an arbitrary ``params`` dict in Tyro.
+    eval_pushes_allowed = allow_during_eval or getattr(env, "_paper_eval_allow_pushes", False)
+    if (env.is_evaluating and not eval_pushes_allowed) or not state.enabled:
         return
 
     push_robot_env_ids = state.due_envs(env.dt)

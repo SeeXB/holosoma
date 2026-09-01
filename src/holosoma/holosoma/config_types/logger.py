@@ -70,13 +70,18 @@ class WandbLoggerConfig:
     resume: bool | None | Literal["allow", "never", "must", "auto"] = None
     """Resume behaviour passed directly to wandb.init."""
 
+    metrics_only: bool = True
+    """Upload chart metrics only, excluding config/log/model/media files."""
+
     # Video recording configuration
     video: VideoConfig = field(default_factory=VideoConfig)
     """Video recording configuration."""
 
     headless_recording: bool = False
-    """Enable video recording in headless mode (saves to local directory and logs to wandb).
-       Kept for backwards compatibility, overrides video.enabled.
+    """Enable video recording in headless mode.
+
+       Videos remain local when ``metrics_only`` is enabled. Kept for backwards
+       compatibility and overrides ``video.enabled``.
     """
 
     # Directory settings

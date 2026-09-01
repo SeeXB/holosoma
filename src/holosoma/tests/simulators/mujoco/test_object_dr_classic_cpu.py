@@ -28,6 +28,7 @@ pytestmark = pytest.mark.mujoco_classic
 from holosoma.config_types.scene import RigidObjectConfig, SceneConfig  # noqa: E402
 from holosoma.managers.randomization.terms.objects import (  # noqa: E402
     _mujoco_object_geom_ids,
+    randomize_object_rigid_body_com_startup,
     randomize_object_rigid_body_inertia_startup,
     randomize_object_rigid_body_mass_startup,
     randomize_object_rigid_body_material_startup,
@@ -55,6 +56,25 @@ def test_object_mass_randomized_classic_cpu():
     # operation="add": the live model mass picked up an offset inside the configured band
     # (a no-op / wrong-backend write would leave it at the URDF default).
     assert 5.0 - 1e-3 <= after - before <= 6.0 + 1e-3, f"mass offset out of band: {before} -> {after}"
+
+
+def test_object_com_randomized_classic_cpu():
+    sim = build_classic_sim(
+        SceneConfig(rigid_objects={"box": RigidObjectConfig(urdf_file=SMALL_BOX, position=[0.4, 0.0, 0.6])})
+    )
+    bid = object_body_id(sim, "box")
+    before = sim.backend.model.body_ipos[bid].copy()
+
+    env = env_shell(sim, 1)
+    randomize_object_rigid_body_com_startup(
+        env,
+        torch.tensor([0]),
+        sampler=_sampler(env),
+        com_distribution_params={"x": (0.02, 0.02), "y": (-0.03, -0.03), "z": (0.04, 0.04)},
+    )
+
+    after = sim.backend.model.body_ipos[bid]
+    assert after == pytest.approx(before + [0.02, -0.03, 0.04])
 
 
 def test_object_friction_randomized_classic_cpu():
