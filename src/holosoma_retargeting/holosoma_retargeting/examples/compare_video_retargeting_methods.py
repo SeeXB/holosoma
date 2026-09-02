@@ -282,17 +282,17 @@ def _report(
 ) -> None:
     original, uniform2, semantic = rows
     lines = [
-        "# Video-recovered SMPL-H retargeting comparison",
+        "# OMOMO SMPL-H retargeting comparison",
         "",
         f"Sequence: `{task_name}` (196 frames, 30 fps).",
         "",
         "## Fair comparison settings",
         "",
-        "- Same video-recovered SMPL-H and object trajectory, coordinate transform, largebox mesh/URDF, and MuJoCo scene.",
+        "- Same OMOMO SMPL-H trajectory, coordinate transform, object mesh/URDF, and MuJoCo scene.",
         "- Object non-penetration and joint limits enabled for all methods.",
         "- Same 10 mm foot-sticking tolerance for all methods; the default 1 mm constraint is infeasible on the noisy recovered trajectory at frame 86.",
         "- Quality scores use unweighted evaluator residuals; optimizer semantic weights and criticality values are not scoring weights.",
-        "- There is no robot ground truth for this recovered video, so these are cross-method consistency and geometry audits rather than pose-to-GT errors.",
+        "- There is no robot ground truth for this sequence, so these are cross-method consistency and geometry audits rather than pose-to-GT errors.",
         "",
         "## Results",
         "",

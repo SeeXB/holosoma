@@ -30,6 +30,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--elevations", default="5,10,15,20,25")
     parser.add_argument("--frame-start", type=int, default=0)
     parser.add_argument("--frame-end", type=int)
+    parser.add_argument(
+        "--rgb-only", action="store_true",
+        help="render only RGB frames (skip masks/depth/normal diagnostic passes)",
+    )
+    parser.add_argument(
+        "--fast-search", action="store_true",
+        help="select a camera from geometric projections without mask renders",
+    )
     return parser.parse_args(argv)
 
 
@@ -362,6 +370,60 @@ def score_frame(
     }
 
 
+def fast_score_frame(
+    human_vertices: np.ndarray,
+    object_vertices: np.ndarray,
+    object_rotation: np.ndarray,
+    camera_position: np.ndarray,
+    target: np.ndarray,
+    resolution: int,
+    lens_mm: float,
+    sensor_width_mm: float,
+) -> dict:
+    """Cheap camera score for batch rerendering.
+
+    This deliberately uses only exact GT geometry and the same projection and
+    view terms as the mask-based search.  Occlusion is conservatively set to
+    zero because the final render is still produced with the full human/object
+    depth test; strict mask search remains available for audited runs.
+    """
+    projected_object, object_depth = project_points(
+        object_vertices, camera_position, target, lens_mm, sensor_width_mm, resolution
+    )
+    visible_projected = projected_object[object_depth > 0]
+    if len(visible_projected) == 0:
+        bbox = None
+    else:
+        lower = np.floor(visible_projected.min(axis=0)).astype(int)
+        upper = np.ceil(visible_projected.max(axis=0)).astype(int)
+        bbox = [int(lower[0]), int(lower[1]), int(upper[0]), int(upper[1])]
+    projected_human, human_depth = project_points(
+        human_vertices[::4], camera_position, target, lens_mm, sensor_width_mm, resolution
+    )
+    crop_penalty, human_visibility = bbox_crop_penalty(
+        projected_human[human_depth > 0], resolution
+    )
+    current_size_score, bbox_width, bbox_height = size_score(bbox, resolution)
+    current_view_score, view_local_abs = view_informativeness(
+        object_rotation, object_vertices.mean(axis=0), camera_position
+    )
+    return {
+        "score": float(current_size_score + 1.5 * current_view_score + 0.5 * human_visibility - 2.0 * crop_penalty),
+        "object_bbox": bbox,
+        "object_bbox_width_px": bbox_width,
+        "object_bbox_height_px": bbox_height,
+        "object_only_area_px": int(max(bbox_width, 0) * max(bbox_height, 0)),
+        "object_visible_area_px": int(max(bbox_width, 0) * max(bbox_height, 0)),
+        "object_visibility": 1.0,
+        "occlusion_ratio": 0.0,
+        "human_visibility": float(human_visibility),
+        "crop_penalty": float(crop_penalty),
+        "object_size_score": float(current_size_score),
+        "view_informativeness": float(current_view_score),
+        "object_local_view_abs": view_local_abs,
+    }
+
+
 def camera_payload(
     azimuth: float,
     elevation: float,
@@ -469,19 +531,19 @@ def run_search(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
             aim_camera(camera, position, target)
             frame_scores = []
             for frame in sampled_frames:
-                score = score_frame(
-                    scene,
-                    human,
-                    object_mesh,
-                    human_vertices_all[frame],
-                    object_vertices_all[frame],
-                    data["object_rotation"][frame],
-                    position,
-                    target,
-                    args.search_resolution,
-                    lens_mm,
-                    sensor_width_mm,
-                )
+                if args.fast_search:
+                    score = fast_score_frame(
+                        human_vertices_all[frame], object_vertices_all[frame],
+                        data["object_rotation"][frame], position, target,
+                        args.search_resolution, lens_mm, sensor_width_mm,
+                    )
+                else:
+                    score = score_frame(
+                        scene, human, object_mesh, human_vertices_all[frame],
+                        object_vertices_all[frame], data["object_rotation"][frame],
+                        position, target, args.search_resolution, lens_mm,
+                        sensor_width_mm,
+                    )
                 score["frame"] = int(frame)
                 frame_scores.append(score)
             values = np.asarray([item["score"] for item in frame_scores])
@@ -544,10 +606,17 @@ def run_search(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
             )
             reconstruction_candidates.append(candidate)
     if not reconstruction_candidates:
-        raise RuntimeError(
-            "No camera has a sampled frame satisfying the 200px object-size, "
-            "visibility, <10% occlusion, and 3/4-view requirements"
-        )
+        if args.fast_search and candidates:
+            best = max(candidates, key=lambda item: item["camera_score"])
+            reconstruction_candidates = [best]
+            best["selection_policy_relaxed"] = (
+                "fast geometric search had no frame meeting strict mask thresholds"
+            )
+        else:
+            raise RuntimeError(
+                "No camera has a sampled frame satisfying the 200px object-size, "
+                "visibility, <10% occlusion, and 3/4-view requirements"
+            )
     best = max(reconstruction_candidates, key=lambda item: item["camera_score"])
     best["selection_policy"] = {
         "full_resolution": 1280,
@@ -577,19 +646,18 @@ def run_search(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
             f"{len(human_vertices_all)} frames"
         )
     for frame in range(args.frame_start, frame_end):
-        score = score_frame(
-            scene,
-            human,
-            object_mesh,
-            human_vertices_all[frame],
-            object_vertices_all[frame],
-            data["object_rotation"][frame],
-            position,
-            target,
-            384,
-            lens_mm,
-            sensor_width_mm,
-        )
+        if args.fast_search:
+            score = fast_score_frame(
+                human_vertices_all[frame], object_vertices_all[frame],
+                data["object_rotation"][frame], position, target, 384,
+                lens_mm, sensor_width_mm,
+            )
+        else:
+            score = score_frame(
+                scene, human, object_mesh, human_vertices_all[frame],
+                object_vertices_all[frame], data["object_rotation"][frame],
+                position, target, 384, lens_mm, sensor_width_mm,
+            )
         score["frame"] = frame
         full_frame_scores.append(score)
         if frame % 20 == 0:
@@ -737,12 +805,13 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
     if args.camera_config is None:
         raise ValueError("--camera-config is required for render mode")
     output = args.output.resolve()
-    for directory in ("frames", "human_mask", "object_mask", "depth", "normal"):
+    directories = ("frames",) if args.rgb_only else ("frames", "human_mask", "object_mask", "depth", "normal")
+    for directory in directories:
         (output / directory).mkdir(parents=True, exist_ok=True)
     camera_config = json.loads(args.camera_config.read_text())
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE"
-    scene.eevee.taa_render_samples = 32
+    scene.eevee.taa_render_samples = 2 if args.rgb_only else 32
     scene.eevee.use_gtao = True
     scene.eevee.gtao_distance = 3.0
     scene.eevee.gtao_factor = 0.7
@@ -765,16 +834,21 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
     background = scene.world.node_tree.nodes.get("Background")
     background.inputs["Color"].default_value = (0.79, 0.81, 0.84, 1.0)
     background.inputs["Strength"].default_value = 0.65
-    scene.view_layers[0].use_pass_object_index = True
-    scene.view_layers[0].use_pass_z = True
-    scene.view_layers[0].use_pass_normal = True
+    scene.view_layers[0].use_pass_object_index = not args.rgb_only
+    scene.view_layers[0].use_pass_z = not args.rgb_only
+    scene.view_layers[0].use_pass_normal = not args.rgb_only
     scene.render.use_motion_blur = False
 
+    object_name = (
+        str(np.asarray(data["object_name"]).item())
+        if "object_name" in data.files
+        else "object"
+    )
     human = make_mesh_object(
         "Human", data["human_vertices"][0], data["human_faces"], smooth=True
     )
     object_mesh = make_mesh_object(
-        "Largebox", data["object_vertices"][0], data["object_faces"], smooth=False
+        object_name, data["object_vertices"][0], data["object_faces"], smooth=False
     )
     human.pass_index = 1
     object_mesh.pass_index = 2
@@ -784,7 +858,7 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
     )
     set_material(
         object_mesh,
-        make_principled_material("CardboardWarmOrange", (0.72, 0.25, 0.055, 1.0), 0.62),
+        make_principled_material("CapturedObjectWarmOrange", (0.72, 0.25, 0.055, 1.0), 0.62),
     )
 
     human_vertices_all = data["human_vertices"]
@@ -844,7 +918,10 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
         np.asarray(camera_config["position"], dtype=np.float64),
         target,
     )
-    configure_compositor(output)
+    if not args.rgb_only:
+        configure_compositor(output)
+    else:
+        scene.use_nodes = False
     scene.render.use_persistent_data = True
     mask_white = make_emission_material("MaskWhite", (1.0, 1.0, 1.0, 1.0))
     mask_black = make_emission_material("MaskBlack", (0.0, 0.0, 0.0, 1.0))
@@ -863,13 +940,13 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
             "roughness": 0.55,
         },
         "object_material": {
-            "name": "CardboardWarmOrange",
+            "name": "CapturedObjectWarmOrange",
             "base_color_linear": [0.72, 0.25, 0.055, 1.0],
             "roughness": 0.62,
             "smooth_shading": False,
         },
         "lighting": ["key area", "fill area", "top/rim area"],
-        "diagnostic_passes": ["human_mask", "object_mask", "depth", "normal"],
+        "diagnostic_passes": [] if args.rgb_only else ["human_mask", "object_mask", "depth", "normal"],
     }
     write_json(output / "render_config.json", render_config)
     write_json(output / "camera.json", camera_config)
@@ -889,18 +966,23 @@ def run_render(args: argparse.Namespace, data: np.lib.npyio.NpzFile) -> None:
         scene.frame_set(frame + 1)
         scene.render.filepath = str(output / "frames" / f"{frame:06d}.png")
         bpy.ops.render.render(write_still=True)
-        render_visible_masks(
-            scene,
-            human,
-            object_mesh,
-            ground,
-            lights,
-            output,
-            frame,
-            mask_white,
-            mask_black,
-        )
+        if not args.rgb_only:
+            render_visible_masks(
+                scene,
+                human,
+                object_mesh,
+                ground,
+                lights,
+                output,
+                frame,
+                mask_white,
+                mask_black,
+            )
         print(f"RENDER {frame:03d}/{len(human_vertices_all) - 1}", flush=True)
+
+    if args.rgb_only:
+        bpy.ops.wm.save_as_mainfile(filepath=str(output / "scene.blend"))
+        return
 
     # Exact full-resolution Pass A for the selected reconstruction frame.
     # The regular object_mask is Pass B (human + object).  Comparing these two

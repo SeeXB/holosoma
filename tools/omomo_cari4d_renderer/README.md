@@ -1,9 +1,9 @@
 # OMOMO → CARI4D-friendly renderer
 
 This directory is intentionally outside both OMOMO and CARI4D.  It reads the
-real OMOMO `sub3_largebox_003` ground-truth motion and produces a static-camera
-Blender render plus geometry-derived diagnostic masks.  It never estimates or
-changes human/object motion.
+real OMOMO ground-truth motion for any `sub<subject>_<object>_<index>` sequence
+and produces a static-camera Blender render plus optional geometry-derived
+diagnostic masks.  It never estimates or changes human/object motion.
 
 All experiment artifacts are written below:
 
@@ -13,6 +13,12 @@ exp/omomo_cari4d/sub03_largebox3/
 
 The requested alias `sub03_largebox3` is explicitly mapped to OMOMO's actual
 metadata identifier `sub3_largebox_003`; no substitute sequence is used.
+
+For batch work, `render_sequence.py` derives the train/test record, captured
+object OBJ and source video from the sequence name and writes to
+`exp/omomo_cari4d/<sequence>/`. Its default mode uses a fast exact-GT
+geometric camera search and RGB-only rendering; use `--strict-search` and
+`--diagnostics` when the audited mask/depth products are needed.
 
 ## Reproduce
 
@@ -32,8 +38,8 @@ third_party/CARI4D/.venv/bin/python \
 tools/omomo_cari4d_renderer/prepare_sequence.py
 ```
 
-2. Search 120 static cameras with 256-pixel two-pass mask renders, then score
-all 196 frames at 384 pixels for the winning camera.  The search is resumable:
+2. Search static cameras with 256-pixel two-pass mask renders, then score all
+frames at 384 pixels for the winning camera.  The search is resumable:
 an interrupted run reloads `camera_candidates.partial.json` and skips completed
 azimuth/elevation pairs.
 
@@ -82,6 +88,21 @@ the same fixed camera and depth test.  This avoids a Blender 3.6 surfaceless
 EEVEE issue in which legacy compositor IDMask-to-PNG nodes may not write files.
 Depth and normals remain untouched diagnostic compositor passes; neither path
 changes the RGB image.
+
+The generated archive also contains `human_joints`, `smplh_joint_names`,
+`object_poses_wxyz_xyz`, and `frame_ids`. The dynamic semantic pipeline sends
+only the rerendered video to the VLM. The VLM returns task-specific action
+names, body parts, and a constrained start/end keyframe function; the latter
+is then evaluated on this GT bundle to produce concrete windows. There is no
+global `lift/carry/place` role list:
+
+```bash
+PYTHONPATH=src/holosoma_retargeting \
+python -m holosoma_retargeting.semantic_keyframes.cli \
+  --video exp/omomo_cari4d/<sequence>/cari4d_friendly/<sequence>_rerender.mp4 \
+  --bundle-file exp/omomo_cari4d/<sequence>/input/omomo_gt_sequence.npz \
+  --output exp/omomo_cari4d/<sequence>/semantic_keyframes/<sequence>_dynamic.json
+```
 
 ## Model-resource note
 

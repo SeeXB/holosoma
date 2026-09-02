@@ -37,6 +37,37 @@ SIGNALS = {
     "hand_mean_speed",
     "pelvis_speed",
 }
+# Dataset-independent vocabulary exposed to the VLM.  Unlike the historical
+# ``SIGNALS`` set above, these names do not encode a box-carry task.
+DYNAMIC_SIGNALS = {
+    "left_hand_object_distance",
+    "right_hand_object_distance",
+    "min_hand_object_distance",
+    "max_hand_object_distance",
+    "pelvis_object_distance",
+    "left_hand_speed",
+    "right_hand_speed",
+    "hand_mean_speed",
+    "pelvis_speed",
+    "object_height",
+    "object_vertical_speed",
+    "object_speed",
+    "object_displacement",
+    "object_progress",
+    "object_goal_distance",
+    "object_angular_speed",
+}
+DYNAMIC_PRIMITIVES = frozenset({
+    "global_minimum",
+    "global_maximum",
+    "local_minimum",
+    "local_maximum",
+    "threshold_crossing_down",
+    "threshold_crossing_up",
+    "sustained_below",
+    "sustained_above",
+})
+DYNAMIC_BODY_PARTS = MAPPABLE_BODY_PARTS
 PRIMITIVES = {
     "global_minimum",
     "global_maximum",
@@ -87,7 +118,12 @@ ROLE_END_REQUIREMENTS = {
 def load_env_file(path: Path) -> None:
     """Load missing environment variables from a simple dotenv file."""
     if not path.exists():
-        return
+        # The repository keeps the retargeting credentials beside this
+        # package, while the CLI is commonly launched from the workspace root.
+        package_env = Path(__file__).resolve().parents[2] / ".env"
+        if package_env == path or not package_env.exists():
+            return
+        path = package_env
     for line in path.read_text(encoding="utf-8").splitlines():
         if "=" not in line or line.lstrip().startswith("#"):
             continue
@@ -138,17 +174,62 @@ def sample_video_frames(video: Path, count: int) -> list[dict[str, Any]]:
         ]
 
 
-def extract_json(text: str) -> dict[str, Any]:
-    """Extract one JSON object from a plain or Markdown-fenced VLM response."""
+def _extract_json_value(text: str) -> Any:
+    """Extract the first complete JSON value from a VLM response."""
     text = text.strip()
     fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     candidate = fenced.group(1) if fenced else text[text.find("{") : text.rfind("}") + 1]
     if not candidate:
         raise ValueError("response contains no JSON object")
-    value = json.loads(candidate)
+    try:
+        value = json.loads(candidate)
+    except json.JSONDecodeError:
+        # A few OpenAI-compatible gateways append a second JSON object to a
+        # repair response.  Keep the first complete object and let the local
+        # schema validator decide whether it is authorized.
+        value, _ = json.JSONDecoder().raw_decode(candidate.lstrip())
+    return value
+
+
+def extract_json(text: str) -> dict[str, Any]:
+    """Extract one JSON object from a plain or Markdown-fenced VLM response."""
+    value = _extract_json_value(text)
     if not isinstance(value, dict):
         raise ValueError("top-level response must be a JSON object")
     return value
+
+
+DEFAULT_BODY_PARTS = {
+    "start": ["pelvis"],
+    "approach": ["pelvis"],
+    "contact": ["left_hand", "right_hand"],
+    "lift": ["left_hand", "right_hand"],
+    "carry_mid": ["pelvis"],
+    "arrive": ["pelvis"],
+    "place": ["left_hand", "right_hand"],
+    "release": ["left_hand", "right_hand"],
+}
+
+
+def normalize_plan_body_parts(plan: dict[str, Any]) -> dict[str, Any]:
+    """Remove VLM-only anatomy aliases before executable validation.
+
+    The runtime deliberately supports a small body-part vocabulary.  Keeping
+    valid aliases and role-specific defaults makes the boundary safe while
+    leaving all trigger/end/criticality decisions untouched.
+    """
+    normalized = copy.deepcopy(plan)
+    for event in normalized.get("events", []):
+        if not isinstance(event, dict):
+            continue
+        role = event.get("event")
+        parts = event.get("body_parts")
+        if isinstance(parts, list):
+            valid = [part for part in parts if part in MAPPABLE_BODY_PARTS]
+            if role in {"contact", "release"} and not any("hand" in part for part in valid):
+                valid = list(DEFAULT_BODY_PARTS.get(role, []))
+            event["body_parts"] = valid or list(DEFAULT_BODY_PARTS.get(role, []))
+    return normalized
 
 
 def plan_validation_issues(plan: dict[str, Any]) -> list[dict[str, Any]]:
@@ -588,10 +669,21 @@ def load_retargeting_bundle_signals(
     def speed(track: np.ndarray) -> np.ndarray:
         return np.linalg.norm(np.gradient(track, axis=0), axis=1) * fps
 
+    def angular_speed(quaternion_wxyz: np.ndarray) -> np.ndarray:
+        # Quaternion sign is arbitrary; use the shortest angular increment.
+        q = quaternion_wxyz / np.maximum(
+            np.linalg.norm(quaternion_wxyz, axis=1, keepdims=True), 1.0e-8
+        )
+        dots = np.sum(q[1:] * q[:-1], axis=1)
+        angles = 2.0 * np.arccos(np.clip(np.abs(dots), 0.0, 1.0))
+        return np.r_[angles[0] if len(angles) else 0.0, angles] * fps
+
     obj_delta = obj - obj[0]
     path_dir = obj[-1] - obj[0]
     norm = max(float(np.linalg.norm(path_dir)), 1e-6)
     progress = np.clip(obj_delta @ (path_dir / norm) / norm, 0.0, 1.0)
+    object_displacement = np.linalg.norm(obj - obj[0], axis=1)
+    object_vertical_speed = np.abs(np.gradient(obj[:, 2])) * fps
     signals = {
         # Historical names say "surface" although the registered resolver uses
         # the canonical object-frame origin.  Keep names/semantics stable here.
@@ -606,6 +698,16 @@ def load_retargeting_bundle_signals(
         "object_goal_distance": np.linalg.norm(obj - obj[-1], axis=1),
         "hand_mean_speed": 0.5 * (speed(left_hand) + speed(right_hand)),
         "pelvis_speed": speed(pelvis),
+        "left_hand_object_distance": dist_l,
+        "right_hand_object_distance": dist_r,
+        "min_hand_object_distance": np.minimum(dist_l, dist_r),
+        "max_hand_object_distance": np.maximum(dist_l, dist_r),
+        "pelvis_object_distance": np.linalg.norm(pelvis - obj, axis=1),
+        "left_hand_speed": speed(left_hand),
+        "right_hand_speed": speed(right_hand),
+        "object_vertical_speed": object_vertical_speed,
+        "object_displacement": object_displacement,
+        "object_angular_speed": angular_speed(object_poses[:, :4]),
     }
     thresholds = {
         "contact_enter": float(np.quantile(signals["max_hand_box_surface_distance"], 0.18)),
@@ -737,6 +839,215 @@ def validate_semantic_keyframe_json(payload: dict[str, Any]) -> None:
                 raise ValueError(f"{name} requires start_frame <= trigger_frame <= end_frame")
 
 
+def dynamic_plan_validation_issues(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate the task-specific VLM action/function contract.
+
+    An action is intentionally not selected from a global role list.  The VLM
+    may name the observed action (for example ``drag_suitcase`` or
+    ``grasp_handle``), while its frame judgment remains a small declarative
+    function over locally computed motion signals.
+    """
+    issues: list[dict[str, Any]] = []
+
+    def add(action: str | None, field: str, message: str) -> None:
+        issues.append({"action": action, "field": field, "message": message})
+
+    actions = plan.get("actions")
+    if not isinstance(actions, list) or not 1 <= len(actions) <= 12:
+        add(None, "actions", "actions must contain between 1 and 12 task-specific actions")
+        return issues
+    names: list[str] = []
+    for index, action in enumerate(actions):
+        if not isinstance(action, dict):
+            add(None, f"actions[{index}]", "every action must be an object")
+            continue
+        name = action.get("action")
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z][a-z0-9_]{1,63}", name):
+            add(str(name) if name is not None else None, "action", "action must be a unique snake_case name")
+            continue
+        if name in names:
+            add(name, "action", "action names must be unique")
+        names.append(name)
+        parts = action.get("body_parts")
+        if not isinstance(parts, list) or not parts or not all(isinstance(part, str) for part in parts):
+            add(name, "body_parts", "body_parts must be a non-empty list of strings")
+        elif set(parts).difference(DYNAMIC_BODY_PARTS):
+            add(name, "body_parts", f"unmappable body parts: {sorted(set(parts).difference(DYNAMIC_BODY_PARTS))}")
+        function = action.get("keyframe_function")
+        if not isinstance(function, dict):
+            add(name, "keyframe_function", "keyframe_function must contain start and end rules")
+            continue
+        for endpoint in ("start", "end"):
+            rule = function.get(endpoint)
+            if not isinstance(rule, dict):
+                add(name, f"keyframe_function.{endpoint}", "rule must be an object")
+                continue
+            primitive = rule.get("primitive")
+            signal = rule.get("signal")
+            if primitive not in DYNAMIC_PRIMITIVES:
+                add(name, f"keyframe_function.{endpoint}", f"unsupported primitive: {primitive!r}")
+            if signal not in DYNAMIC_SIGNALS:
+                add(name, f"keyframe_function.{endpoint}", f"unsupported signal: {signal!r}")
+            threshold = rule.get("threshold")
+            needs_threshold = primitive in {"threshold_crossing_down", "threshold_crossing_up", "sustained_below", "sustained_above"}
+            if needs_threshold:
+                if not isinstance(threshold, dict) or threshold.get("kind") != "quantile":
+                    add(name, f"keyframe_function.{endpoint}", "threshold rules require {kind: quantile, q: number}")
+                elif isinstance(threshold.get("q"), bool) or not isinstance(threshold.get("q"), (int, float)) or not 0.0 <= float(threshold["q"]) <= 1.0:
+                    add(name, f"keyframe_function.{endpoint}", "quantile q must be in [0, 1]")
+            elif threshold is not None:
+                add(name, f"keyframe_function.{endpoint}", "non-threshold primitives must use threshold=null")
+        level = action.get("criticality_level")
+        if isinstance(level, bool) or not isinstance(level, int) or level not in CRITICALITY_MAPPING:
+            add(name, "criticality_level", "criticality_level must be one of 1, 2, 3, 4")
+        for field in ("rationale", "criticality_rationale", "failure_if_inaccurate"):
+            if not isinstance(action.get(field), str) or not action[field].strip():
+                add(name, field, f"{field} must be a non-empty string")
+    return issues
+
+
+def validate_dynamic_plan(plan: dict[str, Any]) -> None:
+    issues = dynamic_plan_validation_issues(plan)
+    if issues:
+        raise ValueError(str(issues[0]["message"]))
+
+
+def build_dynamic_prompt(object_name: str | None = None) -> str:
+    object_hint = f" The manipulated object category is {object_name!r}." if object_name else ""
+    return (
+        "Analyze the entire rerendered human-object video and produce a task-specific semantic action plan."
+        f"{object_hint} Do not assume a box-carry task: distinguish lifting, carrying, dragging, pushing, "
+        "placing, rotating, supporting, or any other actions actually visible. Return JSON only with this schema:\n"
+        '{"actions":[{"action":"snake_case_action_name","body_parts":["pelvis|left_hand|right_hand|left_foot|right_foot|torso"],'
+        '"keyframe_function":{"start":{"primitive":"...","signal":"...","threshold":{"kind":"quantile","q":0.2}},'
+        '"end":{"primitive":"...","signal":"...","threshold":null}},"criticality_level":3,'
+        '"rationale":"...","criticality_rationale":"...","failure_if_inaccurate":"..."}]}\n'
+        "Choose 2 to 8 distinct actions in the temporal order observed; action names must be unique snake_case. "
+        "Each action must describe a meaningful state or interaction transition and name the body parts that matter. "
+        "The keyframe_function is a declarative interval predicate: start finds the action's first keyframe and "
+        "end finds its last keyframe on a separate GT trajectory. Use no frame numbers, durations, Python, lambda, "
+        "code, or arbitrary thresholds. A threshold must be a quantile object with q in [0,1]. For global/local "
+        "min/max rules use threshold=null. The allowed primitives are "
+        f"{sorted(DYNAMIC_PRIMITIVES)}; allowed signals are {sorted(DYNAMIC_SIGNALS)}. "
+        "Use object_height only when the video shows vertical lifting; for dragging/sliding, use object_progress, "
+        "object_displacement, object speed, and hand-object distance instead. Every action must include all fields "
+        "shown above. Temporal correctness is essential: choose the earliest visible onset after the previous action "
+        "and the last frame of that action, not a later repetition or terminal pose. For transition actions, prefer "
+        "threshold_crossing_up/down or sustained_above/below with a quantile over a global minimum/maximum; global "
+        "extrema are appropriate only for an unambiguous single peak/valley. Do not use a global minimum of a "
+        "distance/progress signal to mean 'first contact', because the same minimum can occur again at release. "
+        "Do not emit duplicate zero-length actions unless the video clearly shows an instantaneous event. The resolved "
+        "intervals must remain in the listed action order and cover the visible interaction rather than only the final "
+        "few frames."
+    )
+
+
+def normalize_dynamic_plan(plan: Any) -> dict[str, Any]:
+    """Normalize harmless VLM naming variants without inventing frame labels."""
+    if isinstance(plan, list):
+        plan = {"actions": plan}
+    if not isinstance(plan, dict):
+        return {"actions": plan}
+    normalized = copy.deepcopy(plan)
+    actions = normalized.get("actions")
+    if actions is None and isinstance(normalized.get("events"), list):
+        actions = normalized["events"]
+        normalized["actions"] = actions
+    if not isinstance(actions, list):
+        return normalized
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        if "action" not in action and isinstance(action.get("event"), str):
+            action["action"] = action.pop("event")
+        if "keyframe_function" not in action:
+            function = action.get("frame_judgment") or action.get("function")
+            if isinstance(function, dict):
+                action["keyframe_function"] = function
+        function = action.get("keyframe_function")
+        if isinstance(function, dict):
+            if "start" not in function and "enter" in function:
+                function["start"] = function.pop("enter")
+            if "end" not in function and "exit" in function:
+                function["end"] = function.pop("exit")
+            # Accept the legacy top-level rule names only as an input alias.
+            if "start" not in function and isinstance(action.get("trigger"), dict):
+                function["start"] = action["trigger"]
+            if "end" not in function and isinstance(action.get("end"), dict):
+                function["end"] = action["end"]
+            for endpoint in ("start", "end"):
+                rule = function.get(endpoint)
+                if isinstance(rule, dict):
+                    primitive = rule.get("primitive")
+                    if primitive in {"global_minimum", "global_maximum", "local_minimum", "local_maximum"}:
+                        rule["threshold"] = None
+        parts = action.get("body_parts")
+        if isinstance(parts, list):
+            expanded: list[str] = []
+            for part in parts:
+                if isinstance(part, str):
+                    expanded.extend(token.strip() for token in part.split("|") if token.strip())
+            action["body_parts"] = [part for part in expanded if part in DYNAMIC_BODY_PARTS]
+    return normalized
+
+
+def _dynamic_rule_frame(rule: dict[str, Any], values: np.ndarray, minimum: int) -> int:
+    primitive = rule["primitive"]
+    valid = np.arange(len(values)) >= minimum
+    if not valid.any():
+        return len(values) - 1
+    if primitive in {"global_minimum", "global_maximum", "local_minimum", "local_maximum"}:
+        return _rule_frame({"primitive": primitive, "signal": "_dynamic"}, {"_dynamic": values}, {}, minimum)
+    threshold_spec = rule.get("threshold")
+    threshold = float(np.quantile(values, float(threshold_spec["q"])))
+    if primitive in {"threshold_crossing_down", "sustained_below"}:
+        predicate = values <= threshold
+    else:
+        predicate = values >= threshold
+    if primitive.startswith("threshold_crossing"):
+        candidates = np.flatnonzero(predicate & ~np.r_[False, predicate[:-1]])
+    else:
+        candidates = np.flatnonzero(predicate & np.r_[predicate[1:], False])
+    candidates = candidates[candidates >= minimum]
+    if len(candidates):
+        return int(candidates[0])
+    return int(np.arange(len(values))[valid][np.argmin(np.abs(values[valid] - threshold))])
+
+
+def execute_dynamic_plan(
+    plan: dict[str, Any],
+    signals: dict[str, np.ndarray],
+    fps: float = 30.0,
+) -> dict[str, Any]:
+    """Evaluate each VLM-supplied interval function on aligned GT signals."""
+    validate_dynamic_plan(plan)
+    events: list[dict[str, Any]] = []
+    last_start = 0
+    for action in plan["actions"]:
+        function = action["keyframe_function"]
+        start_rule = function["start"]
+        end_rule = function["end"]
+        start = _dynamic_rule_frame(start_rule, signals[start_rule["signal"]], last_start)
+        end = max(start, _dynamic_rule_frame(end_rule, signals[end_rule["signal"]], start))
+        events.append({
+            "event": action["action"],
+            "action": action["action"],
+            "body_parts": action["body_parts"],
+            "confidence": 1.0,
+            "criticality_level": action["criticality_level"],
+            "criticality": CRITICALITY_MAPPING[action["criticality_level"]],
+            "criticality_rationale": action["criticality_rationale"],
+            "failure_if_inaccurate": action["failure_if_inaccurate"],
+            "windows": [{"start_frame": start, "end_frame": end, "trigger_frame": start}],
+            "trigger": start_rule,
+            "end": end_rule,
+            "keyframe_function": function,
+            "rationale": action["rationale"],
+        })
+        last_start = start
+    return {"fps": int(round(fps)), "events": events, "semantic_mode": "dynamic_vlm_functions"}
+
+
 def semantic_json_diff(v1: dict[str, Any], v2: dict[str, Any]) -> dict[str, Any]:
     """Build an auditable event-wise v1/v2 schema diff without altering either input."""
     fields = ("window", "trigger_frame", "body_parts", "criticality_level", "criticality")
@@ -780,15 +1091,33 @@ def _remove_stale_attempts(output: Path, last_attempt: int) -> None:
 def generate_semantic_keyframes(
     *,
     video: Path,
-    smplx_file: Path,
+    smplx_file: Path | None = None,
+    bundle_file: Path | None = None,
     output: Path,
     model_dir: Path = Path("assets/body_models"),
     sample_count: int = 12,
     max_repairs: int = 3,
+    dynamic: bool = True,
     baseline: Path | None = None,
     diff_output: Path | None = None,
 ) -> dict[str, Any]:
-    """Run the original VLM-to-SMPL-X semantic-keyframe pipeline."""
+    """Run VLM planning and deterministic local resolution.
+
+    ``smplx_file`` preserves the original SMPL-X route.  ``bundle_file`` is a
+    dataset-independent route for OMOMO/CARI4D archives and is preferred for
+    rerendered OMOMO sequences because it uses the exact aligned GT joints and
+    object trajectory without reconstructing SMPL-X a second time.
+    """
+    if (smplx_file is None) == (bundle_file is None):
+        raise ValueError("provide exactly one of smplx_file or bundle_file")
+    if bundle_file is not None and dynamic:
+        return generate_dynamic_semantic_keyframes(
+            video=video,
+            bundle_file=bundle_file,
+            output=output,
+            sample_count=sample_count,
+            max_repairs=max_repairs,
+        )
     load_env_file(Path(".env"))
     output.parent.mkdir(parents=True, exist_ok=True)
     images = sample_video_frames(video, sample_count)
@@ -804,9 +1133,25 @@ def generate_semantic_keyframes(
         raw_path.write_text(raw, encoding="utf-8")
         try:
             if plan is None:
-                candidate = extract_json(raw)
+                candidate = normalize_plan_body_parts(extract_json(raw))
             else:
-                candidate = apply_plan_repairs(plan, extract_json(raw), issues)
+                repair_payload = extract_json(raw)
+                # Some compatible VLMs occasionally echo a second already
+                # valid field alongside the requested patch.  Ignore such
+                # out-of-allowlist echoes while retaining the strict
+                # field-only application and immutable-plan checks below.
+                allowed_repairs = {
+                    (str(issue["event"]), str(issue["field"])) for issue in issues
+                }
+                repairs = repair_payload.get("repairs")
+                if isinstance(repairs, list):
+                    repair_payload["repairs"] = [
+                        repair for repair in repairs
+                        if isinstance(repair, dict)
+                        and (str(repair.get("event")), str(repair.get("field")))
+                        in allowed_repairs
+                    ]
+                candidate = apply_plan_repairs(plan, repair_payload, issues)
                 repair_history.append(
                     {
                         "attempt": attempt,
@@ -831,15 +1176,21 @@ def generate_semantic_keyframes(
             validate_plan(plan)
             plan_path = output.parent / f"{output.stem}.event_plan.json"
             _write_json(plan_path, plan)
-            signals, thresholds = load_smplx_signals(smplx_file, model_dir)
+            if bundle_file is not None:
+                signals, thresholds, bundle_fps = load_retargeting_bundle_signals(bundle_file)
+            else:
+                signals, thresholds = load_smplx_signals(smplx_file, model_dir)
+                bundle_fps = 30.0
             result = execute_plan(plan, signals, thresholds)
+            result["fps"] = int(round(bundle_fps))
             result["generation_metadata"] = {
                 "model": os.environ["OPENAI_MODEL"],
                 "temperature": 0,
                 "seed": 0,
                 "sample_count": sample_count,
                 "source_video": str(video),
-                "source_smplx": str(smplx_file),
+                "source_smplx": None if smplx_file is None else str(smplx_file),
+                "source_bundle": None if bundle_file is None else str(bundle_file),
                 "repair_policy": "field_only_immutable_valid_fields",
                 "vlm_attempt_count": attempt + 1,
                 "accepted_repairs": repair_history,
@@ -862,3 +1213,75 @@ def generate_semantic_keyframes(
     raise RuntimeError(
         f"VLM failed to produce a valid trigger plan after field-only repairs; last error: {last_error}"
     )
+
+
+def generate_dynamic_semantic_keyframes(
+    *,
+    video: Path,
+    bundle_file: Path,
+    output: Path,
+    sample_count: int = 12,
+    max_repairs: int = 3,
+) -> dict[str, Any]:
+    """Generate task-specific VLM actions and resolve their functions on GT.
+
+    The VLM never sees or emits GT frame indices.  It emits only action names,
+    body aliases, and a constrained start/end predicate.  Quantile thresholds
+    are evaluated independently on the supplied trajectory, so two tasks can
+    choose different actions and obtain different keyframe intervals.
+    """
+    load_env_file(Path(".env"))
+    output.parent.mkdir(parents=True, exist_ok=True)
+    images = sample_video_frames(video, sample_count)
+    with np.load(bundle_file, allow_pickle=False) as bundle:
+        object_name = str(np.asarray(bundle["object_name"]).item()) if "object_name" in bundle.files else None
+    base_prompt = build_dynamic_prompt(object_name)
+    plan: dict[str, Any] | None = None
+    issues: list[dict[str, Any]] = []
+    last_error: Exception | None = None
+    for attempt in range(max_repairs + 1):
+        prompt = base_prompt
+        if attempt:
+            prompt += (
+                "\nYour previous response failed local validation. Regenerate the complete plan and fix only "
+                f"these issues: {json.dumps(issues, ensure_ascii=False)}"
+            )
+        raw = call_vlm(images, prompt)
+        raw_path = output.parent / f"{output.stem}.vlm_attempt_{attempt}.txt"
+        raw_path.write_text(raw, encoding="utf-8")
+        try:
+            candidate = normalize_dynamic_plan(_extract_json_value(raw))
+            issues = dynamic_plan_validation_issues(candidate)
+            if issues:
+                last_error = ValueError("; ".join(str(issue["message"]) for issue in issues))
+                continue
+            validate_dynamic_plan(candidate)
+            plan = candidate
+            break
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            last_error = exc
+            issues = [{"action": None, "field": "plan", "message": str(exc)}]
+    if plan is None:
+        raise RuntimeError(
+            f"VLM failed to produce a valid dynamic action plan after {max_repairs + 1} attempts; "
+            f"last error: {last_error}"
+        )
+    plan_path = output.parent / f"{output.stem}.event_plan.json"
+    _write_json(plan_path, plan)
+    signals, _thresholds, fps = load_retargeting_bundle_signals(bundle_file)
+    result = execute_dynamic_plan(plan, signals, fps=fps)
+    result["generation_metadata"] = {
+        "model": os.environ["OPENAI_MODEL"],
+        "temperature": 0,
+        "seed": 0,
+        "sample_count": sample_count,
+        "source_video": str(video),
+        "source_bundle": str(bundle_file),
+        "planning_mode": "dynamic_vlm_actions_and_functions",
+        "threshold_policy": "per-signal trajectory quantiles",
+        "vlm_attempt_count": attempt + 1,
+    }
+    validate_semantic_keyframe_json(result)
+    _write_json(output, result)
+    _remove_stale_attempts(output, attempt)
+    return result

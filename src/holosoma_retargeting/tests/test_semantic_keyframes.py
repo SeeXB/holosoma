@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 from holosoma_retargeting.semantic_keyframes.pipeline import (
     CRITICALITY_MAPPING,
+    dynamic_plan_validation_issues,
+    execute_dynamic_plan,
     ROLE_END_REQUIREMENTS,
     ROLE_ORDER,
     ROLE_TRIGGER_REQUIREMENTS,
@@ -17,6 +19,7 @@ from holosoma_retargeting.semantic_keyframes.pipeline import (
     semantic_json_diff,
     validate_semantic_keyframe_json,
     validate_plan,
+    validate_dynamic_plan,
 )
 
 
@@ -168,3 +171,39 @@ def test_semantic_json_diff_reports_generated_fields() -> None:
     diff = semantic_json_diff(old, new)
     assert diff["any_change"]
     assert set(diff["events"][0]["changed_fields"]) == {"window", "body_parts", "criticality_level", "criticality"}
+
+
+def test_dynamic_plan_uses_task_specific_actions_and_gt_functions() -> None:
+    plan = {
+        "actions": [
+            {
+                "action": "drag_suitcase",
+                "body_parts": ["left_hand", "right_hand"],
+                "keyframe_function": {
+                    "start": {
+                        "primitive": "threshold_crossing_down",
+                        "signal": "min_hand_object_distance",
+                        "threshold": {"kind": "quantile", "q": 0.2},
+                    },
+                    "end": {
+                        "primitive": "threshold_crossing_up",
+                        "signal": "object_progress",
+                        "threshold": {"kind": "quantile", "q": 0.8},
+                    },
+                },
+                "criticality_level": 4,
+                "rationale": "The hands initiate and finish dragging.",
+                "criticality_rationale": "Drag contact determines success.",
+                "failure_if_inaccurate": "The suitcase will not move to the goal.",
+            }
+        ]
+    }
+    validate_dynamic_plan(plan)
+    assert not dynamic_plan_validation_issues(plan)
+    signals = {
+        "min_hand_object_distance": np.array([1.0, 0.8, 0.2, 0.1, 0.4, 0.7]),
+        "object_progress": np.array([0.0, 0.1, 0.3, 0.5, 0.8, 1.0]),
+    }
+    result = execute_dynamic_plan(plan, signals)
+    assert result["events"][0]["event"] == "drag_suitcase"
+    assert result["events"][0]["windows"] == [{"start_frame": 2, "end_frame": 4, "trigger_frame": 2}]

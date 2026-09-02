@@ -13,12 +13,14 @@ from __future__ import annotations
 import argparse
 import json
 import pickle
+import re
 import sys
 from pathlib import Path
 
 import joblib
 import numpy as np
 import scipy.sparse
+from scipy.spatial.transform import Rotation
 import torch
 import trimesh
 
@@ -34,13 +36,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("/mnt/sdadrive/shixiongbo/omomo/data"),
     )
+    parser.add_argument("--motion-video", type=Path, default=None)
+    parser.add_argument("--object-mesh", type=Path, default=None)
     parser.add_argument(
-        "--motion-video",
-        type=Path,
-        default=Path(
-            "/mnt/sdadrive/shixiongbo/omomo/motion_videos/sub3/"
-            "sub3_largebox_003.mp4"
-        ),
+        "--record-file", type=Path, action="append", default=None,
+        help="OMOMO sequence pickle; may be repeated (defaults to train and test)",
     )
     parser.add_argument(
         "--smplh-model",
@@ -52,12 +52,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=workspace / "third_party/human_body_prior",
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=workspace
-        / "exp/omomo_cari4d/sub03_largebox3/input/omomo_gt_sequence.npz",
-    )
+    parser.add_argument("--output", type=Path, default=None)
     return parser.parse_args()
 
 
@@ -97,15 +92,65 @@ def find_sequence(records: dict, sequence_name: str) -> tuple[int, dict]:
     return matches[0]
 
 
+def sequence_object_name(sequence_name: str) -> str:
+    match = re.fullmatch(r"sub\d+_([a-z0-9]+)_\d{3}", sequence_name)
+    if not match:
+        raise ValueError(f"Cannot infer captured object from {sequence_name!r}")
+    return match.group(1)
+
+
+def load_sequence_record(
+    omomo_data: Path, sequence_name: str, record_files: list[Path] | None
+) -> tuple[int, dict, Path]:
+    paths = record_files or [
+        omomo_data / "train_diffusion_manip_seq_joints24.p",
+        omomo_data / "test_diffusion_manip_seq_joints24.p",
+    ]
+    matches: list[tuple[int, dict, Path]] = []
+    for path in paths:
+        if not path.exists():
+            raise FileNotFoundError(path)
+        records = joblib.load(path)
+        found = [
+            (int(key), value)
+            for key, value in records.items()
+            if value.get("seq_name") == sequence_name
+        ]
+        matches.extend((key, value, path) for key, value in found)
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"Expected exactly one record for {sequence_name!r}, found {len(matches)}"
+        )
+    return matches[0]
+
+
 def main() -> None:
     args = parse_args()
     sequence_name = canonical_sequence_name(args.sequence)
-    records_path = args.omomo_data / "train_diffusion_manip_seq_joints24.p"
-    object_path = args.omomo_data / "captured_objects/largebox_cleaned_simplified.obj"
+    object_name = sequence_object_name(sequence_name)
+    workspace = Path(__file__).resolve().parents[2]
+    if args.output is None:
+        output = (
+            workspace / "exp/omomo_cari4d/sub03_largebox3/input/omomo_gt_sequence.npz"
+            if sequence_name == "sub3_largebox_003"
+            else workspace / f"exp/omomo_cari4d/{sequence_name}/input/omomo_gt_sequence.npz"
+        )
+    else:
+        output = args.output
+    subject = int(sequence_name.split("_", 1)[0][3:])
+    motion_video = args.motion_video or (
+        args.omomo_data.parent / "motion_videos" / f"sub{subject}" / f"{sequence_name}.mp4"
+    )
+    object_path = args.object_mesh or (
+        args.omomo_data / f"captured_objects/{object_name}_cleaned_simplified.obj"
+    )
+    record_key, record, records_path = load_sequence_record(
+        args.omomo_data, sequence_name, args.record_file
+    )
     for required_path in (
         records_path,
         object_path,
-        args.motion_video,
+        motion_video,
         args.smplh_model,
         args.human_body_prior_root,
     ):
@@ -113,12 +158,9 @@ def main() -> None:
             raise FileNotFoundError(required_path)
 
     print(f"Loading {records_path}", flush=True)
-    record_key, record = find_sequence(joblib.load(records_path), sequence_name)
     frame_count = int(np.asarray(record["trans"]).shape[0])
-    if frame_count != 196:
-        raise RuntimeError(f"Expected 196 frames, got {frame_count}")
 
-    converted_model = args.output.with_name("SMPLH_male_bodymodel_10betas.npz")
+    converted_model = output.with_name("SMPLH_male_bodymodel_10betas.npz")
     shape_direction_count = convert_smplh_pkl(args.smplh_model, converted_model)
     if shape_direction_count != 10:
         raise RuntimeError(
@@ -168,14 +210,36 @@ def main() -> None:
         + object_translation[:, None, :]
     ).astype(np.float32)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
+    # The semantic-keyframe resolver consumes an explicit metric trajectory.
+    # Store the OMOMO rotation as the resolver's wxyz quaternion convention.
+    object_quaternion_xyzw = Rotation.from_matrix(object_rotation).as_quat()
+    object_quaternion_wxyz = object_quaternion_xyzw[:, [3, 0, 1, 2]].astype(np.float32)
+    smplh_joint_names = np.asarray([
+        "Pelvis", "L_Hip", "L_Knee", "L_Ankle", "L_Toe", "R_Hip", "R_Knee",
+        "R_Ankle", "R_Toe", "Torso", "Spine", "Chest", "Neck", "Head",
+        "L_Thorax", "L_Shoulder", "L_Elbow", "L_Wrist", "L_Index1", "L_Index2",
+        "L_Index3", "L_Middle1", "L_Middle2", "L_Middle3", "L_Pinky1",
+        "L_Pinky2", "L_Pinky3", "L_Ring1", "L_Ring2", "L_Ring3", "L_Thumb1",
+        "L_Thumb2", "L_Thumb3", "R_Thorax", "R_Shoulder", "R_Elbow", "R_Wrist",
+        "R_Index1", "R_Index2", "R_Index3", "R_Middle1", "R_Middle2", "R_Middle3",
+        "R_Pinky1", "R_Pinky2", "R_Pinky3", "R_Ring1", "R_Ring2", "R_Ring3",
+        "R_Thumb1", "R_Thumb2", "R_Thumb3",
+    ])
+
+    output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
-        args.output,
+        output,
         sequence_name=np.asarray(sequence_name),
+        object_name=np.asarray(object_name),
         fps=np.asarray(30, dtype=np.int32),
         human_vertices=human_vertices,
         human_faces=human_faces,
         human_joints=human_joints,
+        smplh_joint_names=smplh_joint_names,
+        frame_ids=np.arange(frame_count, dtype=np.int32),
+        object_poses_wxyz_xyz=np.concatenate(
+            [object_quaternion_wxyz, object_translation], axis=1
+        ),
         object_vertices=object_vertices,
         object_faces=object_faces,
         object_vertices_local=object_vertices_local,
@@ -198,7 +262,7 @@ def main() -> None:
         "sequence_identifier": sequence_name,
         "record_key": record_key,
         "source_records": records_path,
-        "source_video": args.motion_video,
+        "source_video": motion_video,
         "source_object_mesh": object_path,
         "source_smplh_model": args.smplh_model,
         "human_body_prior_commit": _git_head(args.human_body_prior_root),
@@ -229,9 +293,10 @@ def main() -> None:
             "model. Poses, translations, object geometry and object transforms "
             "are exact OMOMO GT."
         ),
-        "archive": args.output,
+        "archive": output,
+        "object_name": object_name,
     }
-    write_json(args.output.with_suffix(".metadata.json"), metadata)
+    write_json(output.with_suffix(".metadata.json"), metadata)
     print(json.dumps(metadata, indent=2, default=str), flush=True)
 
 

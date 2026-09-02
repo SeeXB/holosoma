@@ -127,7 +127,14 @@ class RetargetingEvaluator:
         elif self.object_name == "multi_boxes":
             robot_xml_path = constants.SCENE_XML_FILE  # type: ignore[attr-defined]
         else:
-            robot_xml_path = robot_model_path.replace(".urdf", "_w_" + self.object_name + ".xml")
+            # Batch/custom object scenes may be supplied through constants;
+            # fall back to the legacy model-relative scene name otherwise.
+            configured_scene = getattr(constants, "SCENE_XML_FILE", None)
+            robot_xml_path = (
+                configured_scene
+                if configured_scene and Path(str(configured_scene)).exists()
+                else robot_model_path.replace(".urdf", "_w_" + self.object_name + ".xml")
+            )
 
         self.robot_model = mujoco.MjModel.from_xml_path(robot_xml_path)
         print("Loading robot model from: ", robot_xml_path)

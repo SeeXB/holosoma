@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<!-- Generated from OMOMO captured_objects; see omomo_asset_manifest.json. -->
+<robot name="monitor">
+  <dynamics damping="0.5" friction="0.9"/>
+  <link name="monitor_link">
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.00205628917" ixy="0" ixz="0" iyy="0.00288596828" iyz="0" izz="0.00446904083"/>
+    </inertial>
+    <contact>
+      <lateral_friction value="0.9"/>
+      <rolling_friction value="0.5"/>
+      <stiffness value="30000"/>
+      <damping value="1000"/>
+    </contact>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><mesh filename="monitor.obj" scale="1 1 1"/></geometry>
+      <material name="omomo_monitor_material">
+        <color rgba="0.7 0.8 0.9 0.7"/>
+      </material>
+    </visual>
+    <collision name="monitor">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry><mesh filename="monitor.obj" scale="1 1 1"/></geometry>
+    </collision>
+  </link>
+</robot>

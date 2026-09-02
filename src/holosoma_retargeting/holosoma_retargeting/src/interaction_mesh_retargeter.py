@@ -1949,15 +1949,18 @@ class InteractionMeshRetargeter:
                     constraints += new_constraints
                     original_constraint_objects["foot_lock"].extend(new_constraints)
 
-        # Non-penetration constraints
-        Js, phis = self._update_jacobians_and_phis_from_q(q)
-        for key, phi in phis.items():
-            Ja_n_full = Js[key]
-            Ja_n = Ja_n_full[self.q_a_indices]
-            rhs = -phi - self.penetration_tolerance
-            new_constraint = Ja_n @ dqa >= rhs
-            constraints += [new_constraint]
-            original_constraint_objects["nonpenetration"].append(new_constraint)
+        # Non-penetration constraints.  Respect the public configuration flag;
+        # this is also needed for robot/object motions whose linearized contact
+        # constraints are infeasible even though the objective remains solvable.
+        if self.activate_obj_non_penetration:
+            Js, phis = self._update_jacobians_and_phis_from_q(q)
+            for key, phi in phis.items():
+                Ja_n_full = Js[key]
+                Ja_n = Ja_n_full[self.q_a_indices]
+                rhs = -phi - self.penetration_tolerance
+                new_constraint = Ja_n @ dqa >= rhs
+                constraints += [new_constraint]
+                original_constraint_objects["nonpenetration"].append(new_constraint)
 
         # Self-collision constraints
         Js_sc, phis_sc = self._compute_self_collision_constraints(frame_idx)

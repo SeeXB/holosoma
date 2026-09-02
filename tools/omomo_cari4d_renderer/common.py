@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -16,13 +17,14 @@ SEQUENCE_ALIASES = {
 
 
 def canonical_sequence_name(name: str) -> str:
-    try:
+    if name in SEQUENCE_ALIASES:
         return SEQUENCE_ALIASES[name]
-    except KeyError as exc:
-        raise ValueError(
-            f"Unknown sequence {name!r}; this regression tool only accepts "
-            f"{sorted(SEQUENCE_ALIASES)}"
-        ) from exc
+    match = re.fullmatch(r"sub(\d+)_([a-z0-9]+)_(\d{3})", name)
+    if match:
+        return f"sub{int(match.group(1))}_{match.group(2)}_{match.group(3)}"
+    raise ValueError(
+        f"Unknown sequence {name!r}; expected sub<subject>_<object>_<index>"
+    )
 
 
 def json_default(value: Any) -> Any:
