@@ -7,8 +7,9 @@
 # this host, a measured three-way pressure test with ``GPU_IDS=0,0,0`` peaked
 # at 22.2 GiB of the 24 GiB RTX3090, so same-GPU parallelism is supported here;
 # separate IDs (for example ``0,1,2``) should be used when additional GPUs are
-# available.  Each group has its own IsaacSim process, log, W&B-offline
-# directory, and timestamped experiment directory.
+# available.  Each group has its own IsaacSim process, log, W&B directory, and
+# timestamped experiment directory. W&B is online by default;
+# override LOGGER_PRESET=logger:wandb_offline only for an explicitly offline run.
 
 set -euo pipefail
 
@@ -19,7 +20,7 @@ TASK="sub9_clothesstand_058"
 NUM_ENVS="${NUM_ENVS:-4096}"
 TRAINING_ITERATIONS="${TRAINING_ITERATIONS:-30000}"
 SEED="${SEED:-42}"
-LOGGER_PRESET="${LOGGER_PRESET:-logger:wandb_offline}"
+LOGGER_PRESET="${LOGGER_PRESET:-logger:wandb}"
 VIDEO_ENABLED="${VIDEO_ENABLED:-False}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-hssim}"
 GPU_IDS="${GPU_IDS:-}"

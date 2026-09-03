@@ -160,7 +160,7 @@ class ExperimentConfig:
         holosoma.config_values.robot.g1_29dof
     )
     logger: Annotated[LoggerConfig, UseRegistry(holosoma.config_values.logger.LOGGER_REGISTRY)] = (
-        holosoma.config_values.logger.disabled
+        holosoma.config_values.logger.wandb
     )
     nightly: NightlyConfig | None = None
 
