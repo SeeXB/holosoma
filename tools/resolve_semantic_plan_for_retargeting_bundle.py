@@ -23,7 +23,8 @@ def main() -> None:
     package_root = repository / "src" / "holosoma_retargeting"
     sys.path.insert(0, str(package_root))
     from holosoma_retargeting.semantic_keyframes.pipeline import (  # noqa: PLC0415
-        execute_plan,
+        dynamic_resolution_validation_issues,
+        execute_dynamic_plan,
         load_retargeting_bundle_signals,
         validate_semantic_keyframe_json,
     )
@@ -36,8 +37,12 @@ def main() -> None:
     if not plan_path.is_file():
         raise FileNotFoundError(plan_path)
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
-    signals, thresholds, fps = load_retargeting_bundle_signals(bundle)
-    result = execute_plan(plan, signals, thresholds)
+    signals, _, fps = load_retargeting_bundle_signals(bundle)
+    result = execute_dynamic_plan(plan, signals, fps=fps)
+    frame_count = len(next(iter(signals.values())))
+    resolution_issues = dynamic_resolution_validation_issues(result, frame_count)
+    if resolution_issues:
+        raise ValueError(f"semantic plan degenerates after GT resolution: {resolution_issues}")
     result["fps"] = fps
     result["generation_metadata"] = {
         "signal_source": "explicit_retargeting_bundle",

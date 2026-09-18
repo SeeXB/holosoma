@@ -335,7 +335,13 @@ class IsaacSim(BaseSimulator):
 
             # Get local rank to avoid race conditions in multi-GPU setups
             local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-            usd_conversion_dir = os.path.abspath(os.path.join(asset_root, f"converted_rank{local_rank}"))
+            # Independent training/eval jobs can all have LOCAL_RANK=0. Forced
+            # conversion writes temporary layers, so sharing only by rank can
+            # corrupt another job's in-flight USD stage. Keep each process's
+            # generated layers separate for the lifetime of its simulator.
+            usd_conversion_dir = os.path.abspath(
+                os.path.join(asset_root, f"converted_rank{local_rank}_pid{os.getpid()}")
+            )
 
             spawn = sim_utils.UrdfFileCfg(
                 usd_dir=usd_conversion_dir,

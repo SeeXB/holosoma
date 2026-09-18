@@ -25,6 +25,13 @@ import torch
 import trimesh
 
 from common import canonical_sequence_name, normalized_dimensions, write_json
+from smplh_joint_order import (
+    SMPLH_NATIVE_TO_RETARGET,
+    SMPLH_RETARGET_JOINT_NAMES,
+    SMPLH_RETARGET_LAYOUT,
+    reorder_smplh_native_to_retarget,
+    validate_retarget_smplh_geometry,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -192,7 +199,9 @@ def main() -> None:
             trans=translations,
         )
     human_vertices = body.v.detach().cpu().numpy().astype(np.float32)
-    human_joints = body.Jtr.detach().cpu().numpy().astype(np.float32)
+    human_joints_native = body.Jtr.detach().cpu().numpy().astype(np.float32)
+    human_joints = reorder_smplh_native_to_retarget(human_joints_native)
+    validate_retarget_smplh_geometry(human_joints)
     human_faces = body_model.f.detach().cpu().numpy().astype(np.int32)
 
     object_mesh = trimesh.load_mesh(object_path, process=False)
@@ -214,17 +223,7 @@ def main() -> None:
     # Store the OMOMO rotation as the resolver's wxyz quaternion convention.
     object_quaternion_xyzw = Rotation.from_matrix(object_rotation).as_quat()
     object_quaternion_wxyz = object_quaternion_xyzw[:, [3, 0, 1, 2]].astype(np.float32)
-    smplh_joint_names = np.asarray([
-        "Pelvis", "L_Hip", "L_Knee", "L_Ankle", "L_Toe", "R_Hip", "R_Knee",
-        "R_Ankle", "R_Toe", "Torso", "Spine", "Chest", "Neck", "Head",
-        "L_Thorax", "L_Shoulder", "L_Elbow", "L_Wrist", "L_Index1", "L_Index2",
-        "L_Index3", "L_Middle1", "L_Middle2", "L_Middle3", "L_Pinky1",
-        "L_Pinky2", "L_Pinky3", "L_Ring1", "L_Ring2", "L_Ring3", "L_Thumb1",
-        "L_Thumb2", "L_Thumb3", "R_Thorax", "R_Shoulder", "R_Elbow", "R_Wrist",
-        "R_Index1", "R_Index2", "R_Index3", "R_Middle1", "R_Middle2", "R_Middle3",
-        "R_Pinky1", "R_Pinky2", "R_Pinky3", "R_Ring1", "R_Ring2", "R_Ring3",
-        "R_Thumb1", "R_Thumb2", "R_Thumb3",
-    ])
+    smplh_joint_names = np.asarray(SMPLH_RETARGET_JOINT_NAMES)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
@@ -236,6 +235,8 @@ def main() -> None:
         human_faces=human_faces,
         human_joints=human_joints,
         smplh_joint_names=smplh_joint_names,
+        human_joint_layout=np.asarray(SMPLH_RETARGET_LAYOUT),
+        human_joint_native_to_retarget=SMPLH_NATIVE_TO_RETARGET,
         frame_ids=np.arange(frame_count, dtype=np.int32),
         object_poses_wxyz_xyz=np.concatenate(
             [object_quaternion_wxyz, object_translation], axis=1
@@ -267,6 +268,9 @@ def main() -> None:
         "source_smplh_model": args.smplh_model,
         "human_body_prior_commit": _git_head(args.human_body_prior_root),
         "human_model_type": "SMPL-H (6890 vertices, 52 joints)",
+        "human_joint_layout": SMPLH_RETARGET_LAYOUT,
+        "human_joint_generation": "BodyModel.Jtr followed by explicit native-to-retarget permutation",
+        "human_joint_native_to_retarget": SMPLH_NATIVE_TO_RETARGET,
         "frame_count": frame_count,
         "fps": 30,
         "coordinate_convention": "right-handed, Z-up; values in metres",

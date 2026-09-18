@@ -41,8 +41,17 @@ def load_intermimic_data(file_path):
     """
     intermimic_data = torch.load(file_path, map_location="cpu").detach().numpy()
     human_joints = intermimic_data[:, 162 : 162 + 52 * 3].reshape(-1, 52, 3)
-    # Reorder quaternion from [qx, qy, qz, qw] to [qw, qx, qy, qz]
+    # Packed object columns are [x,y,z,qx,qy,qz,qw]. Return [qw,qx,qy,qz,x,y,z].
     object_poses = intermimic_data[:, 318:325][:, [6, 3, 4, 5, 0, 1, 2]]
+    if not np.isfinite(human_joints).all() or not np.isfinite(object_poses).all():
+        raise ValueError(f"Non-finite InterMimic joints/object poses: {file_path}")
+    norms = np.linalg.norm(object_poses[:, :4], axis=1)
+    if not np.allclose(norms, 1.0, atol=1e-4, rtol=0):
+        raise ValueError(
+            f"Invalid object quaternion norms in {file_path}; expected unit quaternions "
+            "in packed xyz_xyzw order. Regenerate incorrectly packed inputs; do not normalize "
+            "position fields masquerading as quaternions."
+        )
     return human_joints, object_poses
 
 

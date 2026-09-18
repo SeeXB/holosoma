@@ -19,6 +19,7 @@ python src/holosoma/holosoma/eval_agent.py \
   --recording.config.enabled \
   --recording.config.output-path "$output_npz" \
   --eval-overrides.headless True \
+  --training.headless True \
   --training.num-envs 32 \
   --training.seed 42 \
   --training.max-eval-steps 3300 \

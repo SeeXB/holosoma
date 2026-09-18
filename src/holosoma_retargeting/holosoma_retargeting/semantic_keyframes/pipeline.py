@@ -177,17 +177,16 @@ def sample_video_frames(video: Path, count: int) -> list[dict[str, Any]]:
 def _extract_json_value(text: str) -> Any:
     """Extract the first complete JSON value from a VLM response."""
     text = text.strip()
-    fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-    candidate = fenced.group(1) if fenced else text[text.find("{") : text.rfind("}") + 1]
-    if not candidate:
-        raise ValueError("response contains no JSON object")
-    try:
-        value = json.loads(candidate)
-    except json.JSONDecodeError:
-        # A few OpenAI-compatible gateways append a second JSON object to a
-        # repair response.  Keep the first complete object and let the local
-        # schema validator decide whether it is authorized.
-        value, _ = json.JSONDecoder().raw_decode(candidate.lstrip())
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL | re.IGNORECASE)
+    candidate = fenced.group(1).lstrip() if fenced else text
+    # Dynamic plans may legally be returned as a top-level array.  Starting
+    # extraction at the first ``{`` used to silently discard every action but
+    # the first one in that case, turning a good VLM answer into an invalid
+    # singleton object.
+    starts = [index for index in (candidate.find("{"), candidate.find("[")) if index >= 0]
+    if not starts:
+        raise ValueError("response contains no JSON object or array")
+    value, _ = json.JSONDecoder().raw_decode(candidate[min(starts):])
     return value
 
 
@@ -645,6 +644,20 @@ def load_retargeting_bundle_signals(
         names = [str(value) for value in np.asarray(data["smplh_joint_names"]).tolist()]
         frame_ids = np.asarray(data["frame_ids"])
         fps = float(np.asarray(data["fps"]).item())
+        # OMOMO renderer bundles contain ``sequence_name``.  Require the
+        # explicit post-permutation marker so native BodyModel.Jtr columns can
+        # never again be interpreted using retarget joint names.
+        is_omomo_bundle = "sequence_name" in data.files
+        human_joint_layout = (
+            str(np.asarray(data["human_joint_layout"]).item())
+            if "human_joint_layout" in data.files
+            else None
+        )
+    if is_omomo_bundle and human_joint_layout != "smplh_retarget_v1":
+        raise ValueError(
+            "OMOMO bundle lacks verified smplh_retarget_v1 joint ordering; "
+            "regenerate it with tools/omomo_cari4d_renderer/prepare_sequence.py"
+        )
     if joints.ndim != 3 or joints.shape[2] != 3:
         raise ValueError(f"human_joints must have shape [T,J,3], got {joints.shape}")
     if object_poses.shape != (len(joints), 7) or frame_ids.shape != (len(joints),):
@@ -897,6 +910,12 @@ def dynamic_plan_validation_issues(plan: dict[str, Any]) -> list[dict[str, Any]]
                     add(name, f"keyframe_function.{endpoint}", "quantile q must be in [0, 1]")
             elif threshold is not None:
                 add(name, f"keyframe_function.{endpoint}", "non-threshold primitives must use threshold=null")
+        if isinstance(function.get("start"), dict) and function.get("start") == function.get("end"):
+            add(
+                name,
+                "keyframe_function",
+                "start and end rules are identical and would collapse the action; use distinct onset/exit predicates",
+            )
         level = action.get("criticality_level")
         if isinstance(level, bool) or not isinstance(level, int) or level not in CRITICALITY_MAPPING:
             add(name, "criticality_level", "criticality_level must be one of 1, 2, 3, 4")
@@ -915,6 +934,12 @@ def validate_dynamic_plan(plan: dict[str, Any]) -> None:
 def build_dynamic_prompt(object_name: str | None = None) -> str:
     object_hint = f" The manipulated object category is {object_name!r}." if object_name else ""
     return (
+        "HARD EXECUTABLE CONTRACT: every threshold-crossing or sustained rule requires a quantile threshold. "
+        "Prefer threshold_crossing_down, threshold_crossing_up, sustained_below, or sustained_above for "
+        "multi-action transitions; use global/local extrema only for a genuinely unique visible peak or valley. "
+        "Example threshold rule: "
+        '{"primitive":"threshold_crossing_down","signal":"min_hand_object_distance",'
+        '"threshold":{"kind":"quantile","q":0.25}}. '
         "Analyze the entire rerendered human-object video and produce a task-specific semantic action plan."
         f"{object_hint} Do not assume a box-carry task: distinguish lifting, carrying, dragging, pushing, "
         "placing, rotating, supporting, or any other actions actually visible. Return JSON only with this schema:\n"
@@ -938,7 +963,7 @@ def build_dynamic_prompt(object_name: str | None = None) -> str:
         "distance/progress signal to mean 'first contact', because the same minimum can occur again at release. "
         "Do not emit duplicate zero-length actions unless the video clearly shows an instantaneous event. The resolved "
         "intervals must remain in the listed action order and cover the visible interaction rather than only the final "
-        "few frames."
+        "few frames. Never use identical start and end rules for one action."
     )
 
 
@@ -1021,14 +1046,36 @@ def execute_dynamic_plan(
 ) -> dict[str, Any]:
     """Evaluate each VLM-supplied interval function on aligned GT signals."""
     validate_dynamic_plan(plan)
-    events: list[dict[str, Any]] = []
-    last_start = 0
+    # Resolve action onsets in their declared temporal order.  An action's
+    # end predicate must not become the lower bound for the next onset: noisy
+    # GT signals can make an otherwise sensible end crossing recur near the
+    # clip tail and collapse every later action to that frame.  Endpoints are
+    # resolved independently and then clipped at the following onset, which
+    # preserves both VLM functions while producing an ordered phase partition.
+    starts: list[int] = []
+    previous_start = 0
     for action in plan["actions"]:
+        start_rule = action["keyframe_function"]["start"]
+        start = _dynamic_rule_frame(
+            start_rule,
+            signals[start_rule["signal"]],
+            previous_start,
+        )
+        starts.append(start)
+        previous_start = start
+
+    events: list[dict[str, Any]] = []
+    for action_index, action in enumerate(plan["actions"]):
         function = action["keyframe_function"]
         start_rule = function["start"]
         end_rule = function["end"]
-        start = _dynamic_rule_frame(start_rule, signals[start_rule["signal"]], last_start)
-        end = max(start, _dynamic_rule_frame(end_rule, signals[end_rule["signal"]], start))
+        start = starts[action_index]
+        raw_end = max(start, _dynamic_rule_frame(end_rule, signals[end_rule["signal"]], start))
+        end = (
+            min(raw_end, starts[action_index + 1])
+            if action_index + 1 < len(starts)
+            else raw_end
+        )
         events.append({
             "event": action["action"],
             "action": action["action"],
@@ -1044,8 +1091,98 @@ def execute_dynamic_plan(
             "keyframe_function": function,
             "rationale": action["rationale"],
         })
-        last_start = start
     return {"fps": int(round(fps)), "events": events, "semantic_mode": "dynamic_vlm_functions"}
+
+
+def dynamic_resolution_validation_issues(
+    result: dict[str, Any],
+    frame_count: int,
+) -> list[dict[str, Any]]:
+    """Reject declarative plans that become meaningless after GT evaluation.
+
+    Schema validation alone cannot detect several valid-looking VLM outputs,
+    such as four different actions whose global extrema all resolve to the
+    final frame.  Keep this check task-agnostic: it inspects only the resolved
+    temporal support and sends actionable feedback to the next VLM repair
+    attempt without inventing any action labels or frame indices.
+    """
+    issues: list[dict[str, Any]] = []
+    events = result.get("events", [])
+    if not events:
+        return [{"action": None, "field": "resolved_events", "message": "the resolved plan has no events"}]
+
+    resolved: list[tuple[str, int, int]] = []
+    for event in events:
+        windows = event.get("windows", [])
+        if not windows:
+            continue
+        window = windows[0]
+        resolved.append((str(event.get("event")), int(window["start_frame"]), int(window["end_frame"])))
+    if not resolved:
+        return [{"action": None, "field": "resolved_events", "message": "the resolved plan has no windows"}]
+
+    duplicates: dict[tuple[int, int], list[str]] = {}
+    for name, start, end in resolved:
+        duplicates.setdefault((start, end), []).append(name)
+    for (start, end), names in duplicates.items():
+        if len(names) > 1:
+            issues.append({
+                "action": None,
+                "field": "resolved_windows",
+                "message": (
+                    f"distinct actions {names} all resolve to duplicate window [{start}, {end}]; "
+                    "choose different transition predicates instead of a shared global extremum"
+                ),
+            })
+
+    duplicate_starts: dict[int, list[str]] = {}
+    for name, start, _end in resolved:
+        duplicate_starts.setdefault(start, []).append(name)
+    for start, names in duplicate_starts.items():
+        if len(names) > 1:
+            issues.append({
+                "action": None,
+                "field": "resolved_windows",
+                "message": (
+                    f"distinct actions {names} all start at frame {start}; choose different onset "
+                    "predicates so semantic transitions have positive temporal support"
+                ),
+            })
+
+    zero_duration = [name for name, start, end in resolved if end <= start]
+    if len(zero_duration) > max(1, len(resolved) // 2):
+        issues.append({
+            "action": None,
+            "field": "resolved_windows",
+            "message": (
+                f"too many actions resolve to zero duration ({zero_duration}); use threshold crossings or "
+                "sustained predicates so meaningful phases have temporal support"
+            ),
+        })
+
+    last_frame = max(0, frame_count - 1)
+    first_start = resolved[0][1]
+    final_end = resolved[-1][2]
+    minimum_span = max(2, int(np.ceil(0.10 * last_frame)))
+    if len(resolved) >= 2 and final_end - first_start < minimum_span:
+        issues.append({
+            "action": None,
+            "field": "resolved_windows",
+            "message": (
+                f"the full plan resolves only to frames [{first_start}, {final_end}] in a {frame_count}-frame "
+                "clip; select predicates that cover the visible interaction rather than only one short region"
+            ),
+        })
+    if len(resolved) >= 2 and first_start > int(0.80 * last_frame):
+        issues.append({
+            "action": resolved[0][0],
+            "field": "keyframe_function.start",
+            "message": (
+                f"the first action begins at frame {first_start} of {frame_count}; avoid a late global extremum "
+                "and select the earliest visible interaction onset"
+            ),
+        })
+    return issues
 
 
 def semantic_json_diff(v1: dict[str, Any], v2: dict[str, Any]) -> dict[str, Any]:
@@ -1235,41 +1372,54 @@ def generate_dynamic_semantic_keyframes(
     images = sample_video_frames(video, sample_count)
     with np.load(bundle_file, allow_pickle=False) as bundle:
         object_name = str(np.asarray(bundle["object_name"]).item()) if "object_name" in bundle.files else None
+    signals, _thresholds, fps = load_retargeting_bundle_signals(bundle_file)
+    frame_count = len(next(iter(signals.values())))
     base_prompt = build_dynamic_prompt(object_name)
     plan: dict[str, Any] | None = None
+    result: dict[str, Any] | None = None
+    previous_candidate: dict[str, Any] | None = None
     issues: list[dict[str, Any]] = []
     last_error: Exception | None = None
     for attempt in range(max_repairs + 1):
         prompt = base_prompt
         if attempt:
             prompt += (
-                "\nYour previous response failed local validation. Regenerate the complete plan and fix only "
-                f"these issues: {json.dumps(issues, ensure_ascii=False)}"
+                "\nYour previous response failed local validation. Here is the exact normalized response: "
+                f"{json.dumps(previous_candidate, ensure_ascii=False)}\n"
+                "Regenerate the complete plan and correct every listed field. A threshold primitive with "
+                "threshold:null is invalid: replace null with {\"kind\":\"quantile\",\"q\":<a number in [0,1]>} "
+                "chosen for the action visible in the video. Fix these issues: "
+                f"{json.dumps(issues, ensure_ascii=False)}"
             )
         raw = call_vlm(images, prompt)
         raw_path = output.parent / f"{output.stem}.vlm_attempt_{attempt}.txt"
         raw_path.write_text(raw, encoding="utf-8")
         try:
             candidate = normalize_dynamic_plan(_extract_json_value(raw))
+            previous_candidate = candidate
             issues = dynamic_plan_validation_issues(candidate)
             if issues:
                 last_error = ValueError("; ".join(str(issue["message"]) for issue in issues))
                 continue
             validate_dynamic_plan(candidate)
+            candidate_result = execute_dynamic_plan(candidate, signals, fps=fps)
+            issues = dynamic_resolution_validation_issues(candidate_result, frame_count)
+            if issues:
+                last_error = ValueError("; ".join(str(issue["message"]) for issue in issues))
+                continue
             plan = candidate
+            result = candidate_result
             break
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             last_error = exc
             issues = [{"action": None, "field": "plan", "message": str(exc)}]
-    if plan is None:
+    if plan is None or result is None:
         raise RuntimeError(
             f"VLM failed to produce a valid dynamic action plan after {max_repairs + 1} attempts; "
             f"last error: {last_error}"
         )
     plan_path = output.parent / f"{output.stem}.event_plan.json"
     _write_json(plan_path, plan)
-    signals, _thresholds, fps = load_retargeting_bundle_signals(bundle_file)
-    result = execute_dynamic_plan(plan, signals, fps=fps)
     result["generation_metadata"] = {
         "model": os.environ["OPENAI_MODEL"],
         "temperature": 0,

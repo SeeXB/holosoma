@@ -1,9 +1,63 @@
 # Holosoma Semantic Retargeting / WBT 交接文档
 
-> 更新时间：2026-09-02（Asia/Shanghai）
+## 2026-09-18 最新交接（优先于下方历史记录）
+
+### 当前实验：训练中，尚未到正式最终评测
+
+`sub1_largetable_028` 的三组正式训练于 **2026-09-17 18:17（Asia/Shanghai）** 启动。2026-09-18 23:26 检查：三组日志分别推进到约 **10559 / 10556 / 9490，目标均为 30000 iterations**；state 均为 `training`，日志持续更新，尚未生成最终评测结果。此处是检查时快照，接手时需读取 live state/日志，不要重复启动。
+
+| 组 | 轨迹 / RL | W&B run | 训练 PID |
+|---|---|---|---|
+| 1 | Original / Original adaptive | [f0316c9b](https://wandb.ai/yumou0319-/WholeBodyTracking/runs/f0316c9b) | 1912123 |
+| 2 | Semantic B4 / Original adaptive | [18c44b25](https://wandb.ai/yumou0319-/WholeBodyTracking/runs/18c44b25) | 1912125 |
+| 3 | Semantic B4 / Semantic adaptive | [c9b21365](https://wandb.ai/yumou0319-/WholeBodyTracking/runs/c9b21365) | 1912124 |
+
+三组统一 seed 42、4096 environments、原始 reward、Paper-DR、30000 轮，最终 checkpoint 为 `model_29999.pt`。第 1/2 组学习参数相同；短跑 checkpoint 的递归配置比较仅发现 motion 路径和运行/日志标识不同。训练 W&B 于启动时已通过服务端历史读取验证，不是仅创建空 run；该验证不代表未来网络始终正常。
+
+- 持久会话：`tmux attach -t sub1_largetable_028_3groups_20260917`；监视器启动 PID 1912047。
+- 实验根目录：`exp/training/sub1_largetable_028/officialpt_compound1mm_20260917/`。
+- 配置/启动：根目录 `production.json`、`launch_production.sh`；日志 `supervisor.log`。
+- 每组状态：根目录 `production/groupN/state.json`；训练日志 `production/groupN/train.log`；checkpoint 在对应 `train/WholeBodyTracking/` 下。
+- 正式评测输出：`exp/eval/sub1_largetable_028/officialpt_compound1mm_20260917/`。
+- 实验说明及质量限制：根目录 `EXPERIMENT.md`；输入与网格哈希：`production/input_sha256.json`。
+
+### 已解决的问题与本次代码改动
+
+1. **[已解决] OMOMO pose 打包、资产原点与人体关节列错误。** `prepare_batch_retarget_inputs.py` 修正 InterMimic xyz+xyzw 布局、资产中心化后的平移补偿、reader 往返与单位四元数校验；`smplh_joint_order.py` 统一 native→retarget 52 关节映射，renderer/exporter/semantic loader 校验 layout marker。见历史 13.9–13.11。修复这些字段不等于旧衣架自由物体交互已成功，旧错误轨迹仍不得复用。
+2. **[已解决] semantic plan 执行与旧缓存误复用。** 动态计划支持顶层数组，校验重复/坍缩窗口、时间线及映射；resolver 调用动态执行器。batch retarget 记录输入、scene、plan、命令指纹，拒绝无 provenance 或输入已变的旧结果；增加 task/method/tolerance 筛选与诊断入口。
+3. **[已解决] largetable Original 第 194 帧不可行。** 单凸包填满桌底空腔，失败姿态 ankle/table 距离为 -5.21 cm；同一姿态改 32 块 VHACD 后为 +20.33 cm。新增 `scripts/build_omomo_compound_collision.py`，生成共用的 MJCF/URDF 碰撞块；两种重定向及三组 RL 共用该模型。Original/B4 均完成 236/236 帧，未关闭约束或放宽原 1 mm 容差。转换后均 392 帧 / 50 Hz，object 轨迹一致、有限数值和单位四元数检查通过；训练有效 horizon 为 391/50 = 7.82 s。实际 Isaac USD 确认每个物体含 32 个启用的 convexHull collider。
+4. **[已解决] 同 seed 并发 USD 转换冲突。** 机器人转换目录增加 PID；物体转换使用 `tempfile.mkdtemp` 分配独立目录，避免 IsaacLab 秒级时间+相同随机 seed 造成写入冲突。修改位于 `isaacsim.py` / `object_spawner.py`；不改变 PPO 或物理参数。
+5. **[已解决] 训练结束后没有自动评测。** 新增 `scripts/run_three_group_experiment.py`，每组训练成功退出且最终 checkpoint 存在后，立即独立执行评测、汇总、离线视频和 W&B 上传，不等待另外两组。用锁防止重复监视器，保存命令/PID/退出码/阶段，校验输入哈希（含 URDF 引用网格）。训练失败不会误触发评测；失败状态需先调查，不会盲目重训。渲染/上传失败保留已完成物理指标并标记待处理。
+6. **[已解决] 评测 GUI 慢与无用尾部 rollout。** wrapper 显式设置 `training.headless=True`；instrumentation 每 100 步输出进度，全环境满 10 回合后通过 PPO callback 正常保存退出；分析器缓存 NPZ 数组，修正 clip 回绕后 stale timeout flags 的判断。离线渲染脚本及多任务结果汇总均保留。
+
+修复与重定向证据：`exp/retargeting/sub1_largetable_028_officialpt_compound_20260917/`，包括 collision manifest、失败姿态对比、两条原始轨迹及 Isaac USD 审计。转换原始 retarget NPZ 时使用 xyz+wxyz 布局，**不要传 `--use-omniretarget-data`**。
+
+### 评测流程与已完成结果
+
+正式评测按每组自己的最终 checkpoint 和训练 reference：seed 42，32 环境，每环境前 10 个已结束回合（失败也计入，共 320），从 frame 0 开始，horizon=`(N-1)/fps`；initial pose noise=0；Paper-DR push 开启（间隔 1–3 s，线速度 0.3 m/s、角速度 0.78 rad/s）；object termination 1 m / π/4，其余正常终止条件保留。shape scaling 未实现，不能声称覆盖。headless 无实时相机，保存全环境 NPZ，再离线生成 env 0 首个 episode 的 actual/reference 视频并上传评测指标。
+
+- **[已完成] largetable 流程短跑**：`smoke_v2` 的三组均完成 2 轮小训练→各 320 回合评测→汇总→视频，supervisor 正常退出。短跑失败率不是正式实验效果。
+- **[已完成] sub10_largebox_089 上一轮最终评测**：官方输入/default1mm 三组分别 313/320（97.81%）、318/320（99.38%）、319/320（99.69%）。结果根目录 `exp/eval/sub10_largebox_089/20260916_officialpt_default1mm_v1_paper_dr/`（实际评测于 09-17 执行）；W&B eval [wfr4ll0j](https://wandb.ai/yumou0319-/WholeBodyTracking/runs/wfr4ll0j) 已完成并验证上传。
+
+### 仍未解决或尚未覆盖
+
+- largetable 孤立帧仍有 wrist/table 几何穿透：Original 最大约 9.49 mm，B4 14.07 mm；求解器成功不等于完全无穿透。共享碰撞模型改变了实验物理条件，不能与历史 single-hull 条件混作同一实验。
+- 衣架旧任务的 hand/contact 对应与自由物体交互仍有问题，不能因 largetable 成功开训而标成已解决。
+- 39 任务 readiness 审计见 `exp/training/readiness_20260917/READINESS.md`、`readiness.json`、`NEXT_TASK.md`；20 条官方 OMOMO PT 可读且校验通过，semantic 为 10 一致、6 待重新 resolve、4 无效。19 条 LAFAN 原输入和既有 Original/Uniform2 可读，但旧 stride20 与 semantic B4 三组协议仍待统一。不要宣称全部 39 个任务都 ready。
+- 正式 largetable 三组仍在训练，最终评测待各组完成。独立 tmux 可跨对话持续运行，不保证机器重启后自启动。
+
+### 提交范围与验证
+
+本次验证：redman 环境下 pose packing、input provenance、SMPL-H joint order、semantic keyframes、semantic retarget runtime 共 **60 项测试通过**（6 条第三方弃用 warning）；**41 个 Python/Shell 文件语法检查通过**。仿真端完整三组短跑已于 09-17 验证，本次文档/提交操作不重启训练。
+
+本次提交覆盖当前源码、脚本、回归测试和本文。生成的模型/视频/NPZ、训练日志、W&B 缓存、OMOMO 网格、分卷数据、`exp/` 本地产物不纳入。既有 652 个 tracked deletion（旧 benchmark/diagnostics 迁移及 `THIRD_PARTY_LICENSES`、`uv.lock` 等）保留在工作区，未作为本次代码删除提交；不要 `git add -A` 或清理工作区。
+
+推送目标为用户仓库 `seexb/main`（SeeXB/holosoma），不是 Amazon `origin/main`。提交前 HEAD 为 `d3036835`，远端检查为 `692ba2a1`，本地另有 `7bcea974`、`d3036835` 两个已有提交随本次一并推进。最终提交号以 `git log -1` 和 `git ls-remote seexb refs/heads/main` 为准，避免在提交文件中写自身哈希。
+
+> 更新时间：2026-09-18（Asia/Shanghai）；下方编号章节为历史记录，当前状态以上方最新交接为准。
 > 下一位助手：开始工作前请完整阅读本文。仓库中有大量已经完成的因果实验和本地结果，不要从头重跑，也不要删除未提交的实验产物。
 
-## 1. 当前仓库和 Git 状态
+## 1. 仓库和 Git 状态（历史快照，最新见顶部）
 
 - 仓库：`/home/zongyouyu/sxb/holosoma`
 - 当前分支：`main`
@@ -599,3 +653,72 @@ exp/eval/paper_dr_robustness/paper_dr_robustness_results.json
 三者都没有有效 motion frame 上的早停 tracking failure。原始 terminal snapshot 中少量 `bad_object_pos`/`bad_object_ori` 是 clip 完成后 command 已回到 frame 0、而 PhysX 状态尚未同步造成的一拍 stale flag；分析器已按最后一个有效 motion frame 判定成功，并单独记录 stale 计数（Omni 1、S1 2、S2 1），不能把它们计为失败。
 
 本次提交只应包含源码、测试、评测/启动脚本和上述轻量报告；训练日志、checkpoint、raw rollout NPZ、视频、`outputs/`、`third_party/` 和 `.env` 留在本机并由 `.gitignore` 排除。当前仍存在旧 benchmark 结果迁移产生的大量 tracked deletion，以及 `THIRD_PARTY_LICENSES`、`uv.lock` 删除；这些不属于本次 RL success 提交，未纳入 stage。
+
+### 13.8 Clothesstand 三组训练暂停与 8k/12k 评测（2026-09-05）
+
+用户要求先停止等待训练，测试 10k 附近效果后再决定训练长度。三个 `sub9_clothesstand_058` run 均以 4096 env、seed 42、目标 30000 iterations 从零训练，在线 W&B 已启用。运行约 43.5 小时后按用户要求 SIGINT 停止，最后日志 iteration 为 17456 / 17458 / 15755；磁盘可恢复 checkpoint 为 16000 / 16000 / 12000。未保存的后续 iterations 没有恢复点。训练并非 OOM 停止，目前未重启。
+
+Run 目录前缀为 `logs/WholeBodyTracking/20260903_093625-sub9_clothesstand_058_`，后缀依次为 `originaltraj_originalrl_s42-locomotion`、`semanticb4traj_originalrl_s42-locomotion`、`semanticb4traj_semanticadaptive_s42-locomotion`。训练 W&B IDs 为 `sspfcd7i` / `n4j5unuh` / `i52zffor`。
+
+保存间隔为 4000，因此不存在精确 10000 checkpoint。最终对三组各自的 `model_08000.pt` 与 `model_12000.pt` 完成评测，不能把这些结果称为精确 10k。沿用 Paper-DR 的 32 环境 × 前 10 完整 episode、seed 42、push 开启、initial-pose noise=0、object 阈值 1 m / 45°。本任务 reference 是 209 帧、50 fps，完整评测 horizon 为 4.16 秒（208 个有效 motion frames），不能照抄 largebox 的 6.48 秒。第 1 组用 Original reference，第 2/3 组用 B4 reference。
+
+六个 checkpoint 均为 **0/320 成功**。8k/12k 平均 episode 时长分别为：第 1 组 0.292/0.269 s、第 2 组 0.256/0.276 s、第 3 组 0.631/0.605 s。主要失败为 `bad_motion_body_pos` 和 `bad_object_ori`；1920 个计分 episode 共只有 1 次 push，绝大多数在初次 push 前就早停。目前不支持“以后只训练 10k 就够了”的结论，尚未修改训练预算；下一步应定位动作起始段/接触失败原因，尚未建立根因。
+
+最终产物位于 `exp/eval/sub9_clothesstand_058/20260905_headless_isolated_8k_12k/`，包括 `ASSESSMENT.md`、`CHECKPOINT_EVAL_REPORT.md`、`checkpoint_results.json`，每个 `groupN_08000` / `groupN_12000` 目录中有 raw NPZ、eval log 和离线 actual/reference 对比视频（env 0 首个 episode、0.5 倍速、末帧停留 1 秒）。评测 W&B: `yumou0319-/WholeBodyTracking/k23m695h`。
+
+本轮修正了两个评测执行问题：旧 wrapper 只传 `eval_overrides.headless=True`，实际 `training.headless` 仍为 False，导致 GUI 评测极慢；现已显式传 `training.headless=True`。独立进程全部 LOCAL_RANK=0 时强制 USD 转换共享 `converted_rank0` 会产生临时 layer 冲突，曾使一组评测崩溃；现转换目录包含 PID。最终六组均在 headless、无相机、独立转换目录下重新执行并正常退出。旧训练是否受共享目录影响尚未查明，不要当作已经证实的失败根因。导入器仍存在非致命 visual-reference warnings，不应误称所有 warnings 已消失。
+
+新增入口 `scripts/eval_sub9_clothesstand_checkpoints.sh`、`scripts/analyze_clothesstand_checkpoints.py`、`scripts/render_clothesstand_checkpoint_eval.py`。Paper-DR instrumentation 每 100 步报告进度，全部环境满 10 个 episode 后通过 callback stop 正常保存退出，PPO eval loop 现支持该 stop 标记；统计器缓存 NPZ 数组避免反复解压，并只对真正回绕到 frame 0 的 timeout 忽略 stale flags。当时源码/脚本/本文尚未提交；现已纳入 2026-09-18 的代码提交范围，其他产物变动保留。
+
+### 13.9 2026-09-05：衣架失败诊断发现本批 OMOMO pose 打包错误（字段问题已解决，见 13.10–13.11）
+
+用户要求检查仿真/参考回放是否能够真实交互。本轮为诊断，没有修改生产输入打包器、URDF 或训练轨迹，没有重启训练。主要证据与后续顺序见 `exp/eval/sub9_clothesstand_058/20260905_reference_physics/DIAGNOSIS.md`。
+
+**确定错误**：`tools/prepare_batch_retarget_inputs.py:66` 将 GT `[qw,qx,qy,qz,x,y,z]` 写成 `[qx,qy,qz,x,y,z,qw]`，但 `src/utils.py:45` 的 InterMimic reader 实际期待 `[x,y,z,qx,qy,qz,qw]`。读取结果变为 `[qw,x,y,z,qx,qy,qz]`。正确 writer permutation 应为 `[4,5,6,1,2,3,0]`。当时尚未实施；后续已修复并通过回归检查，见 13.10–13.11。
+
+只读审计入口 `scripts/audit_omomo_object_pose_roundtrip.py`：全部 20/20 OMOMO 都受影响，三种方法 60 份 retarget NPZ 的物体四元数逐元素等于错误输入；human joints 正确，内存中正确 permutation 的完整往返误差为零。衣架输入的物体平移误差第一帧 1.760736 m（重定向尺度处理前），错误四元数范数 1.198779–1.857313。完整 `object_pose_roundtrip_audit.json` 已落盘。此前含这些结果的 39-task 汇总不能继续作为有效方法比较，需要重算受影响 OMOMO 与 aggregate；19 条 LAFAN 和此前独立成功的 sub3_largebox_003 不属于这次错误路径。
+
+物理测试入口 `scripts/diagnose_clothesstand_reference_physics.py`，使用原训练场景、名义 mass 0.1 kg、关闭 DR/pushes、6 环境，不调用 RL、不提前重置。物体只初始化一次。有效输出 `default_checked/`：强制机器人每 5 ms 跟随参考而物体自由时，Original/B4 在 0.46/0.44 s 超过物体 45° 朝向阈值；仅 PD 跟踪在 0.38/0.40 s 超限。`decomposition_checked/` 中仅诊断实例改凸分解，强制跟踪仍均在 0.40 s 超限；生产转换器不变。原 USD 实际 `convexHull`，静/动摩擦实际 1.0/1.0。RL 为半球手，retarget 为 rubber hand；初始共同 wrist FK 差约 3.33 mm、torso 10.74 mm。参考第一帧衣架 OBJ 最低顶点 z=-0.105718 m。
+
+注意 `default/` 初次新增诊断错用 raw body 0(world)，其数值无效，已有 INVALID.md；`default_validated/` 为 FK 检查拒绝的无效尝试。只用 `default_checked/` 和 `decomposition_checked/` 的结果。生产训练加载器原本按名称找 pelvis，并无该诊断脚本错误。新增脚本已修正并加 root/FK 校验；关闭 IsaacSim 必须使用已有 close_simulation_app workaround。视频用 MuJoCo 原 retarget 视觉模型离线展示 IsaacSim 实测状态，不是碰撞网格渲染。
+
+本轮新增诊断脚本与报告尚未 commit/push；保留其他 dirty 文件。两次有效仿真均已正常退出，最终无 train/eval/diagnose 进程残留，显存约 1.4 GiB、可用内存约 42 GiB。
+
+### 13.10 2026-09-06：字段与资产原点修复完成，最终交互尚未跑通
+
+用户授权修复并检查交互。完整报告：`exp/eval/sub9_clothesstand_058/20260906_pose_fixed/FIX_AND_INTERACTION_CHECK.md`。
+
+已修改 `tools/prepare_batch_retarget_inputs.py`：正确 PT permutation、实际 reader 往返校验；另发现**网格中心化后物体 pose 未同步补偿**，现新增 `canonicalize_object_poses`，用 `t_asset=t_raw+R(s_frame*c_source-c_asset)`，并验证 canonical OBJ 与 source 顶点对应/统一缩放。衣架原点遗漏约 0.352 m。Reader/转换器拒绝非法四元数；FK 转换器支持 `--scene-xml-file`；batch runner 支持任务筛选/显式诊断 step size，并以输入/场景/plan/命令指纹阻止误复用旧结果。
+
+最终 **v3** 输入为 `exp/retargeting/omomo_pose_origin_fixed_20260906/input/`，20/20 完成并通过校验，根目录有 `roundtrip_audit.json`。固定尺度造成的最大顶点误差上界衣架 0.779 mm、20 条最大 tripod 4.685 mm，远小于原点错误。
+
+**重要：交互未修复成功。** v3 输入、原单凸包、step=0.2 下 Original/Uniform-2/B4 在零基 frame 1/3/3 不可行；共享 64 块 VHACD 碰撞、step=0.2 时在 frame 7/8/8 不可行；compound+step=1.0 仅诊断也在 frame 72/9/9 不可行。所有日志/summary 保留在 v3 根目录及 compound、compound_step1_diagnostic 子目录。没有最终完整原设置轨迹，因而没有最终 v3 的完整自由物体测试结果，不要声称“已经拿得住”或“可开始训练”。
+
+v3 `constraint_audit_final.json` 是 Original frame 1 最终失败的子问题：分别移除 foot_sticking/nonpenetration/step_bound 任一组变 optimal，移除 joint_limits 仍 infeasible，说明组合冲突。单凸包下右手/拇指距离约 -244/-260 mm，不是已证实的真实扫描表面穿透。不要沿用更早中间版本“已排除 foot”结论。下一步是初始化、接触定义、retarget/RL 手几何一致和约束可行性，不应偷偷关闭防穿透或变更 B4 方法来让程序跑完。
+
+**中间版本不得混用**：`exp/retargeting/omomo_pose_fixed_20260906/` 是仅修字段的 v2，原点仍错。在这阶段 compound+step1 下 Original/Uniform-2 曾求解完成并做了物理测试（0.46/0.52s 朝向超限），其视频/NPZ在本 eval 根目录，已由 `STAGE_A_ONLY.md` 明确标记。这些不是最终修复后结果；原始 `omomo_batch` 则是 v1。旧训练 motions 已加 `DO_NOT_USE_FOR_NEW_TRAINING.md`；旧训练入口仍引用它们，不能直接启动。没有覆盖旧结果/资产/checkpoint，没有重启 RL，没有重跑全部39任务，也没有 commit/push。
+
+42项测试通过（7项 packing/origin + 2项 cache + 33项 semantic runtime，redman环境）；hssim缺cvxpy不能用于完整runtime suite。py_compile/diff-check通过。诊断脚本与新代码均保持未提交状态；保留其余用户dirty文件。
+
+### 13.11 2026-09-06：发现并修复 OMOMO 人体关节列顺序
+
+13.10 的“最终 v3”结论已被取代。根因是 `prepare_sequence.py` 直接保存
+`BodyModel.Jtr` 的 SMPL-H native 顺序，却从 7bcea97 起给它贴上 OmniRetarget
+顺序的名字；`prepare_batch_retarget_inputs.py` 又原样打包。已知成功的
+`demo_data/OMOMO_new/sub3_largebox_003.pt` 于 2026-01-12 已入库，早于 2026-09-02
+新增的 renderer/adaptor 路径，并且关节拓扑正确。正确 permutation 与既有
+`export_cari4d_retargeting_input.py` 一致：`[0,1,4,7,10,2,5,8,11,...]`。
+
+修复详情和结果见
+`exp/eval/sub9_clothesstand_058/20260906_joint_pose_fixed/JOINT_ORDER_FIX_AND_INTERACTION.md`。
+新增共享 `smplh_joint_order.py`、显式 layout marker 和拓扑 guard；20 条 OMOMO bundle
+已重建，dynamic plan 已按修正关节重新 resolve，新 v4 PT root 为
+`exp/retargeting/omomo_joint_pose_fixed_20260906/input/`。resolver 也已改为调用
+dynamic action/function executor，而非旧固定八角色 executor。46项相关测试通过。
+
+衣架在 64-part compound、原 step=0.2 和全部原物理约束下，Original/B4 均成功
+完成 126/126 帧（此前错误版 frame 7/8 infeasible），参考视频姿势正常。但 IsaacSim
+prescribed-reference/free-object 测试仍失败：两者最终 object position error 约1.620m、
+orientation error约168.6°，与 object-only 近似；训练 half-sphere hand 到物体表面
+主要有约7–22cm间隙。当前剩余问题是 retarget 接触目标/手几何对应，不是人体关节列。
+未启动RL，旧训练 motions 仍不可用。

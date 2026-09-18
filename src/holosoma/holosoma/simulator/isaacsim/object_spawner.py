@@ -34,6 +34,8 @@ material is attached and the asset keeps its authored material.
 
 from __future__ import annotations
 
+import tempfile
+
 import os
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
@@ -118,6 +120,10 @@ def select_spawn_cfg(
         # articulation/joint-drive cfgs are converter inputs with no USD analogue.
         urdf_cfg = sim_utils.UrdfFileCfg(
             asset_path=resolved_path,
+            # IsaacLab's default uses second-resolution time plus seeded random,
+            # so simultaneous experiments with the same seed can overwrite each
+            # other's conversion. Use an OS-unique directory without changing RNG.
+            usd_dir=tempfile.mkdtemp(prefix="holosoma_object_usd_"),
             fix_base=False,  # MUST stay False — see module docstring (kinematic, not welded base).
             replace_cylinders_with_capsules=True,
             articulation_props=sim_utils.ArticulationRootPropertiesCfg(

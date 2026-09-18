@@ -138,15 +138,20 @@ def build_qpos(
     return actual_qpos, reference_qpos, indices, metadata
 
 
-def camera() -> mujoco.MjvCamera:
+def camera(
+    azimuth: float = 142.0,
+    elevation: float = -20.0,
+    distance: float = 3.55,
+    lookat: tuple[float, float, float] = (0.53, -0.13, 0.55),
+) -> mujoco.MjvCamera:
     result = mujoco.MjvCamera()
     mujoco.mjv_defaultCamera(result)
     result.type = mujoco.mjtCamera.mjCAMERA_FREE
-    result.azimuth = 142.0
-    result.elevation = -20.0
-    result.distance = 3.55
+    result.azimuth = azimuth
+    result.elevation = elevation
+    result.distance = distance
     # Fixed in world coordinates; it does not follow either trajectory.
-    result.lookat[:] = [0.53, -0.13, 0.55]
+    result.lookat[:] = lookat
     return result
 
 
@@ -295,6 +300,10 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=ROOT / "runs/eval/object_drift")
     parser.add_argument("--width", type=int, default=640)
     parser.add_argument("--height", type=int, default=480)
+    parser.add_argument("--azimuth", type=float, default=142.0)
+    parser.add_argument("--elevation", type=float, default=-20.0)
+    parser.add_argument("--distance", type=float, default=3.55)
+    parser.add_argument("--lookat", type=float, nargs=3, default=(0.53, -0.13, 0.55))
     args = parser.parse_args()
 
     output_dir = args.output_dir.resolve()
@@ -313,7 +322,7 @@ def main() -> None:
     actual_data = mujoco.MjData(model)
     reference_data = mujoco.MjData(model)
     renderer = mujoco.Renderer(model, height=args.height, width=args.width)
-    fixed_camera = camera()
+    fixed_camera = camera(args.azimuth, args.elevation, args.distance, tuple(args.lookat))
 
     ref_torso = np.asarray(actual["reference_torso_pos_w"][indices])
     act_torso = np.asarray(actual["actual_torso_pos_w"][indices])

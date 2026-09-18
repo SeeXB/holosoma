@@ -64,6 +64,7 @@ def episode_rows(path: Path, quota: int = 10) -> tuple[list[dict[str, Any]], dic
             for episode_id, terminal_step in enumerate(terminal_steps[:quota], start=1):
                 terminal_flags = tuple(k for k in REASON_KEYS if bool(z[k][terminal_step, env_id]))
                 timeout = bool(z["timeout"][terminal_step, env_id])
+                motion_step = int(z["motion_step"][terminal_step, env_id])
                 # In WBT eval the command manager resets its reference as soon
                 # as the final motion frame is reached.  The environment then
                 # raises its timeout one control tick later; the pre-reset
@@ -73,9 +74,10 @@ def episode_rows(path: Path, quota: int = 10) -> tuple[list[dict[str, Any]], dic
                 # tracking flags for the success decision and retain the raw
                 # terminal flags for auditability.
                 previous_flags = ()
-                if timeout and terminal_step > 0:
+                post_clip_reset = timeout and motion_step == 0 and terminal_step > 0
+                if post_clip_reset:
                     previous_flags = tuple(k for k in REASON_KEYS if bool(z[k][terminal_step - 1, env_id]))
-                flags = previous_flags if timeout else terminal_flags
+                flags = previous_flags if post_clip_reset else terminal_flags
                 success = timeout and not flags
                 if timeout and terminal_flags and not flags:
                     classification = "timeout_with_post_reset_stale_tracking_flags"
@@ -85,7 +87,6 @@ def episode_rows(path: Path, quota: int = 10) -> tuple[list[dict[str, Any]], dic
                     classification = "unclassified_non_timeout"
                 else:
                     classification = "success" if success else "tracking_failure"
-                motion_step = int(z["motion_step"][terminal_step, env_id])
                 # The command sampler can reset ``motion_step`` in the same
                 # control tick in which the clip timeout is raised.  A
                 # timeout-with-tracking-flag therefore still reached the clip
@@ -161,6 +162,10 @@ def _trajectory_errors(path: Path, rows: list[dict[str, Any]]) -> dict[str, floa
         if missing:
             return {"object_pos_rmse_m": None, "object_ori_rmse_deg": None, "tracked_body_pos_rmse_m": None}
 
+        # NpzFile decompresses on every lookup. Cache each trajectory once;
+        # otherwise a 320-episode report repeatedly inflates the full rollout.
+        series = {name: z[name] for name in required}
+
         object_pos_sq: list[np.ndarray] = []
         object_ori_sq: list[np.ndarray] = []
         body_sq: list[np.ndarray] = []
@@ -172,11 +177,11 @@ def _trajectory_errors(path: Path, rows: list[dict[str, Any]]) -> dict[str, floa
             # errors.  The valid clip samples are motion frames 1..324.
             if bool(row["timeout"]) and int(row["motion_step"]) == 0 and end > start:
                 end -= 1
-            object_pos_sq.append(np.asarray(z["object_pos_error_m"][start:end, env], dtype=float) ** 2)
-            object_ori_sq.append(np.asarray(z["object_ori_error_rad"][start:end, env], dtype=float) ** 2)
+            object_pos_sq.append(np.asarray(series["object_pos_error_m"][start:end, env], dtype=float) ** 2)
+            object_ori_sq.append(np.asarray(series["object_ori_error_rad"][start:end, env], dtype=float) ** 2)
             delta = np.asarray(
-                z["pre_actual_tracked_body_pos_w"][start:end, env]
-                - z["pre_reference_tracked_body_pos_w"][start:end, env],
+                series["pre_actual_tracked_body_pos_w"][start:end, env]
+                - series["pre_reference_tracked_body_pos_w"][start:end, env],
                 dtype=float,
             )
             body_sq.append(np.sum(delta * delta, axis=-1).reshape(-1))

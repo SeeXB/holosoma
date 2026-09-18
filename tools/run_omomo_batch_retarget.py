@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -23,8 +24,6 @@ def _run_one(task_name: str, method: str, args: argparse.Namespace) -> dict[str,
     result = save_dir / f"{task_name}_{method}.npz"
     log_path = save_dir / "retarget.log"
     save_dir.mkdir(parents=True, exist_ok=True)
-    if result.is_file() and not args.force:
-        return {"task_name": task_name, "method": method, "status": "cached", "result": str(result)}
 
     command = [
         args.python,
@@ -49,12 +48,15 @@ def _run_one(task_name: str, method: str, args: argparse.Namespace) -> dict[str,
     ]
     if args.no_foot_sticking:
         command += ["--retargeter.no-activate-foot-sticking"]
+    if args.step_size is not None:
+        command += ["--retargeter.step-size", str(args.step_size)]
     if method == "original":
         command += ["--semantic.mode", "original"]
     elif method == "uniform2":
         command += ["--semantic.mode", "uniform", "--semantic.profile-dir", str(save_dir.resolve())]
     elif method == "semantic_b4":
-        plan = args.bundle_root / task_name / "semantic_keyframes" / f"{task_name}_dynamic.json"
+        bundle_task = "sub03_largebox3" if task_name == "sub3_largebox_003" else task_name
+        plan = args.bundle_root / bundle_task / "semantic_keyframes" / f"{task_name}_dynamic.json"
         command += [
             "--semantic.mode",
             "uniform2_semantic_weight_full_event_transition_truncated_budget",
@@ -67,6 +69,23 @@ def _run_one(task_name: str, method: str, args: argparse.Namespace) -> dict[str,
         ]
     else:
         raise ValueError(f"unknown method: {method}")
+    # Never reuse an old result merely because its filename matches: packing,
+    # pose origin, scene or semantic inputs may have changed underneath it.
+    fingerprint = hashlib.sha256(json.dumps(command).encode())
+    sources = [args.input_root / f"{task_name}.pt",
+               args.input_root / "scenes" / f"g1_29dof_w_{object_name}.xml"]
+    if method == "semantic_b4":
+        sources.append(plan)
+    for source in sources:
+        fingerprint.update(source.read_bytes())
+    signature = fingerprint.hexdigest()
+    provenance = save_dir / "retarget_provenance.json"
+    if result.is_file() and not args.force:
+        saved = json.loads(provenance.read_text()) if provenance.is_file() else {}
+        if saved.get("input_signature") == signature:
+            return {"task_name": task_name, "method": method, "status": "cached", "result": str(result)}
+        return {"task_name": task_name, "method": method, "status": "failed", "result": str(result),
+                "error": "Existing result has missing/mismatched input provenance. Use a new output root (or explicit --force)."}
     env = dict(os.environ)
     env["PYTHONPATH"] = str(args.project_root.resolve())
     with log_path.open("w", encoding="utf-8") as log:
@@ -81,6 +100,9 @@ def _run_one(task_name: str, method: str, args: argparse.Namespace) -> dict[str,
     if completed.returncode == 0 and native_result.is_file():
         native_result.replace(result)
     status = "ok" if completed.returncode == 0 and result.is_file() else "failed"
+    if status == "ok":
+        provenance.write_text(json.dumps({"input_signature": signature, "command": command,
+                                          "sources": [str(p.resolve()) for p in sources]}, indent=2))
     return {
         "task_name": task_name,
         "method": method,
@@ -108,10 +130,25 @@ def main() -> None:
         help="Disable foot-sticking constraints for all tasks (useful for infeasible motions).",
     )
     parser.add_argument("--force", action="store_true")
-    parser.add_argument("--method", choices=("original", "uniform2", "semantic_b4", "both"), default="both")
+    parser.add_argument("--step-size", type=float, default=None,
+                        help="Explicit SQP trust-region override; omitted keeps the original setting.")
+    parser.add_argument("--tasks", nargs="+", choices=list(TASK_OBJECTS), default=None,
+                        help="Optional task subset for validated pilot reruns.")
+    parser.add_argument(
+        "--method",
+        choices=("original", "uniform2", "semantic_b4", "training_pair", "both"),
+        default="both",
+        help="training_pair runs Original and Semantic B4 together; both retains the three-method benchmark.",
+    )
     args = parser.parse_args()
-    methods = ("original", "uniform2", "semantic_b4") if args.method == "both" else (args.method,)
-    tasks = [(task, method) for method in methods for task in TASK_OBJECTS]
+    if args.method == "both":
+        methods = ("original", "uniform2", "semantic_b4")
+    elif args.method == "training_pair":
+        methods = ("original", "semantic_b4")
+    else:
+        methods = (args.method,)
+    selected_tasks = args.tasks or list(TASK_OBJECTS)
+    tasks = [(task, method) for method in methods for task in selected_tasks]
     results: list[dict[str, object]] = []
     with ThreadPoolExecutor(max_workers=max(1, args.max_workers)) as executor:
         futures = {executor.submit(_run_one, task, method, args): (task, method) for task, method in tasks}
@@ -122,7 +159,7 @@ def main() -> None:
     results.sort(key=lambda row: (str(row["method"]), str(row["task_name"])))
     args.output_root.mkdir(parents=True, exist_ok=True)
     (args.output_root / "retarget_batch_summary.json").write_text(
-        json.dumps({"tasks": list(TASK_OBJECTS), "results": results}, indent=2, ensure_ascii=False) + "\n",
+        json.dumps({"tasks": selected_tasks, "results": results}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     failed = [row for row in results if row["status"] == "failed"]

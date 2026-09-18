@@ -184,6 +184,11 @@ class MotionLoader:
             else:
                 self.motion_object_poss_input = motion[:, -7:-4]
                 self.motion_object_rots_input = motion[:, -4:]
+            if not torch.isfinite(self.motion_object_poss_input).all() or not torch.isfinite(self.motion_object_rots_input).all():
+                raise ValueError("Non-finite object pose in retarget trajectory")
+            norms = torch.linalg.vector_norm(self.motion_object_rots_input, dim=-1)
+            if not torch.allclose(norms, torch.ones_like(norms), atol=1e-4, rtol=0):
+                raise ValueError("Object quaternion is not unit length; check pose layout before interpolation")
 
         self.input_frames = motion.shape[0]
         self.duration = (self.input_frames - 1) * self.input_dt
@@ -422,6 +427,8 @@ def run_simulator(args_cli: DataConversionConfig):
             raise ValueError("object_name cannot be None when it's not 'ground' or 'multi_boxes'")
         robot_xml_path = robot_model_path.replace(".urdf", "_w_" + object_name + ".xml")
 
+    if args_cli.scene_xml_file is not None:
+        robot_xml_path = args_cli.scene_xml_file
     robot = mujoco.MjModel.from_xml_path(robot_xml_path)
     robot_data = mujoco.MjData(robot)
     print("Loading robot model from: ", robot_xml_path)

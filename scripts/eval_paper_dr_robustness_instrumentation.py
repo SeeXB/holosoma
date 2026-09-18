@@ -13,6 +13,7 @@ from typing import Any
 import sys
 
 import numpy as np
+from loguru import logger
 
 # ``eval_agent.py`` imports this file by path and may not put the repository
 # root on ``sys.path``.  Add it so the established diagnostics namespace is
@@ -61,6 +62,7 @@ if not getattr(EvalRecordingCallback, "_paper_dr_robustness_instrumented", False
         env._paper_eval_push_count = torch.zeros(env.num_envs, dtype=torch.int64, device=env.device)
         self._buffers["push_count"] = []
         self._all_env_buffers["push_count"] = []
+        self._paper_eval_completed_episodes = np.zeros(env.num_envs, dtype=np.int64)
         self._metadata.update(
             {
                 "eval_protocol": "paper_dr_robustness_v1",
@@ -93,6 +95,19 @@ if not getattr(EvalRecordingCallback, "_paper_dr_robustness_instrumented", False
         push_count = env._paper_eval_push_count.detach().cpu().numpy().copy()
         self._buffers["push_count"].append(push_count[self.env_id])
         self._all_env_buffers["push_count"].append(push_count)
+        self._paper_eval_completed_episodes += self._all_env_buffers["done"][-1].astype(np.int64)
+        if self._step_count % 100 == 0:
+            logger.info(
+                "Paper-DR eval step {}: completed episodes/env min={} max={} (quota=10)",
+                self._step_count,
+                int(self._paper_eval_completed_episodes.min()),
+                int(self._paper_eval_completed_episodes.max()),
+            )
+        # The protocol scores only each environment's first ten episodes.
+        # Once every environment has reached that quota, further rollout adds
+        # no scored samples. Request a normal exit so all callbacks still save.
+        if np.all(self._paper_eval_completed_episodes >= 10):
+            actor_state["stop"] = True
         return actor_state
 
     def _save_paper_dr(self: EvalRecordingCallback) -> None:

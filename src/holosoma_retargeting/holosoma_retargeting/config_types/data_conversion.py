@@ -62,6 +62,9 @@ class DataConversionConfig:
     object_name: str | None = None
     """Override object name (default depends on robot and data type)."""
 
+    scene_xml_file: str | None = None
+    """Explicit FK scene; use the same object/robot scene as retargeting."""
+
     input_fps: int = 30
     """FPS of the input motion."""
 

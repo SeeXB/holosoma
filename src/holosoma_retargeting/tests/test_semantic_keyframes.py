@@ -8,6 +8,7 @@ import pytest
 from holosoma_retargeting.semantic_keyframes.pipeline import (
     CRITICALITY_MAPPING,
     dynamic_plan_validation_issues,
+    dynamic_resolution_validation_issues,
     execute_dynamic_plan,
     ROLE_END_REQUIREMENTS,
     ROLE_ORDER,
@@ -15,6 +16,7 @@ from holosoma_retargeting.semantic_keyframes.pipeline import (
     apply_plan_repairs,
     execute_plan,
     extract_json,
+    _extract_json_value,
     plan_validation_issues,
     semantic_json_diff,
     validate_semantic_keyframe_json,
@@ -53,6 +55,11 @@ def _valid_plan() -> dict[str, Any]:
             }
         )
     return {"events": events}
+
+
+def test_extract_json_value_preserves_top_level_action_array() -> None:
+    value = _extract_json_value('```json\n[{"action":"grasp"},{"action":"carry"}]\n```')
+    assert [item["action"] for item in value] == ["grasp", "carry"]
 
 
 def test_extract_and_validate_fenced_plan() -> None:
@@ -207,3 +214,82 @@ def test_dynamic_plan_uses_task_specific_actions_and_gt_functions() -> None:
     result = execute_dynamic_plan(plan, signals)
     assert result["events"][0]["event"] == "drag_suitcase"
     assert result["events"][0]["windows"] == [{"start_frame": 2, "end_frame": 4, "trigger_frame": 2}]
+
+
+def test_dynamic_resolution_rejects_actions_collapsed_to_same_late_frame() -> None:
+    result = {
+        "events": [
+            {"event": "grasp", "windows": [{"start_frame": 95, "trigger_frame": 95, "end_frame": 95}]},
+            {"event": "lift", "windows": [{"start_frame": 95, "trigger_frame": 95, "end_frame": 95}]},
+            {"event": "carry", "windows": [{"start_frame": 95, "trigger_frame": 95, "end_frame": 95}]},
+        ]
+    }
+    issues = dynamic_resolution_validation_issues(result, frame_count=100)
+    messages = " ".join(issue["message"] for issue in issues)
+    assert "duplicate window" in messages
+    assert "zero duration" in messages
+    assert "first action begins" in messages
+
+
+def test_dynamic_resolution_accepts_ordered_task_phases() -> None:
+    result = {
+        "events": [
+            {"event": "grasp", "windows": [{"start_frame": 10, "trigger_frame": 10, "end_frame": 20}]},
+            {"event": "carry", "windows": [{"start_frame": 20, "trigger_frame": 20, "end_frame": 70}]},
+            {"event": "place", "windows": [{"start_frame": 70, "trigger_frame": 70, "end_frame": 90}]},
+        ]
+    }
+    assert not dynamic_resolution_validation_issues(result, frame_count=100)
+
+
+def test_dynamic_executor_does_not_push_next_start_after_previous_end() -> None:
+    def action(name: str, start_q: float, end_q: float) -> dict[str, Any]:
+        return {
+            "action": name,
+            "body_parts": ["left_hand"],
+            "keyframe_function": {
+                "start": {
+                    "primitive": "threshold_crossing_up",
+                    "signal": "object_progress",
+                    "threshold": {"kind": "quantile", "q": start_q},
+                },
+                "end": {
+                    "primitive": "threshold_crossing_up",
+                    "signal": "object_progress",
+                    "threshold": {"kind": "quantile", "q": end_q},
+                },
+            },
+            "criticality_level": 3,
+            "rationale": "Observed phase.",
+            "criticality_rationale": "The phase controls the interaction.",
+            "failure_if_inaccurate": "The transition is sampled incorrectly.",
+        }
+
+    plan = {"actions": [action("lift", 0.1, 0.9), action("carry", 0.5, 0.8)]}
+    result = execute_dynamic_plan(
+        plan,
+        {"object_progress": np.linspace(0.0, 1.0, 11)},
+    )
+    windows = [event["windows"][0] for event in result["events"]]
+    assert windows == [
+        {"start_frame": 1, "end_frame": 5, "trigger_frame": 1},
+        {"start_frame": 5, "end_frame": 8, "trigger_frame": 5},
+    ]
+
+
+def test_dynamic_plan_accepts_extrema_but_rejects_identical_boundaries() -> None:
+    action = {
+        "action": "grasp_box",
+        "body_parts": ["left_hand"],
+        "keyframe_function": {
+            "start": {"primitive": "global_minimum", "signal": "left_hand_object_distance", "threshold": None},
+            "end": {"primitive": "global_minimum", "signal": "left_hand_object_distance", "threshold": None},
+        },
+        "criticality_level": 3,
+        "rationale": "Grasp the box.",
+        "criticality_rationale": "Contact matters.",
+        "failure_if_inaccurate": "The box is dropped.",
+    }
+    plan = {"actions": [action, {**action, "action": "carry_box"}]}
+    messages = " ".join(issue["message"] for issue in dynamic_plan_validation_issues(plan))
+    assert "start and end rules are identical" in messages

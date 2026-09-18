@@ -42,7 +42,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     sequence = canonical_sequence_name(args.sequence)
-    root = args.workspace / f"exp/omomo_cari4d/{sequence}"
+    bundle_name = "sub03_largebox3" if sequence == "sub3_largebox_003" else sequence
+    root = args.workspace / f"exp/omomo_cari4d/{bundle_name}"
     archive = root / "input/omomo_gt_sequence.npz"
     camera_dir = root / "camera_search"
     render_dir = root / "cari4d_friendly"
