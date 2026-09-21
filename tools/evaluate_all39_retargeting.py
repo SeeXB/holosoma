@@ -28,8 +28,8 @@ from prepare_lafan_batch_inputs import TASKS as LAFAN_TASKS
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OMOMO_INPUT = ROOT / "exp/retargeting/omomo_batch/input"
-LAFAN_INPUT = ROOT / "exp/retargeting/lafan_batch/input"
+OMOMO_INPUT = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/omomo_batch/input"
+LAFAN_INPUT = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/lafan_batch/input"
 OMOMO_RUNS = ROOT / "exp/retargeting/omomo_batch/runs"
 LAFAN_RUNS = ROOT / "exp/retargeting/lafan_batch/runs"
 

@@ -115,8 +115,8 @@ def _run_one(task_name: str, method: str, args: argparse.Namespace) -> dict[str,
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-root", type=Path, default=Path("exp/retargeting/omomo_batch/input"))
-    parser.add_argument("--bundle-root", type=Path, default=Path("exp/omomo_cari4d"))
+    parser.add_argument("--input-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/official_inputs"))
+    parser.add_argument("--bundle-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles"))
     parser.add_argument("--output-root", type=Path, default=Path("exp/retargeting/omomo_batch"))
     parser.add_argument("--project-root", type=Path, default=Path("src/holosoma_retargeting"))
     parser.add_argument("--package-dir", type=Path,

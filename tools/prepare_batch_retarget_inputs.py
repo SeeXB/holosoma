@@ -48,6 +48,8 @@ TASK_OBJECTS = {
     "sub16_whitechair_002": "whitechair",
     "sub15_woodchair_020": "woodchair",
     "sub14_woodchair_004": "woodchair",
+    "sub16_largebox_007": "largebox",
+    "sub17_floorlamp_026": "floorlamp",
 }
 
 
@@ -168,12 +170,12 @@ def _write_scene(template: Path, destination: Path, object_name: str, object_mes
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--bundle-root", type=Path, default=Path("exp/omomo_cari4d"))
-    parser.add_argument("--output-root", type=Path, default=Path("exp/retargeting/omomo_batch/input"))
+    parser.add_argument("--bundle-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles"))
+    parser.add_argument("--output-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/omomo_batch/input"))
     parser.add_argument("--models-root", type=Path,
-                        default=Path("src/holosoma_retargeting/holosoma_retargeting/models"))
+                        default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/models"))
     parser.add_argument("--template", type=Path,
-                        default=Path("src/holosoma_retargeting/holosoma_retargeting/models/g1/g1_29dof_w_largebox.xml"))
+                        default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/models/g1/g1_29dof_w_largebox.xml"))
     parser.add_argument(
         "--tasks",
         nargs="+",

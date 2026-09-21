@@ -50,7 +50,7 @@ def summarize_run(
 ) -> dict:
     group = int(directory.name.split("_", 1)[0].removeprefix("group"))
     label, run_name, reference_name = GROUPS[group]
-    reference = reference_file or (reference_dir or ROOT / "exp" / "training" / TASK / "motions") / reference_name
+    reference = reference_file or (reference_dir or ROOT / "src/holosoma/holosoma/data/motions/tasks" / TASK) / reference_name
     run_dir = run_dirs[group] if run_dirs else ROOT / "logs" / "WholeBodyTracking" / run_name
     checkpoint = run_dir / f"model_{checkpoint_step:05d}.pt"
     if not checkpoint.is_file() or not reference.is_file():

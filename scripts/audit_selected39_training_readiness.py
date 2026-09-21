@@ -97,7 +97,7 @@ def semantic_status(path: Path, bundle: Path, frame_count: int) -> dict:
 
 def main() -> None:
     selected = json.loads((ROOT / "exp/omomo_cari4d/selected20_semantic_summary.json").read_text())["tasks"]
-    official = ROOT / "third_party/holosoma_upstream_audit/official_inputs"
+    official = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/official_inputs"
     retarget = ROOT / "third_party/holosoma_upstream_audit/original_selected20_default/runs"
     rows = []
     for task in selected:
@@ -109,7 +109,7 @@ def main() -> None:
             human, obj = load_intermimic_data(str(pt))
             row["input"].update(shape=list(tensor.shape), frames=len(human), valid=bool(torch.isfinite(tensor).all()),
                                 quaternion_max_norm_error=float(np.max(np.abs(np.linalg.norm(obj[:, :4], axis=1)-1))))
-            bundle_root = ROOT / "exp/omomo_cari4d" / ("sub03_largebox3" if task == "sub3_largebox_003" else task)
+            bundle_root = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles" / ("sub03_largebox3" if task == "sub3_largebox_003" else task)
             plans = sorted((bundle_root / "semantic_keyframes").glob(f"{task}_dynamic*.json"))
             row["semantic_candidates"] = [semantic_status(p, bundle_root / "input/omomo_gt_sequence.npz", len(human))
                                           for p in plans if not p.name.endswith(".event_plan.json")]
@@ -128,17 +128,17 @@ def main() -> None:
             if not p.exists() and log.exists():
                 lines = log.read_text(errors="replace").splitlines()
                 row["retarget"][method]["log_last_line"] = lines[-1] if lines else "empty log"
-        row["rl_motions"] = [str(p.relative_to(ROOT)) for p in (ROOT / "exp/training" / task / "motions").rglob("*.npz")]
+        row["rl_motions"] = [str(p.relative_to(ROOT)) for p in (ROOT / "src/holosoma/holosoma/data/motions/tasks" / task).rglob("*.npz")]
         rows.append(row)
         print(task, "input", row["input"].get("valid"), "semantic", row["semantic_ready"],
               "retarget", {k: v.get("valid", False) for k,v in row["retarget"].items()}, flush=True)
 
-    manifest = json.loads((ROOT / "exp/retargeting/lafan_batch/input/manifest.json").read_text())
+    manifest = json.loads((ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/lafan_batch/input/manifest.json").read_text())
     lafan = []
     for task, info in manifest["tasks"].items():
         row = {"task": task, "stride": manifest["stride"], "semantic_plan": "not_defined_in_existing_protocol"}
         for key, p in [("source", Path(manifest["source"]) / f"{task}.npy"),
-                       ("retarget_input", ROOT / "exp/retargeting/lafan_batch/input" / f"{task}.npy")]:
+                       ("retarget_input", ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/lafan_batch/input" / f"{task}.npy")]:
             try:
                 x = np.load(p, allow_pickle=False)
                 row[key] = {"path": str(p), "shape": list(x.shape), "finite": bool(np.isfinite(x).all())}
@@ -158,7 +158,7 @@ def main() -> None:
     (output / "readiness.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
     lines = [
         "# Selected 39-task training readiness audit", "", f"Checked: {report['checked_at']}", "",
-        "OMOMO uses the official InterMimic PT inputs under `third_party/holosoma_upstream_audit/official_inputs`.",
+        "OMOMO uses the official InterMimic PT inputs under `src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/official_inputs`.",
         "Input checks cover readability, finite values and unit object quaternions. Semantic checks cover schema,",
         "resolved timeline, agreement with re-executing the event plan, source frame count/FPS and RL trigger mapping.",
         "Passing these checks does not establish visual semantic correctness or physical feasibility.", "",

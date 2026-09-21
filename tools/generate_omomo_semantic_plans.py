@@ -31,7 +31,7 @@ def _bundle_name(task: str) -> str:
 def _paths(bundle_root: Path, task: str) -> tuple[Path, Path, Path]:
     root = bundle_root / _bundle_name(task)
     return (
-        root / "cari4d_friendly" / f"{task}_rerender.mp4",
+        root / "videos" / f"{task}_rerender.mp4",
         root / "input" / "omomo_gt_sequence.npz",
         root / "semantic_keyframes" / f"{task}_dynamic.json",
     )
@@ -54,13 +54,15 @@ def _existing_plan_is_valid(bundle: Path, output: Path) -> bool:
         return False
 
 
-def _recover_existing_vlm_plan(bundle: Path, output: Path) -> Path | None:
+def _recover_existing_vlm_plan(bundle: Path, output: Path, audit_dir: Path | None = None) -> Path | None:
     """Promote a previously saved VLM response when it passes current checks."""
     signals, _, fps = load_retargeting_bundle_signals(bundle)
     frame_count = len(next(iter(signals.values())))
     candidates: list[tuple[tuple[int, int, int, str], Path, dict, dict]] = []
     paths = set(output.parent.glob("*.event_plan.json"))
     paths.update(output.parent.glob("*.vlm_attempt_*.txt"))
+    if audit_dir is not None:
+        paths.update(audit_dir.glob("*.vlm_attempt_*.txt"))
     for path in sorted(paths):
         try:
             if path.name.endswith(".event_plan.json"):
@@ -104,15 +106,18 @@ def _generate_one(
     force: bool,
     recover_existing: bool,
     recover_only: bool,
+    audit_root: Path = Path("exp/omomo_cari4d"),
 ) -> dict[str, object]:
     video, bundle, output = _paths(bundle_root, task)
+    audit_dir = audit_root / _bundle_name(task) / "semantic_keyframes"
+    output.parent.mkdir(parents=True, exist_ok=True)
     if not video.is_file() or not bundle.is_file():
         missing = [str(path) for path in (video, bundle) if not path.is_file()]
         return {"task": task, "status": "failed", "error": f"missing inputs: {missing}"}
     if not force and _existing_plan_is_valid(bundle, output):
         return {"task": task, "status": "cached", "output": str(output.resolve())}
     if recover_existing:
-        recovered = _recover_existing_vlm_plan(bundle, output)
+        recovered = _recover_existing_vlm_plan(bundle, output, audit_dir)
         if recovered is not None:
             return {
                 "task": task,
@@ -133,6 +138,7 @@ def _generate_one(
             output=output,
             sample_count=sample_count,
             max_repairs=max_repairs,
+            audit_dir=audit_dir,
         )
         actions = [
             {
@@ -160,7 +166,9 @@ def _generate_one(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bundle-root", type=Path, default=Path("exp/omomo_cari4d"))
+    parser.add_argument("--bundle-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles"))
+    parser.add_argument("--audit-root", type=Path, default=Path("exp/omomo_cari4d"),
+                        help="VLM attempt logs and diagnostics; resolved plans stay under --bundle-root")
     parser.add_argument("--env-file", type=Path,
                         default=Path("src/holosoma_retargeting/.env"))
     parser.add_argument("--tasks", nargs="+", choices=list(TASK_OBJECTS), default=None)
@@ -196,6 +204,7 @@ def main() -> None:
                 args.force,
                 not args.no_recover_existing,
                 args.recover_only,
+                args.audit_root,
             ): task
             for task in tasks
         }

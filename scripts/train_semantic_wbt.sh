@@ -50,7 +50,7 @@ NUM_ENVS="${NUM_ENVS:-4096}"
 TRAINING_ITERATIONS="${TRAINING_ITERATIONS:-30000}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-hssim}"
 
-MOTION_FILE="$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/benchmark_results_full_event_transition_truncation/rl/transition_truncated_b4_mj_fps50_w_obj.npz"
+MOTION_FILE="$PROJECT_ROOT/src/holosoma/holosoma/data/motions/benchmarks/benchmark_results_full_event_transition_truncation/transition_truncated_b4_mj_fps50_w_obj.npz"
 SEMANTIC_FILE="$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json"
 
 for required_file in "$MOTION_FILE" "$SEMANTIC_FILE"; do

@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
         "--ground-truth",
         type=Path,
         default=Path(
-            "/mnt/sdadrive/shixiongbo/omomo/data/captured_objects/"
+            "src/holosoma_retargeting/holosoma_retargeting/demo_data/external/omomo/data/captured_objects/"
             "largebox_cleaned_simplified.obj"
         ),
     )

@@ -137,7 +137,7 @@ def main():
             masses[:] = args.mass
             obj.root_physx_view.set_masses(masses, torch.arange(6, dtype=torch.int32))
         (args.output / "asset_audit.json").write_text(json.dumps(audit(sim), indent=2))
-        paths = [ROOT / f"exp/training/sub9_clothesstand_058/motions/sub9_clothesstand_058_{s}_mj_w_obj.npz"
+        paths = [ROOT / f"src/holosoma/holosoma/data/motions/tasks/sub9_clothesstand_058/sub9_clothesstand_058_{s}_mj_w_obj.npz"
                  for s in ("original", "semantic_b4")]
         if args.original_reference is not None:
             paths = [args.original_reference.resolve(), args.b4_reference.resolve()]

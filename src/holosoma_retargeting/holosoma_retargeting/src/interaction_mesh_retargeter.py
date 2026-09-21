@@ -833,6 +833,229 @@ class InteractionMeshRetargeter:
             )
         )
 
+    @staticmethod
+    def _active_pair_recheck_required(
+        diagnostics: dict[str, Any],
+        *,
+        prediction_margin: float,
+        motion_threshold: float,
+    ) -> bool:
+        """Use the final SQP linearization to gate a direct active-pair recheck."""
+        pairs = diagnostics.get("nonpenetration_pairs", ())
+        if not pairs:
+            return False
+        predicted = np.asarray(
+            diagnostics.get("nonpenetration_predicted_distances", ()),
+            dtype=np.float64,
+        )
+        changes = np.asarray(
+            diagnostics.get("nonpenetration_linearized_changes", ()),
+            dtype=np.float64,
+        )
+        if predicted.size != len(pairs) or changes.size != len(pairs):
+            raise ValueError("incomplete non-penetration diagnostics from the final SQP iteration")
+        return bool(
+            np.min(predicted, initial=np.inf) < prediction_margin
+            or np.max(np.abs(changes), initial=0.0) > motion_threshold
+        )
+
+    def _recheck_nonpenetration_pairs(
+        self,
+        q: np.ndarray,
+        pairs: tuple[tuple[int, int], ...],
+    ) -> dict[str, Any]:
+        """Recheck only the collision pairs already found by the final SQP step.
+
+        This deliberately skips MuJoCo broad phase.  The pair IDs come from the
+        10 cm candidate set already constructed for the hard constraints.
+        """
+        self.robot_data.qpos[:] = q
+        mujoco.mj_forward(self.robot_model, self.robot_data)
+        fromto = np.zeros(6, dtype=float)
+        distances: list[float] = []
+        for geom_a, geom_b in pairs:
+            fromto[:] = 0.0
+            distances.append(
+                float(
+                    mujoco.mj_geomDistance(
+                        self.robot_model,
+                        self.robot_data,
+                        geom_a,
+                        geom_b,
+                        float(self.collision_detection_threshold),
+                        fromto,
+                    )
+                )
+            )
+        if not distances:
+            return {
+                "pair_count": 0,
+                "minimum_distance": None,
+                "maximum_penetration": 0.0,
+                "worst_pair": None,
+            }
+        worst_index = int(np.argmin(distances))
+        minimum_distance = float(distances[worst_index])
+        geom_a, geom_b = pairs[worst_index]
+        return {
+            "pair_count": len(pairs),
+            "minimum_distance": minimum_distance,
+            "maximum_penetration": max(0.0, -minimum_distance),
+            "worst_pair": [self._geom_names[geom_a], self._geom_names[geom_b]],
+        }
+
+    def _refine_active_pair_nonpenetration(
+        self,
+        *,
+        q_locked: np.ndarray,
+        q: np.ndarray,
+        q_t_last: np.ndarray,
+        target_laplacian: np.ndarray,
+        adj_list: list[list[int]],
+        obj_pts_local: np.ndarray,
+        foot_sticking: tuple[bool, bool],
+        w_nominal_tracking: float,
+        q_a_nominal: np.ndarray | None,
+        init_t: bool,
+        frame_idx: int,
+        vertex_residual_weights: np.ndarray | None,
+        cost: float,
+        diagnostics: tuple[dict[str, Any], ...],
+    ) -> tuple[np.ndarray, float, dict[str, Any], tuple[dict[str, Any], ...]]:
+        """Bounded SQP continuation for the final active collision set.
+
+        The ordinary SQP hard constraint remains unchanged.  This optional
+        continuation only decides whether another iteration is worthwhile,
+        and keeps the least-penetrating iterate if the bounded repair cannot
+        reach the acceptance threshold.
+        """
+        config = self.semantic_config
+        started = time.perf_counter()
+        info: dict[str, Any] = {
+            "enabled": True,
+            "iterations": 0,
+            "checks": 0,
+            "pair_queries": 0,
+            "triggered": False,
+            "trace": [],
+            "accepted": True,
+            "reason": "prediction_safe",
+        }
+        latest = diagnostics[-1] if diagnostics else {}
+        visited_infeasible_states: set[bytes] = set()
+        visited_collision_states: set[tuple[tuple[str, ...], int]] = set()
+        best_q = np.array(q, copy=True)
+        best_cost = float(cost)
+        best_depth = float("inf")
+        best_diagnostics = diagnostics
+
+        should_recheck = self._active_pair_recheck_required(
+            latest,
+            prediction_margin=config.active_pair_prediction_margin,
+            motion_threshold=config.active_pair_motion_threshold,
+        )
+        while should_recheck:
+            pairs = tuple(
+                (int(pair[0]), int(pair[1]))
+                for pair in latest.get("nonpenetration_pairs", ())
+            )
+            check_started = time.perf_counter()
+            check = self._recheck_nonpenetration_pairs(q, pairs)
+            info["check_time"] = float(info.get("check_time", 0.0)) + (
+                time.perf_counter() - check_started
+            )
+            info["checks"] += 1
+            info["pair_queries"] += int(check["pair_count"])
+            info["trace"].append({"kind": "check", **check})
+            current_depth = float(check["maximum_penetration"])
+            if current_depth < best_depth:
+                best_depth = current_depth
+                best_q = np.array(q, copy=True)
+                best_cost = float(cost)
+                best_diagnostics = diagnostics
+            if current_depth <= config.active_pair_acceptance_tolerance:
+                info["reason"] = "active_pairs_feasible"
+                break
+
+            info["triggered"] = True
+            if int(info["iterations"]) >= config.active_pair_max_iterations:
+                info.update(accepted=False, reason="max_iterations_reached")
+                break
+            collision_state = (
+                tuple(str(name) for name in (check["worst_pair"] or ())),
+                int(round(1e7 * current_depth)),
+            )
+            if collision_state in visited_collision_states:
+                info.update(accepted=False, reason="repeated_collision_state")
+                break
+            visited_collision_states.add(collision_state)
+            state_key = np.round(
+                np.asarray(q[self.q_a_indices], dtype=np.float64), decimals=12
+            ).tobytes()
+            if state_key in visited_infeasible_states:
+                info.update(accepted=False, reason="repeated_infeasible_state")
+                break
+            visited_infeasible_states.add(state_key)
+
+            q_before = np.array(q, copy=True)
+            try:
+                q, cost, _, iteration_diagnostics = self.iterate(
+                    q_locked=q_locked,
+                    q_n=q,
+                    q_t_last=q_t_last,
+                    target_laplacian=target_laplacian,
+                    adj_list=adj_list,
+                    obj_pts_local=obj_pts_local,
+                    foot_sticking=foot_sticking,
+                    w_nominal_tracking=w_nominal_tracking,
+                    q_a_nominal=q_a_nominal,
+                    init_t=init_t,
+                    n_iter=1,
+                    frame_idx=frame_idx,
+                    vertex_residual_weights=vertex_residual_weights,
+                    return_iterations=True,
+                    return_diagnostics=True,
+                )
+            except RuntimeError as exc:
+                if not str(exc).startswith("CVXPY solve failed:"):
+                    raise
+                info.update(accepted=False, reason=f"solver_failed: {exc}")
+                break
+            info["iterations"] += 1
+            latest = iteration_diagnostics[-1]
+            diagnostics = (*diagnostics, *iteration_diagnostics)
+            update_norm = float(np.linalg.norm(q[self.q_a_indices] - q_before[self.q_a_indices]))
+            info["trace"].append(
+                {
+                    "kind": "refinement",
+                    "iteration": info["iterations"],
+                    "update_norm": update_norm,
+                }
+            )
+            if update_norm <= config.active_pair_stagnation_tolerance:
+                info.update(accepted=False, reason="zero_update_while_infeasible")
+                break
+            should_recheck = True
+
+        if info["triggered"] and not info["accepted"]:
+            q = best_q
+            cost = best_cost
+            diagnostics = best_diagnostics
+        if info["triggered"]:
+            info["best_maximum_penetration"] = (
+                None if not np.isfinite(best_depth) else best_depth
+            )
+            print(
+                "active-pair refinement "
+                f"frame={frame_idx} iterations={info['iterations']} "
+                f"accepted={info['accepted']} reason={info['reason']} "
+                f"best_depth_mm={1000.0 * best_depth:.6f}",
+                flush=True,
+            )
+
+        info["wall_time"] = time.perf_counter() - started
+        return q, float(cost), info, diagnostics
+
     def _rescue_reasons(self, metrics: dict[str, Any], interaction_relevant: bool) -> list[str]:
         config = self.semantic_config
         reasons: list[str] = []
@@ -1265,6 +1488,9 @@ class InteractionMeshRetargeter:
                 base_budget = int(budget_plan.budgets[i])
                 final_budget = base_budget
                 previous_q = retargeted_motions[-1]
+                if config.geometry_projection and base_qpos_frames:
+                    # Keep the registered B4 trajectory independent of the repair.
+                    previous_q = base_qpos_frames[-1]
                 solver_calls_before_frame = self._convex_solver_calls
                 optimization_start = time.perf_counter()
                 q_a_nominal_frame = (
@@ -1307,7 +1533,7 @@ class InteractionMeshRetargeter:
                     )
                     trace_previous_q = np.array(q_iterate, copy=True)
 
-                q, cost, actual_iterations = self.iterate(
+                iteration_result = self.iterate(
                     q_locked=q_locked_list[i],
                     q_n=q,
                     q_t_last=previous_q,
@@ -1322,8 +1548,62 @@ class InteractionMeshRetargeter:
                     frame_idx=i,
                     vertex_residual_weights=vertex_weights,
                     return_iterations=True,
+                    return_diagnostics=config.active_pair_nonpenetration_refinement,
                     iteration_observer=record_trace_iterate if trace_events else None,
                 )
+                if config.active_pair_nonpenetration_refinement:
+                    q, cost, actual_iterations, iteration_diagnostics = iteration_result
+                else:
+                    q, cost, actual_iterations = iteration_result
+
+                active_pair_info: dict[str, Any] = {
+                    "enabled": False,
+                    "iterations": 0,
+                    "checks": 0,
+                    "pair_queries": 0,
+                    "triggered": False,
+                    "accepted": True,
+                    "reason": "disabled",
+                    "wall_time": 0.0,
+                    "check_time": 0.0,
+                }
+                if config.active_pair_nonpenetration_refinement:
+                    if not self.activate_obj_non_penetration:
+                        raise ValueError(
+                            "active-pair non-penetration refinement requires "
+                            "activate_obj_non_penetration=True"
+                        )
+                    q, cost, active_pair_info, iteration_diagnostics = (
+                        self._refine_active_pair_nonpenetration(
+                            q_locked=q_locked_list[i],
+                            q=q,
+                            q_t_last=previous_q,
+                            target_laplacian=target_laplacian,
+                            adj_list=adj_list,
+                            obj_pts_local=obj_pts_i,
+                            foot_sticking=foot_sticking_sequences[i],
+                            w_nominal_tracking=w_nominal_tracking,
+                            q_a_nominal=q_a_nominal_frame,
+                            init_t=i == 0,
+                            frame_idx=i,
+                            vertex_residual_weights=vertex_weights,
+                            cost=float(cost),
+                            diagnostics=iteration_diagnostics,
+                        )
+                    )
+                    actual_iterations += int(active_pair_info["iterations"])
+                    final_budget += int(active_pair_info["iterations"])
+                    if active_pair_info["triggered"]:
+                        rescue_log.append(
+                            {
+                                "kind": "active_pair_nonpenetration",
+                                "frame": i,
+                                "old_budget": base_budget,
+                                "new_budget": final_budget,
+                                "actual_extra_iterations": active_pair_info["iterations"],
+                                **active_pair_info,
+                            }
+                        )
                 optimization_time = time.perf_counter() - optimization_start
                 frame_trace_start = time.perf_counter()
                 for (
@@ -1391,18 +1671,52 @@ class InteractionMeshRetargeter:
                 )
                 base_iterations = min(actual_iterations, registered_base_budget)
                 configured_semantic_extra = (
-                    max(0, final_budget - registered_base_budget)
+                    max(0, base_budget - registered_base_budget)
                     if config.is_uniform2_mainline and i in budget_plan.extra_budget_frames
-                    else max(0, final_budget - base_budget)
+                    else 0
                 )
                 semantic_extra_iterations = (
-                    max(0, actual_iterations - registered_base_budget)
+                    max(
+                        0,
+                        actual_iterations
+                        - int(active_pair_info["iterations"])
+                        - registered_base_budget,
+                    )
                     if i in budget_plan.extra_budget_frames
                     else 0
                 )
                 coarse_cost = float(cost)
                 coarse_interaction_metrics: dict[str, Any] | None = None
                 base_qpos_frames.append(np.array(q, copy=True))
+
+                projection_info = {"iterations": 0, "accepted": True}
+                base_optimization_time = optimization_time
+                projection_time = 0.0
+                if config.geometry_projection:
+                    from holosoma_retargeting.semantic_keyframes.geometry_projection import (
+                        GeometryProjectionError, project_geometry,
+                    )
+                    projection_start = time.perf_counter()
+                    previous_q = retargeted_motions[-1]
+                    try:
+                        q, projection_info = project_geometry(
+                            self, q, previous_q, foot_sticking_sequences[i], i,
+                            obj_pts_i, adj_list, vertex_weights,
+                        )
+                    except GeometryProjectionError as exc:
+                        if config.profile_dir is not None:
+                            import json
+                            config.profile_dir.mkdir(parents=True, exist_ok=True)
+                            (config.profile_dir / "geometry_projection_failure.json").write_text(
+                                json.dumps(exc.diagnostics, indent=2) + "\n"
+                            )
+                        raise
+                    projection_time = time.perf_counter() - projection_start
+                    optimization_time += projection_time
+                    actual_iterations += projection_info["iterations"]
+                    final_budget += projection_info["iterations"]
+                    if projection_info["iterations"]:
+                        rescue_log.append({"kind": "geometry_projection", **projection_info})
 
                 check_start = time.perf_counter()
                 penetration_metrics, frame_penetration_rows = self._penetration_audit(q, i)
@@ -1524,6 +1838,24 @@ class InteractionMeshRetargeter:
                         "base_sqp_iterations": base_iterations,
                         "semantic_extra_iterations": semantic_extra_iterations,
                         "actual_sqp_iterations": actual_iterations,
+                        "active_pair_nonpenetration_iterations": active_pair_info["iterations"],
+                        "active_pair_nonpenetration_checks": active_pair_info["checks"],
+                        "active_pair_nonpenetration_pair_queries": active_pair_info["pair_queries"],
+                        "active_pair_nonpenetration_triggered": active_pair_info["triggered"],
+                        "active_pair_nonpenetration_accepted": active_pair_info["accepted"],
+                        "active_pair_nonpenetration_reason": active_pair_info["reason"],
+                        "active_pair_nonpenetration_best_depth": active_pair_info.get(
+                            "best_maximum_penetration"
+                        ),
+                        "active_pair_nonpenetration_time": active_pair_info["wall_time"],
+                        "active_pair_nonpenetration_check_time": active_pair_info.get(
+                            "check_time", 0.0
+                        ),
+                        "geometry_projection_iterations": projection_info["iterations"],
+                        "geometry_projection_time": projection_time,
+                        "geometry_projection_check_time": projection_info.get("timing", {}).get("geometry_check_time_s", 0.0),
+                        "geometry_projection_solve_time": projection_info.get("timing", {}).get("convex_solve_time_s", 0.0),
+                        "base_optimization_time": base_optimization_time,
                         "convex_solver_calls": self._convex_solver_calls - solver_calls_before_frame,
                         "is_semantic_trigger": i in budget_plan.semantic_trigger_frames,
                         "is_random_budget_frame": (
@@ -1580,6 +1912,8 @@ class InteractionMeshRetargeter:
                     }
                 )
                 pbar.set_postfix(cost=cost, iterations=actual_iterations, budget=final_budget)
+                if config.geometry_projection:
+                    q = np.array(base_qpos_frames[-1], copy=True)
 
         if self.debug:
             for handle_list in (
@@ -1604,6 +1938,10 @@ class InteractionMeshRetargeter:
             actual_sqp_iterations=np.asarray([row["actual_sqp_iterations"] for row in profiles]),
             base_sqp_iterations=np.asarray([row["base_sqp_iterations"] for row in profiles]),
             semantic_extra_iterations=np.asarray([row["semantic_extra_iterations"] for row in profiles]),
+            active_pair_nonpenetration_iterations=np.asarray(
+                [row["active_pair_nonpenetration_iterations"] for row in profiles]
+            ),
+            geometry_projection_iterations=np.asarray([row["geometry_projection_iterations"] for row in profiles]),
             max_sqp_budgets=np.asarray([row["final_budget_after_rescue"] for row in profiles]),
             convex_solver_calls=np.asarray([row["convex_solver_calls"] for row in profiles]),
             unweighted_vertex_residuals=np.stack(unweighted_vertex_residuals),
@@ -1629,6 +1967,23 @@ class InteractionMeshRetargeter:
                 penetration_tolerance=config.rescue_penetration_tolerance,
                 penetration_pairs=penetration_pair_rows,
                 metadata={
+                    "active_pair_nonpenetration_refinement": {
+                        "enabled": config.active_pair_nonpenetration_refinement,
+                        "fixed_iteration_cap": config.active_pair_max_iterations,
+                        "acceptance_tolerance_m": config.active_pair_acceptance_tolerance,
+                        "prediction_margin_m": config.active_pair_prediction_margin,
+                        "motion_threshold_m": config.active_pair_motion_threshold,
+                        "stagnation_tolerance": config.active_pair_stagnation_tolerance,
+                        "check": "direct distance on the final SQP active pairs; no new broad phase",
+                    },
+                    "geometry_projection": {
+                        "enabled": config.geometry_projection,
+                        "max_iterations": config.geometry_projection_max_iterations,
+                        "numerical_tolerance_m": config.geometry_projection_numerical_tolerance,
+                        "objective": "minimum change to base B4 weighted interaction Laplacian",
+                        "feedback": "corrections do not change the base B4 SQP warm start",
+                        "frame_costs": "base SQP objective before optional geometry projection",
+                    },
                     "semantic_keyframe_path": str(config.semantic_keyframe_path)
                     if config.semantic_keyframe_path is not None
                     else None,
@@ -1952,12 +2307,16 @@ class InteractionMeshRetargeter:
         # Non-penetration constraints.  Respect the public configuration flag;
         # this is also needed for robot/object motions whose linearized contact
         # constraints are infeasible even though the objective remains solvable.
+        nonpenetration_jacobians: dict[tuple[int, int], np.ndarray] = {}
+        nonpenetration_distances: dict[tuple[int, int], float] = {}
         if self.activate_obj_non_penetration:
             Js, phis = self._update_jacobians_and_phis_from_q(q)
             for key, phi in phis.items():
                 Ja_n_full = Js[key]
                 Ja_n = Ja_n_full[self.q_a_indices]
-                rhs = -phi - self.penetration_tolerance
+                nonpenetration_jacobians[key] = np.asarray(Ja_n, dtype=np.float64)
+                nonpenetration_distances[key] = float(phi)
+                rhs = -self.penetration_tolerance - phi
                 new_constraint = Ja_n @ dqa >= rhs
                 constraints += [new_constraint]
                 original_constraint_objects["nonpenetration"].append(new_constraint)
@@ -2057,6 +2416,16 @@ class InteractionMeshRetargeter:
         q_star[3:7] /= np.linalg.norm(q_star[3:7]) + 1e-12
 
         if return_diagnostics:
+            nonpenetration_pairs = tuple(nonpenetration_distances)
+            linearized_changes = tuple(
+                float(nonpenetration_jacobians[pair] @ dqa_star)
+                for pair in nonpenetration_pairs
+            )
+            predicted_distances = tuple(
+                nonpenetration_distances[pair] + change
+                for pair, change in zip(nonpenetration_pairs, linearized_changes)
+            )
+
             def _dual_magnitude(value: Any) -> float:
                 if value is None:
                     return 0.0
@@ -2093,6 +2462,12 @@ class InteractionMeshRetargeter:
                     name: len(objects) for name, objects in original_constraint_objects.items()
                 },
                 "original_active_constraint_categories": tuple(active_constraint_categories),
+                "nonpenetration_pairs": nonpenetration_pairs,
+                "nonpenetration_pre_distances": tuple(
+                    nonpenetration_distances[pair] for pair in nonpenetration_pairs
+                ),
+                "nonpenetration_linearized_changes": linearized_changes,
+                "nonpenetration_predicted_distances": predicted_distances,
             }
             return q_star, cost, diagnostics
         return q_star, cost

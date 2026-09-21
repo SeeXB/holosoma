@@ -17,7 +17,7 @@ trap 'status=$?; echo "$(date -Is) eval_watcher_exit_status=$status"' EXIT
 RUN1="$PROJECT_ROOT/logs/WholeBodyTracking/20260913_181327-${TASK}_originaltraj_originalrl_s42_${TAG}-locomotion"
 RUN2="$PROJECT_ROOT/logs/WholeBodyTracking/20260913_181327-${TASK}_semanticb4traj_originalrl_s42_${TAG}-locomotion"
 RUN3="$PROJECT_ROOT/logs/WholeBodyTracking/20260913_181327-${TASK}_semanticb4traj_semanticadaptive_s42_${TAG}-locomotion"
-REFERENCE_DIR="$PROJECT_ROOT/exp/training/$TASK/motions/official_intermimic_default1mm"
+REFERENCE_DIR="$PROJECT_ROOT/src/holosoma/holosoma/data/motions/tasks/$TASK/official_intermimic_default1mm"
 
 echo "$(date -Is) waiting_for_three_trainings tag=$TAG"
 if [[ -s "$EVAL_ROOT/final_results.json" ]]; then

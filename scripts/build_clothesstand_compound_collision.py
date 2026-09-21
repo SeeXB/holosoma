@@ -16,7 +16,7 @@ out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=True)
 asset_dir = out / "assets"
 asset_dir.mkdir(exist_ok=True)
-source = ROOT / "src/holosoma_retargeting/holosoma_retargeting/models/clothesstand/clothesstand.obj"
+source = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/models/clothesstand/clothesstand.obj"
 mesh = trimesh.load(source, force="mesh")
 settings = dict(maxConvexHulls=64, resolution=1000000, minimumVolumePercentErrorAllowed=0.5,
                 maxNumVerticesPerCH=64, shrinkWrap=True)

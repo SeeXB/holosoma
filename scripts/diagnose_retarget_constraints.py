@@ -14,6 +14,7 @@ import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--audit-output", type=Path, required=True)
+parser.add_argument("--run-config-job", type=Path, help="Replay a B4 comparison job through its Python configuration entrypoint.")
 args, rest = parser.parse_known_args()
 original_solve = cp.Problem.solve
 reported = False
@@ -51,5 +52,10 @@ def solve(problem, *a, **kw):
 
 
 cp.Problem.solve = solve
-sys.argv = [sys.argv[0]] + rest
-runpy.run_module("holosoma_retargeting.examples.robot_retarget", run_name="__main__")
+if args.run_config_job:
+    runner = Path(__file__).resolve().parents[1] / "tools/run_current_semantic_retarget_comparison.py"
+    sys.argv = [str(runner), "--execute-retarget", str(args.run_config_job)]
+    runpy.run_path(str(runner), run_name="__main__")
+else:
+    sys.argv = [sys.argv[0]] + rest
+    runpy.run_module("holosoma_retargeting.examples.robot_retarget", run_name="__main__")

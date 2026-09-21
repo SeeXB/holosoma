@@ -16,7 +16,7 @@ DEFAULT_INPUT = ROOT / "diagnostics/reset_contact/training_style_reset_samples.n
 DEFAULT_OUTPUT = ROOT / "diagnostics/reset_contact/rendered"
 DEFAULT_MODEL = (
     ROOT
-    / "src/holosoma_retargeting/holosoma_retargeting/models/g1/g1_29dof_w_largebox.xml"
+    / "src/holosoma_retargeting/holosoma_retargeting/demo_data/models/g1/g1_29dof_w_largebox.xml"
 )
 
 

@@ -49,8 +49,9 @@ def main() -> None:
         "source_bundle": str(bundle),
         "source_event_plan": str(plan_path),
         "uses_dataset_motion_or_object_pose_labels": False,
-        "hand_proxy_joints": ["L_Middle3", "R_Middle3"],
-        "object_position_source": "object_poses_wxyz_xyz[:,4:7]",
+        "planning_mode": plan.get("schema", "dynamic_vlm_actions_and_functions"),
+        "hand_proxy_joints": ["L_Middle3", "R_Middle3"] if "object_height" in signals else ["LeftHand", "RightHand"],
+        "object_position_source": "object_poses_wxyz_xyz[:,4:7]" if "object_height" in signals else None,
     }
     validate_semantic_keyframe_json(result)
     output.parent.mkdir(parents=True, exist_ok=True)

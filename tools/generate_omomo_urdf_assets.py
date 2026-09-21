@@ -26,9 +26,9 @@ import numpy as np
 import trimesh
 
 
-DEFAULT_SOURCE_ROOT = Path("/mnt/sdadrive/shixiongbo/omomo")
+DEFAULT_SOURCE_ROOT = Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/external/omomo")
 DEFAULT_OUTPUT_ROOT = Path(
-    "src/holosoma_retargeting/holosoma_retargeting/models"
+    "src/holosoma_retargeting/holosoma_retargeting/demo_data/models"
 )
 
 # The selected OMOMO tasks.  The sequence records are split between the train

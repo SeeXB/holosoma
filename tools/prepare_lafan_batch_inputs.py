@@ -28,7 +28,7 @@ TASKS = (
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/lafan"))
-    ap.add_argument("--output", type=Path, default=Path("exp/retargeting/lafan_batch/input"))
+    ap.add_argument("--output", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/lafan_batch/input"))
     ap.add_argument("--stride", type=int, default=20)
     args = ap.parse_args()
     if args.stride < 1:

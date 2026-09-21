@@ -243,6 +243,23 @@ JOINTS_MAPPINGS = {
         "L_Wrist": "left_hand_sphere_link",
         "R_Wrist": "right_hand_sphere_link",
     },
+    ("smplh", "a3"): {
+        "Pelvis": "pelvis_link",
+        "L_Hip": "left_hip_pitch_Link",
+        "R_Hip": "right_hip_pitch_Link",
+        "L_Knee": "left_knee_Link",
+        "R_Knee": "right_knee_Link",
+        "L_Shoulder": "left_shoulder_roll_Link",
+        "R_Shoulder": "right_shoulder_roll_Link",
+        "L_Elbow": "left_elbow_Link",
+        "R_Elbow": "right_elbow_Link",
+        "L_Ankle": "left_ankle_pitch_Link",
+        "R_Ankle": "right_ankle_pitch_Link",
+        "L_Toe": "left_foot_front_link",
+        "R_Toe": "right_foot_front_link",
+        "L_Wrist": "left_wrist_yaw_Link",
+        "R_Wrist": "right_wrist_yaw_Link",
+    },
     ("smplx", "g1"): {
         "Pelvis": "pelvis_contour_link",
         "L_Hip": "left_hip_pitch_link",
@@ -338,6 +355,7 @@ DEMO_JOINTS_REGISTRY: dict[str, list[str]] = {
 # can select the strict CARI4D loader without changing the optimizer topology.
 JOINTS_MAPPINGS[("cari4d", "g1")] = dict(JOINTS_MAPPINGS[("smplh", "g1")])
 JOINTS_MAPPINGS[("cari4d", "t1")] = dict(JOINTS_MAPPINGS[("smplh", "t1")])
+JOINTS_MAPPINGS[("cari4d", "a3")] = dict(JOINTS_MAPPINGS[("smplh", "a3")])
 
 # Type alias for data formats - use str to allow dynamic data formats via DEMO_JOINTS_REGISTRY
 # No need to update this when adding new formats - just add to DEMO_JOINTS_REGISTRY above

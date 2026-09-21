@@ -16,6 +16,7 @@ class RobotDefaults(TypedDict):
 
 
 _ROBOT_DEFAULTS: dict[str, RobotDefaults] = {
+    "a3": {"robot_dof": 31, "robot_height": 1.73, "object_name": "ground"},
     "g1": {"robot_dof": 29, "robot_height": 1.32, "object_name": "ground"},
     "t1": {"robot_dof": 23, "robot_height": 1.2, "object_name": "ground"},
 }
@@ -43,7 +44,7 @@ def _validate_robot_type(robot_type: str, robot_defaults: Mapping[str, RobotDefa
 
 @dataclass(frozen=True)
 class RobotConfig:
-    """Unified configuration for all robot constants (G1, T1) using tyro.
+    """Unified configuration for all robot constants (A3, G1, T1) using tyro.
 
     Example usage:
         # From CLI:
@@ -121,7 +122,7 @@ class RobotConfig:
         """Get robot URDF file path."""
         if self.robot_urdf_file is not None:
             return self.robot_urdf_file
-        return f"models/{self.robot_type}/{self.robot_type}_{self.ROBOT_DOF}dof.urdf"
+        return f"demo_data/models/{self.robot_type}/{self.robot_type}_{self.ROBOT_DOF}dof.urdf"
 
     ROBOT_URDF_FILE = property(_robot_urdf_file, doc="Get robot URDF file path.")
 
@@ -153,6 +154,17 @@ class RobotConfig:
                 "right_foot_sphere_4_link",
                 "left_foot_sphere_5_link",
                 "right_foot_sphere_5_link",
+            ]
+        if self.robot_type == "a3":
+            return [
+                "left_foot_front_link",
+                "right_foot_front_link",
+                "left_foot_rear_link",
+                "right_foot_rear_link",
+                "left_foot_inner_link",
+                "right_foot_inner_link",
+                "left_foot_outer_link",
+                "right_foot_outer_link",
             ]
         raise ValueError(f"Invalid robot type: {self.robot_type}")
 
@@ -232,6 +244,11 @@ class RobotConfig:
             return np.arange(19)
         if self.robot_type == "t1":
             return np.concatenate([np.arange(7), np.arange(11, 23)])
+        if self.robot_type == "a3":
+            # Track the complete 31-DoF nominal configuration when a nominal
+            # trajectory is supplied.  The indices are actuated-DoF indices,
+            # not floating-base qpos indices.
+            return np.arange(31)
         # Default: return empty array if robot type not defined (nominal tracking not used)
         return np.array([], dtype=int)
 

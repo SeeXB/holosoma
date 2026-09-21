@@ -24,7 +24,7 @@ def main() -> None:
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--label", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--scene", type=Path, default=ROOT / "exp/retargeting/omomo_batch/input/scenes/g1_29dof_w_clothesstand.xml")
+    parser.add_argument("--scene", type=Path, default=ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/omomo_batch/input/scenes/g1_29dof_w_clothesstand.xml")
     parser.add_argument("--frame-stride", type=int, default=1, help="Optional output downsampling, preserving playback speed")
     args = parser.parse_args()
     with np.load(args.actual, allow_pickle=False) as z, np.load(args.reference, allow_pickle=False) as ref:

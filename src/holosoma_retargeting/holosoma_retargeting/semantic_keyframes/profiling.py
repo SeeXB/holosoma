@@ -74,6 +74,12 @@ def summarize_profiles(
     solver_call_counts = np.asarray([int(row.get("convex_solver_calls", 0)) for row in profiles], dtype=np.int64)
     total_base_iterations = int(sum(int(row.get("base_sqp_iterations", 0)) for row in profiles))
     total_semantic_extra_iterations = int(sum(int(row.get("semantic_extra_iterations", 0)) for row in profiles))
+    total_active_pair_nonpenetration_iterations = int(
+        sum(int(row.get("active_pair_nonpenetration_iterations", 0)) for row in profiles)
+    )
+    active_pair_nonpenetration_frames = int(
+        sum(bool(row.get("active_pair_nonpenetration_triggered", False)) for row in profiles)
+    )
     configured_semantic_extra_iterations = int(
         sum(int(row.get("configured_semantic_extra_iterations", 0)) for row in profiles)
     )
@@ -106,6 +112,8 @@ def summarize_profiles(
         "total_actual_iterations": total_iterations,
         "total_base_iterations": total_base_iterations,
         "total_semantic_extra_iterations": total_semantic_extra_iterations,
+        "total_active_pair_nonpenetration_iterations": total_active_pair_nonpenetration_iterations,
+        "active_pair_nonpenetration_frames": active_pair_nonpenetration_frames,
         "configured_semantic_extra_iterations": configured_semantic_extra_iterations,
         "mean_actual_iterations_per_frame": total_iterations / max(len(profiles), 1),
         "median_actual_iterations_per_frame": (

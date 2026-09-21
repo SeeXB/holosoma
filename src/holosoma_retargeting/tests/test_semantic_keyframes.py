@@ -62,6 +62,39 @@ def test_extract_json_value_preserves_top_level_action_array() -> None:
     assert [item["action"] for item in value] == ["grasp", "carry"]
 
 
+def test_dynamic_generation_separates_plan_data_from_audit_logs(tmp_path, monkeypatch):
+    from holosoma_retargeting.semantic_keyframes import pipeline
+
+    plan = {"actions": [{
+        "action": "move_object", "body_parts": ["left_hand"],
+        "keyframe_function": {
+            "start": {"primitive": "threshold_crossing_up", "signal": "object_progress",
+                      "threshold": {"kind": "quantile", "q": 0.1}},
+            "end": {"primitive": "threshold_crossing_up", "signal": "object_progress",
+                    "threshold": {"kind": "quantile", "q": 0.8}},
+        },
+        "criticality_level": 3, "rationale": "Move the object.",
+        "criticality_rationale": "Contact matters.", "failure_if_inaccurate": "Object slips.",
+    }]}
+    bundle = tmp_path / "bundle.npz"
+    np.savez(bundle, object_name=np.asarray("table"))
+    output = tmp_path / "data/plan.json"
+    audit = tmp_path / "exp/audit"
+    audit.mkdir(parents=True)
+    (audit / "plan.vlm_attempt_9.txt").write_text("stale")
+    monkeypatch.setattr(pipeline, "load_env_file", lambda _: None)
+    monkeypatch.setattr(pipeline, "sample_video_frames", lambda *args: [])
+    monkeypatch.setattr(pipeline, "load_retargeting_bundle_signals",
+                        lambda _: ({"object_progress": np.linspace(0, 1, 11)}, {}, 30))
+    monkeypatch.setattr(pipeline, "call_vlm", lambda *args: json.dumps(plan))
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    pipeline.generate_dynamic_semantic_keyframes(
+        video=tmp_path / "video.mp4", bundle_file=bundle, output=output, audit_dir=audit,
+    )
+    assert {p.name for p in output.parent.iterdir()} == {"plan.json", "plan.event_plan.json"}
+    assert {p.name for p in audit.iterdir()} == {"plan.vlm_attempt_0.txt"}
+
+
 def test_extract_and_validate_fenced_plan() -> None:
     plan = _valid_plan()
     parsed = extract_json(f"prefix\n```json\n{json.dumps(plan)}\n```\n")
@@ -214,6 +247,42 @@ def test_dynamic_plan_uses_task_specific_actions_and_gt_functions() -> None:
     result = execute_dynamic_plan(plan, signals)
     assert result["events"][0]["event"] == "drag_suitcase"
     assert result["events"][0]["windows"] == [{"start_frame": 2, "end_frame": 4, "trigger_frame": 2}]
+
+
+def test_dynamic_crossing_does_not_treat_initial_true_sample_as_crossing() -> None:
+    plan = {
+        "actions": [
+            {
+                "action": "lift_object",
+                "body_parts": ["left_hand", "right_hand"],
+                "keyframe_function": {
+                    "start": {
+                        "primitive": "threshold_crossing_up",
+                        "signal": "object_height",
+                        "threshold": {"kind": "quantile", "q": 0.2},
+                    },
+                    "end": {
+                        "primitive": "threshold_crossing_up",
+                        "signal": "object_height",
+                        "threshold": {"kind": "quantile", "q": 0.8},
+                    },
+                },
+                "criticality_level": 4,
+                "rationale": "The object rises.",
+                "criticality_rationale": "The lift transition matters.",
+                "failure_if_inaccurate": "The lift onset is sampled incorrectly.",
+            }
+        ]
+    }
+
+    result = execute_dynamic_plan(
+        plan,
+        {"object_height": np.array([0.0, -1.0, 1.0, 2.0])},
+    )
+
+    assert result["events"][0]["windows"] == [
+        {"start_frame": 2, "end_frame": 3, "trigger_frame": 2}
+    ]
 
 
 def test_dynamic_resolution_rejects_actions_collapsed_to_same_late_frame() -> None:

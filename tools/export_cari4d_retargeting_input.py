@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=(
             repository / "src" / "holosoma_retargeting" / "holosoma_retargeting" /
-            "models" / "g1" / "g1_29dof_w_largebox.xml"
+            "demo_data" / "models" / "g1" / "g1_29dof_w_largebox.xml"
         ),
         help="MuJoCo robot+object scene whose object mesh reference will be replaced.",
     )

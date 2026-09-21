@@ -32,7 +32,7 @@ DEFAULT_REFERENCE = (
 )
 DEFAULT_MODEL = (
     ROOT
-    / "src/holosoma_retargeting/holosoma_retargeting/models/g1"
+    / "src/holosoma_retargeting/holosoma_retargeting/demo_data/models/g1"
     / "g1_29dof_w_largebox.xml"
 )
 

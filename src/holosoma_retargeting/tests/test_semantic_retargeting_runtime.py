@@ -527,6 +527,48 @@ def test_weight_energy_scaling_is_exact_and_mean_one() -> None:
     assert scaled.l1_norm_alpha_minus_one == pytest.approx(1.25 * result.l1_norm_alpha_minus_one)
 
 
+def test_active_pair_nonpenetration_gate_uses_existing_linearization() -> None:
+    safe = {
+        "nonpenetration_pairs": ((1, 2),),
+        "nonpenetration_predicted_distances": (0.013,),
+        "nonpenetration_linearized_changes": (0.001,),
+    }
+    near_boundary = {
+        **safe,
+        "nonpenetration_predicted_distances": (0.011,),
+    }
+    large_motion = {
+        **safe,
+        "nonpenetration_linearized_changes": (-0.006,),
+    }
+    gate = InteractionMeshRetargeter._active_pair_recheck_required
+    assert not gate(safe, prediction_margin=0.012, motion_threshold=0.005)
+    assert gate(near_boundary, prediction_margin=0.012, motion_threshold=0.005)
+    assert gate(large_motion, prediction_margin=0.012, motion_threshold=0.005)
+    assert not gate({}, prediction_margin=0.012, motion_threshold=0.005)
+
+
+def test_active_pair_nonpenetration_refinement_is_explicit_final_b4_only() -> None:
+    config = SemanticRetargetingConfig(
+        mode=FINAL_SEMANTIC_MODE,
+        semantic_keyframe_path=Path("plan.json"),
+        active_pair_nonpenetration_refinement=True,
+    )
+    config.validate()
+    with pytest.raises(ValueError, match="explicit B4"):
+        SemanticRetargetingConfig(
+            mode="original",
+            active_pair_nonpenetration_refinement=True,
+        ).validate()
+    with pytest.raises(ValueError, match="active_pair_max_iterations"):
+        SemanticRetargetingConfig(active_pair_max_iterations=0).validate()
+    with pytest.raises(ValueError, match="at least the acceptance tolerance"):
+        SemanticRetargetingConfig(
+            active_pair_acceptance_tolerance=0.01,
+            active_pair_prediction_margin=0.009,
+        ).validate()
+
+
 def test_precision_evaluator_uses_raw_geometry_and_original_criticality() -> None:
     num_frames = 40
     residuals = np.ones((num_frames, 5), dtype=np.float64)

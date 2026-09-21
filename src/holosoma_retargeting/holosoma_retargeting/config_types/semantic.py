@@ -105,6 +105,20 @@ class SemanticRetargetingConfig:
     rescue_hand_object_tolerance: float = 0.05
     rescue_velocity_limit_per_frame: float | None = None
 
+    # Opt-in experimental correction; historical B4 and Original are unchanged.
+    geometry_projection: bool = False
+    geometry_projection_max_iterations: int = 10
+    geometry_projection_numerical_tolerance: float = 1e-5
+
+    # Opt-in lightweight feasibility continuation.  It reuses the final SQP
+    # collision active set and bounds the extra work per frame.
+    active_pair_nonpenetration_refinement: bool = False
+    active_pair_max_iterations: int = 10
+    active_pair_acceptance_tolerance: float = 10e-3
+    active_pair_prediction_margin: float = 12e-3
+    active_pair_motion_threshold: float = 5e-3
+    active_pair_stagnation_tolerance: float = 1e-10
+
     @property
     def uses_semantic_events(self) -> bool:
         return self.mode not in {"original", "uniform"}
@@ -190,6 +204,30 @@ class SemanticRetargetingConfig:
         return "part"
 
     def validate(self) -> None:
+        if self.geometry_projection and self.mode != FINAL_SEMANTIC_MODE:
+            raise ValueError("geometry_projection is only supported for the explicit B4 variant")
+        if self.geometry_projection_max_iterations < 1:
+            raise ValueError("geometry_projection_max_iterations must be positive")
+        if not 0 < self.geometry_projection_numerical_tolerance <= 1e-5:
+            raise ValueError("geometry projection numerical tolerance must be in (0, 1e-5]")
+        if self.active_pair_nonpenetration_refinement and self.mode != FINAL_SEMANTIC_MODE:
+            raise ValueError(
+                "active_pair_nonpenetration_refinement is only supported for the explicit B4 variant"
+            )
+        if self.active_pair_max_iterations < 1:
+            raise ValueError("active_pair_max_iterations must be positive")
+        if self.active_pair_acceptance_tolerance <= 0:
+            raise ValueError("active_pair_acceptance_tolerance must be positive")
+        if self.active_pair_prediction_margin < self.active_pair_acceptance_tolerance:
+            raise ValueError(
+                "active_pair_prediction_margin must be at least the acceptance tolerance"
+            )
+        if self.active_pair_prediction_margin <= 0:
+            raise ValueError("active_pair_prediction_margin must be positive")
+        if self.active_pair_motion_threshold <= 0:
+            raise ValueError("active_pair_motion_threshold must be positive")
+        if self.active_pair_stagnation_tolerance <= 0:
+            raise ValueError("active_pair_stagnation_tolerance must be positive")
         if self.mode not in ACTIVE_SEMANTIC_MODES:
             raise ValueError(
                 f"unsupported active semantic mode {self.mode!r}; expected one of {ACTIVE_SEMANTIC_MODES}"

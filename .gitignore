@@ -39,6 +39,18 @@ logs_eval
 /third_party/
 /exp/eval/**/rollout*.npz
 
+# Local datasets and generated experiment inputs (see DATA_LAYOUT.md).
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/body_models/
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/pretrained/
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/external/
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/semantic_keyframes/frozen/
+/src/holosoma/holosoma/data/motions/tasks/
+/src/holosoma/holosoma/data/motions/retargeted/
+/src/holosoma/holosoma/data/motions/benchmarks/
+/src/holosoma/holosoma/data/semantic/
+
 # Isaacsim Converted Files
 src/holosoma/holosoma/data/robots/converted/
 src/holosoma/holosoma/data/robots/converted_rank*/

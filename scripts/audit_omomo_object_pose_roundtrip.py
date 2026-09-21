@@ -23,7 +23,7 @@ from holosoma_retargeting.src.utils import load_intermimic_data
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--input-root", type=Path, default=ROOT / "exp/retargeting/omomo_batch/input")
+    parser.add_argument("--input-root", type=Path, default=ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/retarget_inputs/omomo_batch/input")
     parser.add_argument("--runs-root", type=Path, default=ROOT / "exp/retargeting/omomo_batch/runs")
     args = parser.parse_args()
     manifest_path = args.input_root / "manifest.json"
@@ -31,7 +31,7 @@ def main():
     entries = {row["task_name"]: row for row in manifest.get("tasks", [])}
     rows = []
     for task in TASK_OBJECTS:
-        with np.load(ROOT / f"exp/omomo_cari4d/{task}/input/omomo_gt_sequence.npz", allow_pickle=False) as z:
+        with np.load(ROOT / f"src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/{task}/input/omomo_gt_sequence.npz", allow_pickle=False) as z:
             gt = z["object_poses_wxyz_xyz"].copy()
             gt_human = z["human_joints"].copy()
             raw_gt = gt.copy()

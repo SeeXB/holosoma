@@ -44,12 +44,17 @@ def main() -> None:
     sequence = canonical_sequence_name(args.sequence)
     bundle_name = "sub03_largebox3" if sequence == "sub3_largebox_003" else sequence
     root = args.workspace / f"exp/omomo_cari4d/{bundle_name}"
-    archive = root / "input/omomo_gt_sequence.npz"
+    data_root = args.workspace / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles" / bundle_name
+    archive = data_root / "input/omomo_gt_sequence.npz"
     camera_dir = root / "camera_search"
     render_dir = root / "cari4d_friendly"
-    video = render_dir / f"{sequence}_rerender.mp4"
+    # The encoded video is an input to semantic planning; render intermediates
+    # and camera-search diagnostics remain experiment outputs.
+    video = data_root / "videos" / f"{sequence}_rerender.mp4"
+    video.parent.mkdir(parents=True, exist_ok=True)
 
-    prepare = [args.python, args.workspace / "tools/omomo_cari4d_renderer/prepare_sequence.py", "--sequence", sequence]
+    prepare = [args.python, args.workspace / "tools/omomo_cari4d_renderer/prepare_sequence.py",
+               "--sequence", sequence, "--output", archive]
     if args.force or not archive.exists():
         run(prepare)
     if args.force or not (camera_dir / "best_camera.json").exists():
@@ -81,7 +86,7 @@ def main() -> None:
             "-pix_fmt", "yuv420p", "-movflags", "+faststart", video,
         ])
         # ``rgb.mp4`` is the stable filename consumed by downstream VLM tools.
-        rgb = render_dir / "rgb.mp4"
+        rgb = video.parent / "rgb.mp4"
         if rgb != video:
             rgb.unlink(missing_ok=True)
             rgb.symlink_to(video.name)

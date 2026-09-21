@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--max-hulls", type=int, default=32)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    source = root / "src/holosoma_retargeting/holosoma_retargeting/models" / args.object / f"{args.object}.obj"
+    source = root / "src/holosoma_retargeting/holosoma_retargeting/demo_data/models" / args.object / f"{args.object}.obj"
     out = args.output.resolve()
     if (out / "collision_manifest.json").exists():
         raise FileExistsError("Use a new output directory to preserve collision provenance")

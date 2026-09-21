@@ -54,6 +54,15 @@ BODY_PART_ALIASES: dict[str, tuple[str, ...]] = {
     "torso": ("Spine3", "Spine2", "Spine1", "Chest", "Torso", "torso"),
 }
 
+# The interaction mesh may have no torso vertex. Waist uses its existing root
+# representative only as a retargeting approximation; RL maps actual waist links.
+BODY_PART_ALIASES["waist"] = ("Torso", "Chest", "Spine2", "Spine1", "Pelvis", "Hips")
+for _side, _short, _long in (("left", "L", "Left"), ("right", "R", "Right")):
+    for _part, _smpl, _lafan in (("hip", "Hip", "UpLeg"), ("knee", "Knee", "Leg"),
+        ("ankle", "Ankle", "Foot"), ("shoulder", "Shoulder", "Arm"),
+        ("elbow", "Elbow", "ForeArm"), ("wrist", "Wrist", "Hand")):
+        BODY_PART_ALIASES[f"{_side}_{_part}"] = (f"{_short}_{_smpl}", f"{_long}{_lafan}")
+
 
 @dataclass(frozen=True)
 class SemanticEvent:

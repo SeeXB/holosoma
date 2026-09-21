@@ -37,10 +37,10 @@ if [[ "${#gpu_ids[@]}" -lt 3 ]]; then
     exit 2
 fi
 
-ORIGINAL_MOTION="$PROJECT_ROOT/exp/training/$TASK/motions/${TASK}_original_mj_w_obj.npz"
-SEMANTIC_B4_MOTION="$PROJECT_ROOT/exp/training/$TASK/motions/${TASK}_semantic_b4_mj_w_obj.npz"
-OBJECT_URDF="$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/models/clothesstand/clothesstand.urdf"
-SEMANTIC_FILE="$PROJECT_ROOT/exp/training/$TASK/semantic/${TASK}_semantic_adaptive_training.json"
+ORIGINAL_MOTION="$PROJECT_ROOT/src/holosoma/holosoma/data/motions/tasks/$TASK/${TASK}_original_mj_w_obj.npz"
+SEMANTIC_B4_MOTION="$PROJECT_ROOT/src/holosoma/holosoma/data/motions/tasks/$TASK/${TASK}_semantic_b4_mj_w_obj.npz"
+OBJECT_URDF="$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/demo_data/models/clothesstand/clothesstand.urdf"
+SEMANTIC_FILE="$PROJECT_ROOT/src/holosoma/holosoma/data/semantic/$TASK/${TASK}_semantic_adaptive_training.json"
 LOG_DIR="$PROJECT_ROOT/exp/training/$TASK/launcher_logs"
 MANIFEST="$LOG_DIR/parallel_manifest.txt"
 

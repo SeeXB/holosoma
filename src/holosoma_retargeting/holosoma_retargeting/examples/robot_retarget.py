@@ -118,12 +118,12 @@ def create_task_constants(
         obj_name = task_config.object_name or "largebox"
         task_constants.OBJECT_NAME = obj_name
         task_constants.OBJECT_URDF_FILE = str(
-            task_config.object_urdf_file or Path(f"models/{obj_name}/{obj_name}.urdf")
+            task_config.object_urdf_file or Path(f"demo_data/models/{obj_name}/{obj_name}.urdf")
         )
         task_constants.OBJECT_MESH_FILE = str(
-            task_config.object_mesh_file or Path(f"models/{obj_name}/{obj_name}.obj")
+            task_config.object_mesh_file or Path(f"demo_data/models/{obj_name}/{obj_name}.obj")
         )
-        task_constants.OBJECT_URDF_TEMPLATE = f"models/templates/{obj_name}.urdf.jinja"
+        task_constants.OBJECT_URDF_TEMPLATE = f"demo_data/models/templates/{obj_name}.urdf.jinja"
         task_constants.SCENE_XML_FILE = str(task_config.scene_xml_file) if task_config.scene_xml_file else ""
     elif task_type == "climbing":
         obj_name = task_config.object_name or "multi_boxes"

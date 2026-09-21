@@ -25,7 +25,7 @@ from prepare_lafan_batch_inputs import TASKS as LAFAN_TASKS
 
 ROOT = Path(__file__).resolve().parents[1]
 OMOMO_RUNS = ROOT / "exp/retargeting/omomo_batch/runs"
-OMOMO_PLANS = ROOT / "exp/omomo_cari4d"
+OMOMO_PLANS = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles"
 LAFAN_RUNS = ROOT / "exp/retargeting/lafan_batch/runs"
 
 

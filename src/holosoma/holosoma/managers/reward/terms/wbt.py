@@ -204,3 +204,50 @@ class UndesiredContacts(RewardTermBase):
             assert name in b_names, f"The specified name ({name}) doesn't exist: {b_names}"
             indexes.append(b_names.index(name))
         return torch.tensor(indexes, dtype=torch.long, device=device)
+
+
+class SemanticPlanUndesiredContacts(UndesiredContacts):
+    """Original contact penalty minus all body parts named in the task plan.
+
+    Opt-in term: legacy Original RL and existing checkpoint presets retain
+    UndesiredContacts. No positive contact bonus or phase-dependent exemption
+    is introduced. The remaining bodies keep the original force threshold.
+    """
+
+    def __init__(self, cfg: RewardTermCfg, env: WholeBodyTrackingManager):
+        super().__init__(cfg, env)
+        # RewardManager is constructed before CommandManager. Bind once on
+        # the first reward evaluation, after command setup is complete.
+        self._semantic_contacts_ready = False
+
+    def _initialize_semantic_contacts(self, env):
+        from holosoma.utils.semantic_contacts import load_semantic_contact_parts, resolve_semantic_contact_links
+
+        command = env.command_manager.get_state("motion_command")
+        motion_cfg = getattr(command, "motion_cfg", None)
+        if motion_cfg is None or motion_cfg.sampling_mode != "semantic_adaptive":
+            raise ValueError("SemanticPlanUndesiredContacts requires semantic_adaptive motion sampling")
+        if not motion_cfg.semantic_file:
+            raise ValueError("SemanticPlanUndesiredContacts requires an explicit semantic_file")
+        self.semantic_body_parts = load_semantic_contact_parts(motion_cfg.semantic_file)
+        self.semantic_contact_mapping = resolve_semantic_contact_links(
+            self.semantic_body_parts, env.simulator.body_names
+        )
+        exempt = {name for names in self.semantic_contact_mapping.values() for name in names}
+        original_indices = self.undesired_contacts_body_indexes.tolist()
+        self.exempted_contact_body_names = [
+            env.simulator.body_names[i] for i in original_indices if env.simulator.body_names[i] in exempt
+        ]
+        remaining = [env.simulator.body_names[i] for i in original_indices if env.simulator.body_names[i] not in exempt]
+        self.undesired_contacts_body_indexes = self._get_index_of_a_in_b(remaining, env.simulator.body_names, env.device)
+        logger.info(
+            "Semantic contact plan {}: task-wide parts={}, removed={}, remaining={}",
+            motion_cfg.semantic_file, self.semantic_body_parts, self.exempted_contact_body_names, remaining,
+        )
+
+        self._semantic_contacts_ready = True
+
+    def __call__(self, env: WholeBodyTrackingManager, **kwargs) -> torch.Tensor:
+        if not self._semantic_contacts_ready:
+            self._initialize_semantic_contacts(env)
+        return super().__call__(env, **kwargs)

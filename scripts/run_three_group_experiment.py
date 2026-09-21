@@ -108,9 +108,12 @@ def eval_command(cfg, checkpoint, out, motion):
 
 
 def upload_report(config_path, result_path):
-    import wandb
     cfg = json.loads(Path(config_path).read_text())
     result_path = Path(result_path)
+    if (Path(cfg['eval_root']) / 'LOCAL_ONLY').exists():
+        print('Evaluation upload skipped: user requested local-only results', flush=True)
+        return
+    import wandb
     report = json.loads(result_path.read_text())
     results = report["results"] if "results" in report else [report]
     label = "summary" if len(results) == 3 else f"group{results[0]['group']}"

@@ -165,7 +165,7 @@ paper_observation = ObservationManagerCfg(
 _paper_motion = replace(
     motion_config_w_object_transition_truncated_b4,
     motion_file=(
-        "exp/benchmark_results_full_event_transition_truncation/rl/"
+        "src/holosoma/holosoma/data/motions/benchmarks/benchmark_results_full_event_transition_truncation/"
         "transition_truncated_b4_mj_fps50_w_obj.npz"
     ),
     use_adaptive_timesteps_sampler=True,
@@ -252,7 +252,33 @@ g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr = _paper_experiment(
     command_cfg=paper_command_semantic_adaptive,
 )
 
+# Anatomy-v2 experiment. Keep the first-round sampling-only S2 preset frozen
+# so loading/evaluating its existing checkpoints does not change reward rules.
+_semantic_contact_terms = dict(g1_29dof_wbt_reward_w_object.terms)
+_semantic_contact_terms["undesired_contacts"] = replace(
+    _semantic_contact_terms["undesired_contacts"],
+    func="holosoma.managers.reward.terms.wbt:SemanticPlanUndesiredContacts",
+)
+_semantic_contact_motion = replace(
+    _paper_motion,
+    sampling_mode="semantic_adaptive",
+    semantic_file="",  # Require the task-specific reviewed plan at launch.
+)
+_semantic_contact_command = replace(
+    paper_command_semantic_adaptive,
+    setup_terms={"motion_command": CommandTermCfg(
+        func="holosoma.managers.command.terms.wbt:MotionCommand",
+        params={"motion_config": _semantic_contact_motion},
+    )},
+)
+g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr = replace(
+    g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
+    command=_semantic_contact_command,
+    reward=replace(g1_29dof_wbt_reward_w_object, terms=_semantic_contact_terms),
+)
+
 __all__ = [
+    "g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr",
     "g1_29dof_wbt_w_object_b4_omni_paper_dr",
     "g1_29dof_wbt_w_object_b4_semantic_paper_dr",
     "g1_29dof_wbt_w_object_b4_s0_original_adaptive_paper_dr",

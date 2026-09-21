@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--omomo-data",
         type=Path,
-        default=Path("/mnt/sdadrive/shixiongbo/omomo/data"),
+        default=workspace / "src/holosoma_retargeting/holosoma_retargeting/demo_data/external/omomo/data",
     )
     parser.add_argument("--motion-video", type=Path, default=None)
     parser.add_argument("--object-mesh", type=Path, default=None)
@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--smplh-model",
         type=Path,
-        default=workspace / "third_party/CARI4D/data/smpl/smplh/SMPLH_male.pkl",
+        default=workspace / "src/holosoma_retargeting/holosoma_retargeting/demo_data/body_models/cari4d_smpl/smplh/SMPLH_male.pkl",
     )
     parser.add_argument(
         "--human-body-prior-root",
@@ -138,9 +138,9 @@ def main() -> None:
     workspace = Path(__file__).resolve().parents[2]
     if args.output is None:
         output = (
-            workspace / "exp/omomo_cari4d/sub03_largebox3/input/omomo_gt_sequence.npz"
+            workspace / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/sub03_largebox3/input/omomo_gt_sequence.npz"
             if sequence_name == "sub3_largebox_003"
-            else workspace / f"exp/omomo_cari4d/{sequence_name}/input/omomo_gt_sequence.npz"
+            else workspace / f"src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/{sequence_name}/input/omomo_gt_sequence.npz"
         )
     else:
         output = args.output

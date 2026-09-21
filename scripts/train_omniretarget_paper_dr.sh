@@ -51,7 +51,7 @@ LOGGER_PRESET="${LOGGER_PRESET:-logger:wandb}"
 VIDEO_ENABLED="${VIDEO_ENABLED:-False}"
 CONDA_ENV_NAME="${CONDA_ENV_NAME:-hssim}"
 
-MOTION_FILE="$PROJECT_ROOT/exp/benchmark_results_full_event_transition_truncation/rl/\
+MOTION_FILE="$PROJECT_ROOT/src/holosoma/holosoma/data/motions/benchmarks/benchmark_results_full_event_transition_truncation/\
 transition_truncated_b4_mj_fps50_w_obj.npz"
 SEMANTIC_FILE="$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/demo_data/\
 semantic_keyframes/sub3_largebox_003_semantic_v2.json"

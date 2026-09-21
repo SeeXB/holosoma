@@ -43,7 +43,7 @@ DEFAULT_FINAL = (
     / "transition_truncated_b4"
     / "sub3_largebox_003_original.npz"
 )
-DEFAULT_MODEL = PACKAGE_DIR / "models" / "g1" / "g1_29dof_w_largebox.xml"
+DEFAULT_MODEL = PACKAGE_DIR / "demo_data" / "models" / "g1" / "g1_29dof_w_largebox.xml"
 DEFAULT_OUTPUT_DIR = (
     PACKAGE_DIR
     / "benchmark_results_full_event_transition_truncation"
@@ -215,6 +215,8 @@ def _render_pair(
     frame_count: int,
     fps: int,
     camera_config: CameraConfig,
+    original_title: str,
+    final_title: str,
 ) -> tuple[np.ndarray, np.ndarray]:
     camera = _camera_for_frame(original_qpos, final_qpos, camera_config)
 
@@ -229,7 +231,7 @@ def _render_pair(
     return (
         _annotate(
             original_frame,
-            title="Original OmniRetarget",
+            title=original_title,
             frame_index=frame_index,
             frame_count=frame_count,
             fps=fps,
@@ -237,7 +239,7 @@ def _render_pair(
         ),
         _annotate(
             final_frame,
-            title="Final: Transition-Truncated-B4",
+            title=final_title,
             frame_index=frame_index,
             frame_count=frame_count,
             fps=fps,
@@ -323,6 +325,8 @@ def render(args: argparse.Namespace) -> None:
                     frame_count=frame_count,
                     fps=fps,
                     camera_config=camera_config,
+                    original_title=args.original_title,
+                    final_title=args.final_title,
                 )
                 if frame_index in preview_indices:
                     previews.append((frame_index, original_frame, final_frame))
@@ -355,6 +359,7 @@ def render(args: argparse.Namespace) -> None:
             "distance": camera_config.distance,
             "anchor": "per-frame shared robot/object center from the mean of both methods",
         },
+        "titles": {"original": args.original_title, "final": args.final_title},
         "outputs": {key: str(path) for key, path in outputs.items()} if encoders else {},
         "preview": str(preview_path),
     }
@@ -376,6 +381,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--azimuth", type=float, default=CameraConfig.azimuth)
     parser.add_argument("--elevation", type=float, default=CameraConfig.elevation)
     parser.add_argument("--distance", type=float, default=CameraConfig.distance)
+    parser.add_argument("--original-title", default="Original OmniRetarget")
+    parser.add_argument("--final-title", default="Final: Transition-Truncated-B4")
     parser.add_argument("--preview-only", action="store_true")
     parser.add_argument(
         "--preview-frames",

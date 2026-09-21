@@ -50,7 +50,7 @@ def test_reorder_moves_native_columns_before_applying_names():
 
 
 def test_geometry_guard_rejects_native_columns_labelled_as_retarget():
-    path = ROOT / "exp/omomo_cari4d/sub9_clothesstand_058/input/omomo_gt_sequence.npz"
+    path = ROOT / "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/sub9_clothesstand_058/input/omomo_gt_sequence.npz"
     if not path.is_file():
         pytest.skip("local OMOMO diagnostic bundle is unavailable")
     with np.load(path, allow_pickle=False) as data:

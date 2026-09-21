@@ -19,11 +19,11 @@ from pathlib import Path
 
 
 DEFAULT_SOURCE = Path(
-    "exp/omomo_cari4d/sub9_clothesstand_058/semantic_keyframes/"
+    "src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/sub9_clothesstand_058/semantic_keyframes/"
     "sub9_clothesstand_058_dynamic.json"
 )
 DEFAULT_OUTPUT = Path(
-    "exp/training/sub9_clothesstand_058/semantic/"
+    "src/holosoma/holosoma/data/semantic/sub9_clothesstand_058/"
     "sub9_clothesstand_058_semantic_adaptive_training.json"
 )
 

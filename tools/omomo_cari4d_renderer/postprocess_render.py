@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
         "--original-video",
         type=Path,
         default=Path(
-            "/mnt/sdadrive/shixiongbo/omomo/motion_videos/sub3/"
+            "src/holosoma_retargeting/holosoma_retargeting/demo_data/external/omomo/motion_videos/sub3/"
             "sub3_largebox_003.mp4"
         ),
     )

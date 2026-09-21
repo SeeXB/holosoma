@@ -31,7 +31,7 @@ def summarize_run(directory: Path, quota: int) -> dict:
     group_text, step_text = directory.name.split("_")
     group, step = int(group_text.removeprefix("group")), int(step_text)
     label, suffix = GROUPS[group]
-    reference = ROOT / "exp/training/sub9_clothesstand_058/motions" / (
+    reference = ROOT / "src/holosoma/holosoma/data/motions/tasks/sub9_clothesstand_058" / (
         "sub9_clothesstand_058_original_mj_w_obj.npz" if group == 1
         else "sub9_clothesstand_058_semantic_b4_mj_w_obj.npz"
     )

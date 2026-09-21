@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import copy
+import hashlib
 import json
 import os
 import re
@@ -23,7 +24,27 @@ import numpy as np
 
 ROLE_ORDER = ("start", "approach", "contact", "lift", "carry_mid", "arrive", "place", "release")
 CRITICALITY_MAPPING = {1: 0.25, 2: 0.50, 3: 0.75, 4: 1.00}
-MAPPABLE_BODY_PARTS = frozenset({"pelvis", "left_hand", "right_hand", "left_foot", "right_foot"})
+MAPPABLE_BODY_PARTS = frozenset(
+    {"pelvis", "waist"}
+    | {f"{side}_{part}" for side in ("left", "right")
+       for part in ("hip", "knee", "ankle", "shoulder", "elbow", "wrist", "hand", "foot")}
+)
+BODY_PART_NORMALIZATION = {
+    "torso": "waist", "left_forearm": "left_elbow", "right_forearm": "right_elbow",
+}
+# Names in canonical SMPL-H bundles and native LAFAN skeletons, respectively.
+BODY_JOINT_NAMES = {
+    "pelvis": ("Pelvis", "Hips"), "waist": ("Torso", "Spine"),
+    **{f"{side}_{part}": (f"{short}_{smpl}", f"{long}{lafan}")
+       for side, short, long in (("left", "L", "Left"), ("right", "R", "Right"))
+       for part, smpl, lafan in (("hip", "Hip", "UpLeg"), ("knee", "Knee", "Leg"),
+           ("ankle", "Ankle", "Foot"), ("foot", "Toe", "ToeBase"),
+           ("shoulder", "Shoulder", "Arm"), ("elbow", "Elbow", "ForeArm"),
+           ("wrist", "Wrist", "Hand"), ("hand", "Middle3", "Hand"))},
+}
+BODY_SIGNALS = {f"{part}_{metric}" for part in MAPPABLE_BODY_PARTS
+                for metric in ("height", "speed")} | {"body_travel_progress"}
+
 SIGNALS = {
     "left_hand_box_surface_distance",
     "right_hand_box_surface_distance",
@@ -53,10 +74,13 @@ DYNAMIC_SIGNALS = {
     "object_vertical_speed",
     "object_speed",
     "object_displacement",
+    "object_rotate",
     "object_progress",
     "object_goal_distance",
     "object_angular_speed",
 }
+DYNAMIC_SIGNALS.update(BODY_SIGNALS)
+DYNAMIC_SIGNALS.update(f"{part}_object_distance" for part in MAPPABLE_BODY_PARTS)
 DYNAMIC_PRIMITIVES = frozenset({
     "global_minimum",
     "global_maximum",
@@ -515,6 +539,14 @@ def apply_plan_repairs(
     return repaired
 
 
+class VLMQuotaError(RuntimeError):
+    """Provider quota rejection; this does not establish the account balance."""
+
+    def __init__(self, message, provider_error=None):
+        super().__init__(message)
+        self.provider_error = provider_error or {}
+
+
 def call_vlm(content: list[dict[str, Any]], prompt: str | None = None) -> str:
     """Call an OpenAI-compatible vision chat-completions endpoint."""
     base_url = os.environ.get("OPENAI_BASE_URL")
@@ -543,6 +575,19 @@ def call_vlm(content: list[dict[str, Any]], prompt: str | None = None) -> str:
             payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 429 and "insufficient_quota" in detail:
+            try:
+                error = json.loads(detail).get("error", {})
+            except (ValueError, AttributeError):
+                error = {}
+            if not isinstance(error, dict):
+                error = {}
+            diagnostic = {"http_status": exc.code}
+            for field in ("code", "type", "message", "param"):
+                if isinstance(error.get(field), str):
+                    value = error[field].replace(api_key, "[REDACTED]")
+                    diagnostic[field] = value[:500] if "data:image" not in value else "[omitted echoed image data]"
+            raise VLMQuotaError("VLM HTTP 429: insufficient_quota; account balance not determined", diagnostic) from exc
         raise RuntimeError(f"VLM HTTP {exc.code}: {detail}") from exc
     return str(payload["choices"][0]["message"]["content"])
 
@@ -629,6 +674,8 @@ def load_retargeting_bundle_signals(
     thresholds intentionally match the existing semantic-plan resolver.
     """
     with np.load(path, allow_pickle=False) as data:
+        if "object_poses_wxyz_xyz" not in data.files:
+            return load_body_bundle_signals(data)
         required = {
             "human_joints",
             "object_poses_wxyz_xyz",
@@ -691,6 +738,15 @@ def load_retargeting_bundle_signals(
         angles = 2.0 * np.arccos(np.clip(np.abs(dots), 0.0, 1.0))
         return np.r_[angles[0] if len(angles) else 0.0, angles] * fps
 
+    def cumulative_rotation(quaternion_wxyz: np.ndarray) -> np.ndarray:
+        """Unsigned 3-D orientation travel from the first frame, in radians."""
+        q = quaternion_wxyz / np.maximum(
+            np.linalg.norm(quaternion_wxyz, axis=1, keepdims=True), 1.0e-8
+        )
+        dots = np.sum(q[1:] * q[:-1], axis=1)
+        increments = 2.0 * np.arccos(np.clip(np.abs(dots), 0.0, 1.0))
+        return np.r_[0.0, np.cumsum(increments)]
+
     obj_delta = obj - obj[0]
     path_dir = obj[-1] - obj[0]
     norm = max(float(np.linalg.norm(path_dir)), 1e-6)
@@ -720,6 +776,7 @@ def load_retargeting_bundle_signals(
         "right_hand_speed": speed(right_hand),
         "object_vertical_speed": object_vertical_speed,
         "object_displacement": object_displacement,
+        "object_rotate": cumulative_rotation(object_poses[:, :4]),
         "object_angular_speed": angular_speed(object_poses[:, :4]),
     }
     thresholds = {
@@ -734,7 +791,45 @@ def load_retargeting_bundle_signals(
         "approach_distance": float(np.quantile(signals["pelvis_box_distance"], 0.45)),
         "approach_speed": float(np.quantile(signals["pelvis_speed"], 0.55)),
     }
+    body_signals = compute_body_signals(joints, names, fps, obj)
+    # Preserve the legacy hand/pelvis definitions used by existing plans.
+    signals.update({key: value for key, value in body_signals.items() if key not in signals})
     return signals, thresholds, fps
+
+
+def compute_body_signals(joints, names, fps, obj=None):
+    """Metric world-space body signals; cumulative travel is not a frame counter."""
+    signals = {}
+    for part, aliases in BODY_JOINT_NAMES.items():
+        name = next((name for name in aliases if name in names), None)
+        if name is None:
+            continue
+        track = joints[:, names.index(name)]
+        signals[f"{part}_height"] = track[:, 2]
+        signals[f"{part}_speed"] = np.linalg.norm(np.gradient(track, axis=0), axis=1) * fps
+        if obj is not None:
+            signals[f"{part}_object_distance"] = np.linalg.norm(track - obj, axis=1)
+    travel = np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(joints, axis=0), axis=2).mean(axis=1))]
+    signals["body_travel_progress"] = travel / max(float(travel[-1]), 1e-8)
+    return signals
+
+
+def load_body_bundle_signals(data):
+    """Load a explicitly marked Z-up, full-rate body-only bundle (e.g. LAFAN)."""
+    if str(np.asarray(data["human_joint_layout"]).item()) != "lafan_z_up_v1":
+        raise ValueError("body-only bundle requires lafan_z_up_v1 joint layout")
+    joints = np.asarray(data["human_joints"], dtype=float)
+    names = [str(name) for name in data["smplh_joint_names"]]
+    fps = float(np.asarray(data["fps"]).item())
+    if (joints.ndim != 3 or joints.shape[1:] != (len(names), 3) or len(joints) < 2
+            or len(set(names)) != len(names) or not np.isfinite(joints).all()
+            or not np.isfinite(fps) or fps <= 0
+            or np.asarray(data["frame_ids"]).shape != (len(joints),)):
+        raise ValueError("invalid body-only trajectory shape, names, values, frame IDs or fps")
+    signals = compute_body_signals(joints, names, fps)
+    if "pelvis_height" not in signals:
+        raise ValueError("body-only bundle requires a named pelvis joint")
+    return signals, {}, fps
 
 
 def _rule_frame(
@@ -931,31 +1026,154 @@ def validate_dynamic_plan(plan: dict[str, Any]) -> None:
         raise ValueError(str(issues[0]["message"]))
 
 
-def build_dynamic_prompt(object_name: str | None = None) -> str:
+def build_dynamic_prompt(
+    object_name: str | None = None,
+    available_signals=None,
+    body_only=False,
+) -> str:
     object_hint = f" The manipulated object category is {object_name!r}." if object_name else ""
-    return (
+    json_example = (
+        {
+            "actions": [
+                {
+                    "action": "example_lift_object",
+                    "body_parts": ["left_hand", "right_hand"],
+                    "keyframe_function": {
+                        "start": {
+                            "primitive": "threshold_crossing_up",
+                            "signal": "object_height",
+                            "threshold": {"kind": "quantile", "q": 0.3},
+                        },
+                        "end": {
+                            "primitive": "threshold_crossing_up",
+                            "signal": "object_height",
+                            "threshold": {"kind": "quantile", "q": 0.8},
+                        },
+                    },
+                    "criticality_level": 4,
+                    "rationale": "The object visibly rises while supported by both hands.",
+                    "criticality_rationale": "Accurate support is essential during the lift.",
+                    "failure_if_inaccurate": "The object may not be lifted safely.",
+                },
+                {
+                    "action": "example_rotate_object",
+                    "body_parts": ["left_hand", "right_hand"],
+                    "keyframe_function": {
+                        "start": {
+                            "primitive": "threshold_crossing_up",
+                            "signal": "object_rotate",
+                            "threshold": {"kind": "quantile", "q": 0.2},
+                        },
+                        "end": {
+                            "primitive": "threshold_crossing_up",
+                            "signal": "object_rotate",
+                            "threshold": {"kind": "quantile", "q": 0.8},
+                        },
+                    },
+                    "criticality_level": 3,
+                    "rationale": "The supported object visibly changes orientation.",
+                    "criticality_rationale": "The target orientation affects later placement.",
+                    "failure_if_inaccurate": "The object may be placed in the wrong orientation.",
+                },
+                {
+                    "action": "example_place_object",
+                    "body_parts": ["left_hand", "right_hand"],
+                    "keyframe_function": {
+                        "start": {
+                            "primitive": "threshold_crossing_down",
+                            "signal": "object_height",
+                            "threshold": {"kind": "quantile", "q": 0.8},
+                        },
+                        "end": {
+                            "primitive": "threshold_crossing_down",
+                            "signal": "object_height",
+                            "threshold": {"kind": "quantile", "q": 0.2},
+                        },
+                    },
+                    "criticality_level": 4,
+                    "rationale": "The supported object visibly descends to its resting surface.",
+                    "criticality_rationale": "Accurate placement is essential for a stable final state.",
+                    "failure_if_inaccurate": "The object may be released before it is stably placed.",
+                },
+            ]
+        }
+        if not body_only else
+        {
+            "actions": [
+                {
+                    "action": "example_body_motion",
+                    "body_parts": ["pelvis"],
+                    "keyframe_function": {
+                        "start": {
+                            "primitive": "threshold_crossing_up",
+                            "signal": "pelvis_speed",
+                            "threshold": {"kind": "quantile", "q": 0.2},
+                        },
+                        "end": {
+                            "primitive": "threshold_crossing_down",
+                            "signal": "pelvis_speed",
+                            "threshold": {"kind": "quantile", "q": 0.2},
+                        },
+                    },
+                    "criticality_level": 2,
+                    "rationale": "The pelvis begins and then finishes a visible motion.",
+                    "criticality_rationale": "The interval captures the central body transition.",
+                    "failure_if_inaccurate": "The motion phase may be retargeted at the wrong time.",
+                }
+            ]
+        }
+    )
+    anatomy = (
+        f" Allowed body_parts are exactly {sorted(DYNAMIC_BODY_PARTS)}. "
+        "Choose anatomically precise parts visible in the images, not a fixed list. "
+        "Hand means palm/fingers; wrist means the wrist joint; elbow includes the forearm link. "
+        "Forearm support/clamping should name left_elbow/right_elbow, not automatically hand. "
+        "Waist means the trunk/waist. Include only parts important to the observed action. "
+        "Explain the visual evidence for those body parts in rationale. Do not copy an example body part list. "
+    )
+    scene = (
+        "Analyze chronological front/side skeleton views of a body-only motion clip. "
+        "There is no manipulated object. Red is left, blue is right; views are pelvis-centered horizontally. "
+        "Describe locomotion, jumps, falls, getting up, dance, fighting or other visible body actions. "
+        "For long repetitive clips summarize 2 to 8 successive phases, not every cycle. "
+        "body_travel_progress is normalized cumulative mean joint travel (not elapsed time); "
+        "it can delimit early/middle/late movement phases. Heights are world Z and speeds are world m/s. "
+        if body_only else
+        "Analyze the entire rerendered human-object video and produce a task-specific semantic action plan."
+    )
+    interaction_hint = (
+        "Use only body-motion signals; do not infer a manipulated object. " if body_only else
+        f"{object_hint} Do not assume a box-carry task: distinguish lifting, carrying, dragging, pushing, "
+        "placing, rotating, supporting, or any other actions actually visible. "
+    )
+    return anatomy + scene + interaction_hint + (
         "HARD EXECUTABLE CONTRACT: every threshold-crossing or sustained rule requires a quantile threshold. "
         "Prefer threshold_crossing_down, threshold_crossing_up, sustained_below, or sustained_above for "
         "multi-action transitions; use global/local extrema only for a genuinely unique visible peak or valley. "
         "Example threshold rule: "
-        '{"primitive":"threshold_crossing_down","signal":"min_hand_object_distance",'
+        '{"primitive":"threshold_crossing_down","signal":"pelvis_speed",'
         '"threshold":{"kind":"quantile","q":0.25}}. '
-        "Analyze the entire rerendered human-object video and produce a task-specific semantic action plan."
-        f"{object_hint} Do not assume a box-carry task: distinguish lifting, carrying, dragging, pushing, "
-        "placing, rotating, supporting, or any other actions actually visible. Return JSON only with this schema:\n"
-        '{"actions":[{"action":"snake_case_action_name","body_parts":["pelvis|left_hand|right_hand|left_foot|right_foot|torso"],'
-        '"keyframe_function":{"start":{"primitive":"...","signal":"...","threshold":{"kind":"quantile","q":0.2}},'
-        '"end":{"primitive":"...","signal":"...","threshold":null}},"criticality_level":3,'
-        '"rationale":"...","criticality_rationale":"...","failure_if_inaccurate":"..."}]}\n'
+        "Return one JSON object only. Do not return Python, pseudocode, Markdown or prose outside JSON. "
+        "Here is a complete event-plan JSON example. It demonstrates the required shape and how distinct "
+        "physical actions use distinct signals. It is not the answer: replace every example action, body part, "
+        "rule and explanation with actions actually visible in this video:\n"
+        + json.dumps(json_example, indent=2) + "\n"
         "Choose 2 to 8 distinct actions in the temporal order observed; action names must be unique snake_case. "
         "Each action must describe a meaningful state or interaction transition and name the body parts that matter. "
         "The keyframe_function is a declarative interval predicate: start finds the action's first keyframe and "
         "end finds its last keyframe on a separate GT trajectory. Use no frame numbers, durations, Python, lambda, "
         "code, or arbitrary thresholds. A threshold must be a quantile object with q in [0,1]. For global/local "
         "min/max rules use threshold=null. The allowed primitives are "
-        f"{sorted(DYNAMIC_PRIMITIVES)}; allowed signals are {sorted(DYNAMIC_SIGNALS)}. "
+        f"{sorted(DYNAMIC_PRIMITIVES)}; allowed signals are {sorted(available_signals if available_signals is not None else DYNAMIC_SIGNALS)}. "
         "Use object_height only when the video shows vertical lifting; for dragging/sliding, use object_progress, "
-        "object_displacement, object speed, and hand-object distance instead. Every action must include all fields "
+        "object_displacement, object_speed, and hand-object distance instead. For a visible orientation change, "
+        "use object_rotate to represent cumulative rotation progress; object_angular_speed only represents how fast "
+        "the object is rotating at an instant. Do not describe rotation using contact distance alone. For lowering "
+        "or placement after a lift, object_height must cross downward: use threshold_crossing_down at a higher "
+        "quantile for onset and at a lower quantile for completion. Do not use upward height crossings for placing. "
+        "Call an action dragging or sliding only when the video shows the object remaining supported by the ground; "
+        "visible off-ground transport is lifting or carrying even when horizontal displacement is large. "
+        "Every action must include all fields "
         "shown above. Temporal correctness is essential: choose the earliest visible onset after the previous action "
         "and the last frame of that action, not a later repetition or terminal pose. For transition actions, prefer "
         "threshold_crossing_up/down or sustained_above/below with a quantile over a global minimum/maximum; global "
@@ -963,7 +1181,10 @@ def build_dynamic_prompt(object_name: str | None = None) -> str:
         "distance/progress signal to mean 'first contact', because the same minimum can occur again at release. "
         "Do not emit duplicate zero-length actions unless the video clearly shows an instantaneous event. The resolved "
         "intervals must remain in the listed action order and cover the visible interaction rather than only the final "
-        "few frames. Never use identical start and end rules for one action."
+        "few frames. Never use identical start and end rules for one action. "
+        "When repeated extrema or crossings cannot separate successive phases, body_travel_progress "
+        "is monotonic cumulative mean joint travel and permits distinct increasing quantile crossings; "
+        "choose quantiles to reflect the visible phases, rather than repeatedly selecting the same peak. "
     )
 
 
@@ -1012,7 +1233,7 @@ def normalize_dynamic_plan(plan: Any) -> dict[str, Any]:
             for part in parts:
                 if isinstance(part, str):
                     expanded.extend(token.strip() for token in part.split("|") if token.strip())
-            action["body_parts"] = [part for part in expanded if part in DYNAMIC_BODY_PARTS]
+            action["body_parts"] = list(dict.fromkeys(BODY_PART_NORMALIZATION.get(part, part) for part in expanded))
     return normalized
 
 
@@ -1030,7 +1251,10 @@ def _dynamic_rule_frame(rule: dict[str, Any], values: np.ndarray, minimum: int) 
     else:
         predicate = values >= threshold
     if primitive.startswith("threshold_crossing"):
-        candidates = np.flatnonzero(predicate & ~np.r_[False, predicate[:-1]])
+        # A crossing needs two observed samples: the previous sample must be on
+        # the other side of the threshold.  Treating an already-true predicate
+        # at frame 0 as a crossing fabricates a keyframe before any motion.
+        candidates = np.flatnonzero(predicate[1:] & ~predicate[:-1]) + 1
     else:
         candidates = np.flatnonzero(predicate & np.r_[predicate[1:], False])
     candidates = candidates[candidates >= minimum]
@@ -1045,6 +1269,12 @@ def execute_dynamic_plan(
     fps: float = 30.0,
 ) -> dict[str, Any]:
     """Evaluate each VLM-supplied interval function on aligned GT signals."""
+    if plan.get("schema") == "holosoma.trajectory_event_program.v1":
+        from .trajectory_events import execute_event_program
+        return execute_event_program(plan, signals, fps)
+    if plan.get("schema") == "holosoma.localized_visual_phases.v1":
+        from .local_phases import execute_local_plan
+        return execute_local_plan(plan, signals, fps)
     validate_dynamic_plan(plan)
     # Resolve action onsets in their declared temporal order.  An action's
     # end predicate must not become the lower bound for the next onset: noisy
@@ -1359,6 +1589,8 @@ def generate_dynamic_semantic_keyframes(
     output: Path,
     sample_count: int = 12,
     max_repairs: int = 3,
+    audit_dir: Path | None = None,
+    image_content: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Generate task-specific VLM actions and resolve their functions on GT.
 
@@ -1369,12 +1601,15 @@ def generate_dynamic_semantic_keyframes(
     """
     load_env_file(Path(".env"))
     output.parent.mkdir(parents=True, exist_ok=True)
-    images = sample_video_frames(video, sample_count)
+    audit_dir = audit_dir or output.parent
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    images = image_content if image_content is not None else sample_video_frames(video, sample_count)
     with np.load(bundle_file, allow_pickle=False) as bundle:
         object_name = str(np.asarray(bundle["object_name"]).item()) if "object_name" in bundle.files else None
     signals, _thresholds, fps = load_retargeting_bundle_signals(bundle_file)
     frame_count = len(next(iter(signals.values())))
-    base_prompt = build_dynamic_prompt(object_name)
+    base_prompt = build_dynamic_prompt(object_name, set(signals) & DYNAMIC_SIGNALS,
+                                       body_only="object_height" not in signals)
     plan: dict[str, Any] | None = None
     result: dict[str, Any] | None = None
     previous_candidate: dict[str, Any] | None = None
@@ -1392,7 +1627,7 @@ def generate_dynamic_semantic_keyframes(
                 f"{json.dumps(issues, ensure_ascii=False)}"
             )
         raw = call_vlm(images, prompt)
-        raw_path = output.parent / f"{output.stem}.vlm_attempt_{attempt}.txt"
+        raw_path = audit_dir / f"{output.stem}.vlm_attempt_{attempt}.txt"
         raw_path.write_text(raw, encoding="utf-8")
         try:
             candidate = normalize_dynamic_plan(_extract_json_value(raw))
@@ -1428,10 +1663,13 @@ def generate_dynamic_semantic_keyframes(
         "source_video": str(video),
         "source_bundle": str(bundle_file),
         "planning_mode": "dynamic_vlm_actions_and_functions",
+        "body_vocabulary_version": "g1_anatomy_v2",
+        "base_prompt_sha256": hashlib.sha256(base_prompt.encode()).hexdigest(),
+        "visual_source_kind": "skeleton_views" if "object_height" not in signals else "video",
         "threshold_policy": "per-signal trajectory quantiles",
         "vlm_attempt_count": attempt + 1,
     }
     validate_semantic_keyframe_json(result)
     _write_json(output, result)
-    _remove_stale_attempts(output, attempt)
+    _remove_stale_attempts(audit_dir / output.name, attempt)
     return result

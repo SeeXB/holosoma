@@ -34,10 +34,10 @@ if [[ "${#gpu_ids[@]}" -lt 3 ]]; then
     exit 2
 fi
 
-ORIGINAL_MOTION="${ORIGINAL_MOTION:-$PROJECT_ROOT/exp/training/$TASK/motions/${TASK}_original_mj_w_obj.npz}"
-SEMANTIC_B4_MOTION="${SEMANTIC_B4_MOTION:-$PROJECT_ROOT/exp/training/$TASK/motions/${TASK}_semantic_b4_mj_w_obj.npz}"
-OBJECT_URDF="${OBJECT_URDF:-$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/models/largebox/largebox.urdf}"
-SEMANTIC_FILE="${SEMANTIC_FILE:-$PROJECT_ROOT/exp/omomo_cari4d/$TASK/semantic_keyframes/${TASK}_dynamic.json}"
+ORIGINAL_MOTION="${ORIGINAL_MOTION:-$PROJECT_ROOT/src/holosoma/holosoma/data/motions/tasks/$TASK/${TASK}_original_mj_w_obj.npz}"
+SEMANTIC_B4_MOTION="${SEMANTIC_B4_MOTION:-$PROJECT_ROOT/src/holosoma/holosoma/data/motions/tasks/$TASK/${TASK}_semantic_b4_mj_w_obj.npz}"
+OBJECT_URDF="${OBJECT_URDF:-$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/demo_data/models/largebox/largebox.urdf}"
+SEMANTIC_FILE="${SEMANTIC_FILE:-$PROJECT_ROOT/src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles/$TASK/semantic_keyframes/${TASK}_dynamic.json}"
 LOG_DIR="$PROJECT_ROOT/exp/training/$TASK/launcher_logs"
 MANIFEST="$LOG_DIR/parallel_manifest.txt"
 RESOURCE_LOG="$LOG_DIR/${LOG_TAG}_resources.csv"

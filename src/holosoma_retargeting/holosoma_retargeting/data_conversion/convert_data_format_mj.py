@@ -62,11 +62,11 @@ def create_task_constants(
         namespace.OBJECT_NAME = object_name
 
     if namespace.OBJECT_NAME != "ground":
-        namespace.OBJECT_URDF_FILE = f"models/{namespace.OBJECT_NAME}/{namespace.OBJECT_NAME}.urdf"
-        namespace.OBJECT_MESH_FILE = f"models/{namespace.OBJECT_NAME}/{namespace.OBJECT_NAME}.obj"
-        namespace.OBJECT_URDF_TEMPLATE = f"models/templates/{namespace.OBJECT_NAME}.urdf.jinja"
+        namespace.OBJECT_URDF_FILE = f"demo_data/models/{namespace.OBJECT_NAME}/{namespace.OBJECT_NAME}.urdf"
+        namespace.OBJECT_MESH_FILE = f"demo_data/models/{namespace.OBJECT_NAME}/{namespace.OBJECT_NAME}.obj"
+        namespace.OBJECT_URDF_TEMPLATE = f"demo_data/models/templates/{namespace.OBJECT_NAME}.urdf.jinja"
         namespace.SCENE_XML_FILE = (
-            f"models/{robot_config.robot_type}/"
+            f"demo_data/models/{robot_config.robot_type}/"
             f"{robot_config.robot_type}_{namespace.ROBOT_DOF}dof_w_{namespace.OBJECT_NAME}.xml"
         )
     else:
