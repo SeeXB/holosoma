@@ -125,6 +125,14 @@ class MotionConfig:
     semantic_fps: float | None = None
     """Optional semantic JSON FPS override; metadata is preferred and checked."""
 
+    semantic_critical_interval_weight: float = 2.0
+    """Per-frame sampling multiplier for critical event windows in ``semantic_adaptive``.
+
+    Ordinary complement intervals have weight 1.0.  This value must be greater
+    than 1 so semantic-adaptive sampling cannot silently lose its critical-event
+    preference.
+    """
+
     start_at_timestep_zero_prob: float = 0.0
     """Probability of starting at timestep zero."""
 

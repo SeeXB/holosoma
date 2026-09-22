@@ -1032,104 +1032,41 @@ def build_dynamic_prompt(
     body_only=False,
 ) -> str:
     object_hint = f" The manipulated object category is {object_name!r}." if object_name else ""
-    json_example = (
-        {
-            "actions": [
-                {
-                    "action": "example_lift_object",
-                    "body_parts": ["left_hand", "right_hand"],
-                    "keyframe_function": {
-                        "start": {
-                            "primitive": "threshold_crossing_up",
-                            "signal": "object_height",
-                            "threshold": {"kind": "quantile", "q": 0.3},
-                        },
-                        "end": {
-                            "primitive": "threshold_crossing_up",
-                            "signal": "object_height",
-                            "threshold": {"kind": "quantile", "q": 0.8},
-                        },
+    # This is deliberately a structural template rather than a worked example.
+    # Concrete anatomical labels in a worked example strongly anchor VLM part
+    # selection even when the full vocabulary is listed later in the prompt.
+    json_template = {
+        "actions": [
+            {
+                "action": "<unique_snake_case_action>",
+                "body_parts": ["<allowed_body_part>"],
+                "keyframe_function": {
+                    "start": {
+                        "primitive": "<allowed_primitive>",
+                        "signal": "<allowed_signal>",
+                        "threshold": {"kind": "quantile", "q": "<number_0_to_1>"},
                     },
-                    "criticality_level": 4,
-                    "rationale": "The object visibly rises while supported by both hands.",
-                    "criticality_rationale": "Accurate support is essential during the lift.",
-                    "failure_if_inaccurate": "The object may not be lifted safely.",
+                    "end": {
+                        "primitive": "<allowed_primitive>",
+                        "signal": "<allowed_signal>",
+                        "threshold": {"kind": "quantile", "q": "<number_0_to_1>"},
+                    },
                 },
-                {
-                    "action": "example_rotate_object",
-                    "body_parts": ["left_hand", "right_hand"],
-                    "keyframe_function": {
-                        "start": {
-                            "primitive": "threshold_crossing_up",
-                            "signal": "object_rotate",
-                            "threshold": {"kind": "quantile", "q": 0.2},
-                        },
-                        "end": {
-                            "primitive": "threshold_crossing_up",
-                            "signal": "object_rotate",
-                            "threshold": {"kind": "quantile", "q": 0.8},
-                        },
-                    },
-                    "criticality_level": 3,
-                    "rationale": "The supported object visibly changes orientation.",
-                    "criticality_rationale": "The target orientation affects later placement.",
-                    "failure_if_inaccurate": "The object may be placed in the wrong orientation.",
-                },
-                {
-                    "action": "example_place_object",
-                    "body_parts": ["left_hand", "right_hand"],
-                    "keyframe_function": {
-                        "start": {
-                            "primitive": "threshold_crossing_down",
-                            "signal": "object_height",
-                            "threshold": {"kind": "quantile", "q": 0.8},
-                        },
-                        "end": {
-                            "primitive": "threshold_crossing_down",
-                            "signal": "object_height",
-                            "threshold": {"kind": "quantile", "q": 0.2},
-                        },
-                    },
-                    "criticality_level": 4,
-                    "rationale": "The supported object visibly descends to its resting surface.",
-                    "criticality_rationale": "Accurate placement is essential for a stable final state.",
-                    "failure_if_inaccurate": "The object may be released before it is stably placed.",
-                },
-            ]
-        }
-        if not body_only else
-        {
-            "actions": [
-                {
-                    "action": "example_body_motion",
-                    "body_parts": ["pelvis"],
-                    "keyframe_function": {
-                        "start": {
-                            "primitive": "threshold_crossing_up",
-                            "signal": "pelvis_speed",
-                            "threshold": {"kind": "quantile", "q": 0.2},
-                        },
-                        "end": {
-                            "primitive": "threshold_crossing_down",
-                            "signal": "pelvis_speed",
-                            "threshold": {"kind": "quantile", "q": 0.2},
-                        },
-                    },
-                    "criticality_level": 2,
-                    "rationale": "The pelvis begins and then finishes a visible motion.",
-                    "criticality_rationale": "The interval captures the central body transition.",
-                    "failure_if_inaccurate": "The motion phase may be retargeted at the wrong time.",
-                }
-            ]
-        }
-    )
+                "criticality_level": "<integer_1_to_4>",
+                "rationale": "<visible_evidence_for_the_action_and_every_selected_body_part>",
+                "criticality_rationale": "<why_this_interval_is_critical>",
+                "failure_if_inaccurate": "<consequence_of_inaccurate_retargeting>",
+            }
+        ]
+    }
     anatomy = (
         f" Allowed body_parts are exactly {sorted(DYNAMIC_BODY_PARTS)}. "
         "Choose anatomically precise parts visible in the images, not a fixed list. "
         "Hand means palm/fingers; wrist means the wrist joint; elbow includes the forearm link. "
         "Forearm support/clamping should name left_elbow/right_elbow, not automatically hand. "
         "Waist means the trunk/waist. Include only parts important to the observed action. "
-        "Explain the visual evidence for those body parts in rationale. Do not copy an example body part list. "
+        "For every selected label, explain separate visible evidence in rationale for why that exact anatomical "
+        "region matters. Do not select a nearby or parent body part by default. "
     )
     scene = (
         "Analyze chronological front/side skeleton views of a body-only motion clip. "
@@ -1150,15 +1087,15 @@ def build_dynamic_prompt(
         "HARD EXECUTABLE CONTRACT: every threshold-crossing or sustained rule requires a quantile threshold. "
         "Prefer threshold_crossing_down, threshold_crossing_up, sustained_below, or sustained_above for "
         "multi-action transitions; use global/local extrema only for a genuinely unique visible peak or valley. "
-        "Example threshold rule: "
-        '{"primitive":"threshold_crossing_down","signal":"pelvis_speed",'
-        '"threshold":{"kind":"quantile","q":0.25}}. '
         "Return one JSON object only. Do not return Python, pseudocode, Markdown or prose outside JSON. "
-        "Here is a complete event-plan JSON example. It demonstrates the required shape and how distinct "
-        "physical actions use distinct signals. It is not the answer: replace every example action, body part, "
-        "rule and explanation with actions actually visible in this video:\n"
-        + json.dumps(json_example, indent=2) + "\n"
-        "Choose 2 to 8 distinct actions in the temporal order observed; action names must be unique snake_case. "
+        "Here is a structural event-plan JSON template. Angle-bracket strings are type placeholders only, "
+        "not values or a concrete event/body-part example. Replace every placeholder; numerical placeholders "
+        "must become JSON numbers. Add one action object per observed critical action:\n"
+        + json.dumps(json_template, indent=2) + "\n"
+        "Choose 1 to 8 distinct critical actions in the temporal order observed; action names must be unique "
+        "snake_case. One well-supported event is better than splitting one continuous interaction into several "
+        "events whose trajectory conditions cannot distinguish them. Do not invent lift/carry/place phases merely "
+        "to increase the action count. "
         "Each action must describe a meaningful state or interaction transition and name the body parts that matter. "
         "The keyframe_function is a declarative interval predicate: start finds the action's first keyframe and "
         "end finds its last keyframe on a separate GT trajectory. Use no frame numbers, durations, Python, lambda, "
@@ -1610,6 +1547,8 @@ def generate_dynamic_semantic_keyframes(
     frame_count = len(next(iter(signals.values())))
     base_prompt = build_dynamic_prompt(object_name, set(signals) & DYNAMIC_SIGNALS,
                                        body_only="object_height" not in signals)
+    base_prompt_path = audit_dir / f"{output.stem}.base_prompt.txt"
+    base_prompt_path.write_text(base_prompt, encoding="utf-8")
     plan: dict[str, Any] | None = None
     result: dict[str, Any] | None = None
     previous_candidate: dict[str, Any] | None = None
@@ -1626,6 +1565,9 @@ def generate_dynamic_semantic_keyframes(
                 "chosen for the action visible in the video. Fix these issues: "
                 f"{json.dumps(issues, ensure_ascii=False)}"
             )
+        (audit_dir / f"{output.stem}.prompt_attempt_{attempt}.txt").write_text(
+            prompt, encoding="utf-8"
+        )
         raw = call_vlm(images, prompt)
         raw_path = audit_dir / f"{output.stem}.vlm_attempt_{attempt}.txt"
         raw_path.write_text(raw, encoding="utf-8")
@@ -1665,6 +1607,7 @@ def generate_dynamic_semantic_keyframes(
         "planning_mode": "dynamic_vlm_actions_and_functions",
         "body_vocabulary_version": "g1_anatomy_v2",
         "base_prompt_sha256": hashlib.sha256(base_prompt.encode()).hexdigest(),
+        "base_prompt_path": str(base_prompt_path),
         "visual_source_kind": "skeleton_views" if "object_height" not in signals else "video",
         "threshold_policy": "per-signal trajectory quantiles",
         "vlm_attempt_count": attempt + 1,

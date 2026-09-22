@@ -640,6 +640,7 @@ class MotionCommand(CommandTermBase):
                 semantic_file=self.motion_cfg.semantic_file,
                 semantic_fps=self.motion_cfg.semantic_fps,
                 sampling_mode=self.motion_cfg.sampling_mode,
+                critical_interval_weight=self.motion_cfg.semantic_critical_interval_weight,
             )
 
         # 5. metrics

@@ -97,21 +97,27 @@ def test_anatomy_runtime_mapping_uses_limb_joints():
     assert mapping.joint_names["waist"] == "Pelvis"
 
 
-def test_dynamic_prompt_contains_complete_json_event_example_with_rotation():
+def test_dynamic_prompt_has_complete_vocabulary_without_anatomical_example_bias():
     prompt = build_dynamic_prompt(
         object_name="chair",
         available_signals={"object_height", "object_rotate", "object_angular_speed"},
     )
-    example_start = prompt.index('{\n  "actions"')
-    example = json.JSONDecoder().raw_decode(prompt[example_start:])[0]
-    assert set(example) == {"actions"}
-    assert len(example["actions"]) == 3
-    rotate = example["actions"][1]
-    assert rotate["action"] == "example_rotate_object"
-    assert rotate["keyframe_function"]["start"]["signal"] == "object_rotate"
-    place = example["actions"][2]
-    assert place["keyframe_function"]["start"]["primitive"] == "threshold_crossing_down"
-    assert place["keyframe_function"]["end"]["threshold"]["q"] == 0.2
+    template_start = prompt.index('{\n  "actions"')
+    template = json.JSONDecoder().raw_decode(prompt[template_start:])[0]
+    assert set(template) == {"actions"}
+    assert len(template["actions"]) == 1
+    action = template["actions"][0]
+    assert action["body_parts"] == ["<allowed_body_part>"]
+    assert action["keyframe_function"]["start"]["signal"] == "<allowed_signal>"
+    assert action["rationale"] == "<visible_evidence_for_the_action_and_every_selected_body_part>"
+    for part in MAPPABLE_BODY_PARTS:
+        assert part in prompt
+    assert '["left_hand", "right_hand"]' not in prompt
+    assert '["pelvis"]' not in prompt
+    assert "example_lift_object" not in prompt
+    assert "object_rotate" in prompt
+    assert "Choose 1 to 8" in prompt
+    assert "Choose 2 to 8" not in prompt
     assert "Do not return Python" in prompt
 
 

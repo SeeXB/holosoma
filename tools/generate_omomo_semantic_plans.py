@@ -28,12 +28,23 @@ def _bundle_name(task: str) -> str:
     return "sub03_largebox3" if task == "sub3_largebox_003" else task
 
 
-def _paths(bundle_root: Path, task: str) -> tuple[Path, Path, Path]:
+def _paths(
+    bundle_root: Path,
+    task: str,
+    *,
+    output_root: Path | None = None,
+    signal_bundle_name: str = "omomo_gt_sequence.npz",
+) -> tuple[Path, Path, Path]:
     root = bundle_root / _bundle_name(task)
+    output = (
+        output_root / "omomo" / task / "semantic_plan.json"
+        if output_root is not None
+        else root / "semantic_keyframes" / f"{task}_dynamic.json"
+    )
     return (
         root / "videos" / f"{task}_rerender.mp4",
-        root / "input" / "omomo_gt_sequence.npz",
-        root / "semantic_keyframes" / f"{task}_dynamic.json",
+        root / "input" / signal_bundle_name,
+        output,
     )
 
 
@@ -107,9 +118,16 @@ def _generate_one(
     recover_existing: bool,
     recover_only: bool,
     audit_root: Path = Path("exp/omomo_cari4d"),
+    output_root: Path | None = None,
+    signal_bundle_name: str = "omomo_gt_sequence.npz",
 ) -> dict[str, object]:
-    video, bundle, output = _paths(bundle_root, task)
-    audit_dir = audit_root / _bundle_name(task) / "semantic_keyframes"
+    video, bundle, output = _paths(
+        bundle_root,
+        task,
+        output_root=output_root,
+        signal_bundle_name=signal_bundle_name,
+    )
+    audit_dir = audit_root / task
     output.parent.mkdir(parents=True, exist_ok=True)
     if not video.is_file() or not bundle.is_file():
         missing = [str(path) for path in (video, bundle) if not path.is_file()]
@@ -169,6 +187,17 @@ def main() -> None:
     parser.add_argument("--bundle-root", type=Path, default=Path("src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/bundles"))
     parser.add_argument("--audit-root", type=Path, default=Path("exp/omomo_cari4d"),
                         help="VLM attempt logs and diagnostics; resolved plans stay under --bundle-root")
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        help="Optional independent plan root; writes omomo/<task>/semantic_plan*.json without touching bundles.",
+    )
+    parser.add_argument(
+        "--signal-bundle-name",
+        default="omomo_gt_sequence.npz",
+        choices=("omomo_gt_sequence.npz", "intermimic_semantic_bundle.npz"),
+        help="Trajectory signal bundle used to resolve VLM functions.",
+    )
     parser.add_argument("--env-file", type=Path,
                         default=Path("src/holosoma_retargeting/.env"))
     parser.add_argument("--tasks", nargs="+", choices=list(TASK_OBJECTS), default=None)
@@ -205,6 +234,8 @@ def main() -> None:
                 not args.no_recover_existing,
                 args.recover_only,
                 args.audit_root,
+                args.output_root,
+                args.signal_bundle_name,
             ): task
             for task in tasks
         }

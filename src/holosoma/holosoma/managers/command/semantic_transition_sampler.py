@@ -1,9 +1,11 @@
-"""Semantic-transition reference-timestep sampling for WBT.
+"""Semantic-interval reference-timestep sampling for WBT.
 
 The sampler is deliberately independent from rewards and termination terms.  A
-semantic JSON file is used only to partition a single reference motion into
-intervals.  The interval statistics are updated from the existing termination
-signal supplied by :class:`MotionCommand`.
+semantic JSON file partitions a single reference motion into every critical
+event window and the ordinary gaps around them.  Together these disjoint,
+half-open intervals cover the complete sampleable timeline.  Interval failure
+statistics are updated from the existing termination signal supplied by
+:class:`MotionCommand`.
 """
 
 from __future__ import annotations
@@ -24,7 +26,12 @@ SAMPLING_MODES = ("original_adaptive", "semantic_uniform", "semantic_adaptive")
 
 @dataclass(frozen=True)
 class SemanticTransition:
-    """One interval from the previous event trigger to the current trigger."""
+    """One critical-event interval or ordinary complement interval.
+
+    ``target_step`` is the exclusive sampling boundary and the step that an
+    episode must reach to count as successful.  The historical class name is
+    retained to avoid breaking callers and metric dashboards.
+    """
 
     transition_id: int
     start_time_s: float
@@ -33,6 +40,12 @@ class SemanticTransition:
     target_step: int
     source_event_name: str
     target_event_name: str
+    interval_kind: str
+    event_name: str | None
+
+    @property
+    def is_critical(self) -> bool:
+        return self.interval_kind == "critical_event"
 
 
 def _positive_fps(value: Any, *, field_name: str) -> float:
@@ -72,11 +85,14 @@ def load_semantic_transitions(
     motion_time_step_total: int,
     semantic_fps: float | None = None,
 ) -> tuple[SemanticTransition, ...]:
-    """Load trigger timestamps and map semantic frames to motion frames.
+    """Build critical event windows plus ordinary gaps over the whole motion.
 
     The mapping is always performed in seconds.  If both the JSON metadata and
     an explicit config value are present they must agree; missing FPS metadata
     is therefore never silently replaced by a hard-coded 30/50 FPS assumption.
+    Semantic windows use ``[start_frame, end_frame)`` boundaries after FPS
+    mapping.  The final motion step is a reachable target rather than a reset
+    start, matching :class:`MotionCommand`'s existing last-step guard.
     """
 
     if not str(semantic_file).strip():
@@ -106,10 +122,13 @@ def load_semantic_transitions(
         semantic_rate = json_fps
     assert semantic_rate is not None
     motion_rate = _positive_fps(motion_fps, field_name="motion_fps")
-    if motion_time_step_total <= 0:
-        raise ValueError("motion_time_step_total must be positive")
+    if motion_time_step_total < 2:
+        raise ValueError("motion_time_step_total must contain at least two steps")
 
-    events: list[tuple[int, int, str]] = []
+    # MotionCommand never retains the final step as a reset start.  Partition
+    # [0, sampleable_end) and use sampleable_end as the last reachable target.
+    sampleable_end = motion_time_step_total - 1
+    events: list[tuple[int, int, int, str]] = []
     for event_index, raw_event in enumerate(payload["events"]):
         if not isinstance(raw_event, dict):
             raise ValueError(f"{source}: events[{event_index}] must be an object")
@@ -117,50 +136,85 @@ def load_semantic_transitions(
         if not isinstance(event_name, str) or not event_name.strip():
             raise ValueError(f"{source}: events[{event_index}].event must be a non-empty string")
         for window_index, window in enumerate(_event_windows(raw_event)):
-            frame = window.get("trigger_frame", raw_event.get("trigger_frame"))
-            trigger_frame = _integer_frame(frame, field_name=f"events[{event_index}].trigger_frame")
-            events.append((trigger_frame, event_index * 100000 + window_index, event_name))
-    events.sort(key=lambda item: (item[0], item[1]))
-    if len(events) < 2:
-        raise ValueError(f"{source}: at least two ordered event triggers are required")
+            start_frame = _integer_frame(
+                window.get("start_frame", raw_event.get("start_frame")),
+                field_name=f"events[{event_index}].windows[{window_index}].start_frame",
+            )
+            end_frame = _integer_frame(
+                window.get("end_frame", raw_event.get("end_frame")),
+                field_name=f"events[{event_index}].windows[{window_index}].end_frame",
+            )
+            trigger_frame = _integer_frame(
+                window.get("trigger_frame", raw_event.get("trigger_frame")),
+                field_name=f"events[{event_index}].windows[{window_index}].trigger_frame",
+            )
+            if not start_frame <= trigger_frame <= end_frame:
+                raise ValueError(
+                    f"{source}: event {event_name!r} must satisfy start_frame <= trigger_frame <= end_frame"
+                )
+            start_step = round((start_frame / semantic_rate) * motion_rate)
+            target_step = round((end_frame / semantic_rate) * motion_rate)
+            if target_step <= start_step:
+                raise ValueError(
+                    f"{source}: event {event_name!r} window [{start_frame}, {end_frame}] maps to empty "
+                    f"motion interval [{start_step}, {target_step})"
+                )
+            if start_step < 0 or target_step > sampleable_end:
+                raise ValueError(
+                    f"{source}: event {event_name!r} maps to [{start_step}, {target_step}), outside "
+                    f"sampleable motion range [0, {sampleable_end})"
+                )
+            events.append((start_step, target_step, event_index * 100000 + window_index, event_name))
+    events.sort(key=lambda item: (item[0], item[1], item[2]))
+    if not events:
+        raise ValueError(f"{source}: at least one semantic event window is required")
 
     transitions: list[SemanticTransition] = []
-    previous_frame, _, previous_name = events[0]
-    previous_time = previous_frame / semantic_rate
-    previous_step = round(previous_time * motion_rate)
-    for transition_id, (target_frame, _, target_name) in enumerate(events[1:]):
-        target_time = target_frame / semantic_rate
-        target_step = round(target_time * motion_rate)
-        if target_time <= previous_time or target_step <= previous_step:
+
+    def append_interval(start_step: int, target_step: int, *, kind: str, event_name: str | None,
+                        source_name: str, target_name: str) -> None:
+        transition_id = len(transitions)
+        transitions.append(SemanticTransition(
+            transition_id=transition_id,
+            start_time_s=start_step / motion_rate,
+            target_time_s=target_step / motion_rate,
+            start_step=start_step,
+            target_step=target_step,
+            source_event_name=source_name,
+            target_event_name=target_name,
+            interval_kind=kind,
+            event_name=event_name,
+        ))
+
+    cursor = 0
+    previous_name = "motion_start"
+    for start_step, target_step, _, event_name in events:
+        if start_step < cursor:
             raise ValueError(
-                f"{source}: event triggers must be strictly increasing after FPS mapping; "
-                f"transition {transition_id} maps [{previous_time}, {target_time}]s to "
-                f"[{previous_step}, {target_step})"
+                f"{source}: semantic event windows overlap after FPS mapping; event {event_name!r} "
+                f"starts at {start_step} before the previous interval ends at {cursor}"
             )
-        if target_step >= motion_time_step_total:
-            raise ValueError(
-                f"{source}: target event {target_name!r} maps to motion step {target_step}, "
-                f"outside motion length {motion_time_step_total}"
+        if cursor < start_step:
+            append_interval(
+                cursor, start_step, kind="ordinary", event_name=None,
+                source_name=previous_name, target_name=event_name,
             )
-        transitions.append(
-            SemanticTransition(
-                transition_id=transition_id,
-                start_time_s=previous_time,
-                target_time_s=target_time,
-                start_step=previous_step,
-                target_step=target_step,
-                source_event_name=previous_name,
-                target_event_name=target_name,
-            )
+        append_interval(
+            start_step, target_step, kind="critical_event", event_name=event_name,
+            source_name=event_name, target_name=event_name,
         )
-        previous_frame, _, previous_name = target_frame, 0, target_name
-        previous_time = target_time
-        previous_step = target_step
+        cursor = target_step
+        previous_name = event_name
+    if cursor < sampleable_end:
+        append_interval(
+            cursor, sampleable_end, kind="ordinary", event_name=None,
+            source_name=previous_name, target_name="motion_end",
+        )
     return tuple(transitions)
 
 
 class SemanticTransitionSampler:
-    """Sample semantic intervals and maintain per-transition failure EMAs."""
+    """Sample full-timeline intervals and maintain per-interval failure EMAs."""
 
     def __init__(
         self,
@@ -174,6 +228,7 @@ class SemanticTransitionSampler:
         sampling_mode: str,
         adaptive_uniform_ratio: float = 0.1,
         adaptive_alpha: float = 0.001,
+        critical_interval_weight: float = 2.0,
     ):
         if sampling_mode not in ("semantic_uniform", "semantic_adaptive"):
             raise ValueError(f"SemanticTransitionSampler requires semantic mode, got {sampling_mode!r}")
@@ -181,12 +236,16 @@ class SemanticTransitionSampler:
             raise ValueError("adaptive_uniform_ratio must lie in [0, 1]")
         if not 0.0 < adaptive_alpha <= 1.0:
             raise ValueError("adaptive_alpha must lie in (0, 1]")
+        if not math.isfinite(critical_interval_weight) or critical_interval_weight <= 1.0:
+            raise ValueError("critical_interval_weight must be finite and greater than 1")
         self.device = device
         self.motion_time_step_total = motion_time_step_total
+        self.sampleable_step_total = motion_time_step_total - 1
         self.num_envs = num_envs
         self.sampling_mode = sampling_mode
         self.adaptive_uniform_ratio = float(adaptive_uniform_ratio)
         self.adaptive_alpha = float(adaptive_alpha)
+        self.critical_interval_weight = float(critical_interval_weight)
         self.transitions = load_semantic_transitions(
             semantic_file,
             motion_fps=motion_fps,
@@ -200,6 +259,12 @@ class SemanticTransitionSampler:
         self._target_steps = torch.tensor(
             [item.target_step for item in self.transitions], dtype=torch.long, device=device
         )
+        self._interval_spans = self._target_steps - self._start_steps
+        self._critical_mask = torch.tensor(
+            [item.is_critical for item in self.transitions], dtype=torch.bool, device=device
+        )
+        if torch.any(self._interval_spans <= 0):
+            raise ValueError("Semantic intervals must all have positive motion-step spans")
         self.failure_score = torch.zeros(self.num_transitions, dtype=torch.float32, device=device)
         self.success_count = torch.zeros(self.num_transitions, dtype=torch.long, device=device)
         self.failure_count = torch.zeros(self.num_transitions, dtype=torch.long, device=device)
@@ -216,19 +281,25 @@ class SemanticTransitionSampler:
 
     @property
     def sampling_probabilities(self) -> torch.Tensor:
+        span_mass = self._interval_spans.to(dtype=torch.float32)
         if self.sampling_mode == "semantic_uniform":
-            return torch.full(
-                (self.num_transitions,),
-                1.0 / float(self.num_transitions),
-                dtype=torch.float32,
-                device=self.device,
-            )
-        scores = self.failure_score + self.adaptive_uniform_ratio / float(self.num_transitions)
-        # Cold start (and an explicitly zero uniform ratio) must still leave
-        # every transition sampleable.  The tiny floor only matters when the
-        # configured prior is zero; normal runs use the original sampler's
-        # positive adaptive_uniform_ratio directly.
-        scores = scores + torch.finfo(scores.dtype).eps
+            # Uniform per frame, not per interval.  Splitting or joining an
+            # ordinary gap therefore cannot change the baseline distribution.
+            return span_mass / span_mass.sum()
+        semantic_weight = torch.where(
+            self._critical_mask,
+            torch.full_like(span_mass, self.critical_interval_weight),
+            torch.ones_like(span_mass),
+        )
+        prior_mass = span_mass * semantic_weight
+        prior = prior_mass / prior_mass.sum()
+        # At cold start this prior already weights each critical frame more
+        # heavily.  Failure EMA then multiplies the prior; the configured
+        # exploration term keeps every interval sampleable.
+        scores = prior * (self.failure_score + self.adaptive_uniform_ratio)
+        if not torch.any(scores > 0):
+            return prior
+        scores = scores + torch.finfo(scores.dtype).eps * prior
         return scores / scores.sum()
 
     def sample(self, num_samples: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -241,7 +312,7 @@ class SemanticTransitionSampler:
         global_count = int(global_mask.sum().item())
         if global_count:
             frame_indices[global_mask] = torch.randint(
-                0, self.motion_time_step_total, (global_count,), device=self.device
+                0, self.sampleable_step_total, (global_count,), device=self.device
             )
             self.global_uniform_count += global_count
         transition_mask = ~global_mask
@@ -249,7 +320,7 @@ class SemanticTransitionSampler:
         if transition_count:
             sampled_ids = torch.multinomial(self.sampling_probabilities, transition_count, replacement=True)
             starts = self._start_steps[sampled_ids]
-            spans = self._target_steps[sampled_ids] - starts
+            spans = self._interval_spans[sampled_ids]
             offsets = (torch.rand(transition_count, device=self.device) * spans.float()).long()
             frame_indices[transition_mask] = starts + offsets.clamp_max(spans - 1)
             transition_ids[transition_mask] = sampled_ids
@@ -386,8 +457,17 @@ class SemanticTransitionSampler:
             self.global_uniform_count.float() + total_samples
         ).clamp_min(1.0)
         output: dict[str, torch.Tensor] = {
+            "semantic_sampling/interval_count": torch.tensor(
+                float(self.num_transitions), device=self.device
+            ),
             "semantic_sampling/transition_count": torch.tensor(
                 float(self.num_transitions), device=self.device
+            ),
+            "semantic_sampling/critical_interval_count": self._critical_mask.sum().float(),
+            "semantic_sampling/ordinary_interval_count": (~self._critical_mask).sum().float(),
+            "semantic_sampling/critical_probability_mass": probabilities[self._critical_mask].sum(),
+            "semantic_sampling/critical_sample_fraction": (
+                sample_float[self._critical_mask].sum() / total_samples.clamp_min(1.0)
             ),
             "semantic_sampling/global_uniform_fraction": global_fraction,
             "semantic_sampling/sample_entropy": entropy,
@@ -402,6 +482,7 @@ class SemanticTransitionSampler:
             output[f"{prefix}_success_rate"] = success_rate[transition_id]
             output[f"{prefix}_sample_count"] = self.sample_count[transition_id].float()
             output[f"{prefix}_failure_score"] = self.failure_score[transition_id]
+            output[f"{prefix}_is_critical"] = self._critical_mask[transition_id].float()
         return output
 
 

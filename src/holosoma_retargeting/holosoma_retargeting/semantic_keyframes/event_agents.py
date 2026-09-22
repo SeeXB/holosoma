@@ -37,6 +37,9 @@ def event_catalog_prompt(*, bimanual=False, object_task=True):
         'body_parts, criticality_level and rationale. Event names must be unique snake_case; '
         'body_parts must be a nonempty list from the vocabulary below; criticality_level is an '
         'integer from 1 to 4; rationale is nonempty English visual evidence. No markdown.\n'
+        'For every selected body-part label, rationale must state separate visible evidence for why '
+        'that exact anatomical region is critical. Do not select a nearby, parent or default part '
+        'when the images support a more precise label.\n'
         'STRUCTURAL TEMPLATE ONLY: replace every angle-bracket placeholder. These are type '
         'descriptions, not literal values or a concrete event example. Numbers must be JSON numbers.\n'
         + json.dumps(template, indent=2)

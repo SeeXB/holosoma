@@ -78,7 +78,12 @@ def test_catalog_must_have_one_to_four_events(events):
 def test_prompts_separate_discovery_from_signal_logic():
     visual = event_catalog_prompt(bimanual=True)
     assert '<unique_snake_case_event_name>' in visual
+    assert visual.count('<allowed_body_part>') == 1
     assert 'USER-CONFIRMED BIMANUAL' in visual
+    assert all(part in visual for part in (
+        'pelvis', 'waist', 'left_hip', 'right_knee', 'left_shoulder',
+        'right_elbow', 'left_wrist', 'right_hand', 'left_foot', 'right_ankle',
+    ))
     assert 'Available signals' not in visual and 'object_vertical_velocity' not in visual
     assert 'object orientation' in visual
     assert not any('\u4e00' <= ch <= '\u9fff' for ch in visual)

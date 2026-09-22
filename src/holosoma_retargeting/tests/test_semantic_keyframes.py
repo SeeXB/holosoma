@@ -92,7 +92,12 @@ def test_dynamic_generation_separates_plan_data_from_audit_logs(tmp_path, monkey
         video=tmp_path / "video.mp4", bundle_file=bundle, output=output, audit_dir=audit,
     )
     assert {p.name for p in output.parent.iterdir()} == {"plan.json", "plan.event_plan.json"}
-    assert {p.name for p in audit.iterdir()} == {"plan.vlm_attempt_0.txt"}
+    assert {p.name for p in audit.iterdir()} == {
+        "plan.base_prompt.txt", "plan.prompt_attempt_0.txt", "plan.vlm_attempt_0.txt",
+    }
+    assert (audit / "plan.base_prompt.txt").read_text() == (audit / "plan.prompt_attempt_0.txt").read_text()
+    result = json.loads(output.read_text())
+    assert result["generation_metadata"]["base_prompt_path"] == str(audit / "plan.base_prompt.txt")
 
 
 def test_extract_and_validate_fenced_plan() -> None:
