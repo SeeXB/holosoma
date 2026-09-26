@@ -113,6 +113,20 @@ g1_29dof_wbt_reward_w_object = RewardManagerCfg(
 )
 
 
+# Explicit opt-in; historical G1/G2/G3 presets retain their exact rewards.
+g1_29dof_wbt_reward_w_object_contact_position = replace(
+    g1_29dof_wbt_reward_w_object,
+    terms={
+        **g1_29dof_wbt_reward_w_object.terms,
+        "reference_contact_position": RewardTermCfg(
+            func="holosoma.managers.reward.terms.reference_contact:ReferenceContactPosition",
+            params={"contact_file": "", "contact_sha256": "", "sigma": 0.05},
+            weight=2.0,
+        ),
+    },
+)
+
+
 # Fixed semantic timing/mapping configuration shared by all three normalized
 # objectives; it contains no event-name-dependent or reward-magnitude parameter.
 semantic_keyframe_config = SemanticKeyframeRewardCfg(
@@ -163,6 +177,7 @@ __all__ = [
     "g1_29dof_wbt_fast_sac_reward",
     "g1_29dof_wbt_reward",
     "g1_29dof_wbt_reward_w_object",
+    "g1_29dof_wbt_reward_w_object_contact_position",
     "g1_29dof_wbt_semantic_keyframe_reward",
     "g1_29dof_wbt_semantic_reward",
     "g1_29dof_wbt_w_object_semantic_e1_part_reward",

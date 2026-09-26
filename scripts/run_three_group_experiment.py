@@ -18,6 +18,7 @@ from pathlib import Path
 import subprocess
 import sys
 import threading
+import time
 import traceback
 import uuid
 import xml.etree.ElementTree as ET
@@ -81,8 +82,14 @@ def train_command(cfg, group, train_base, run_id):
                "--command.setup-terms.motion-command.params.motion-config.motion-file", motion]
     if cfg.get("wandb", True):
         command += ["--logger.id", run_id, "--logger.group", f"{cfg['task']}_{cfg['tag']}"]
+    if "save_interval" in cfg:
+        command += ["--algo.config.save-interval", cfg["save_interval"]]
     if group == 3:
         command += ["--command.setup-terms.motion-command.params.motion-config.semantic-file", cfg["semantic_file"]]
+        if cfg.get("contact_file"):
+            command.insert(4, "reward:g1-29dof-wbt-w-object-contact-position")
+            command += ["--reward.terms.reference-contact-position.params.contact-file", cfg["contact_file"],
+                        "--reward.terms.reference-contact-position.params.contact-sha256", cfg["contact_sha256"]]
     return command
 
 
@@ -187,6 +194,8 @@ def worker(cfg, config_path, group):
                     state["upload_error"] = str(error)
         state.update(phase="complete" if state.get("video_complete") and (not cfg.get("wandb", True) or state.get("upload_complete"))
                      else "evaluation_complete_postprocessing_pending", updated=now())
+        state.pop("error", None)
+        state.pop("traceback", None)
         save_json(state_path, state)
         return state
     except Exception as error:
@@ -197,6 +206,13 @@ def worker(cfg, config_path, group):
 
 
 def preflight(cfg):
+    groups = cfg.get("groups", [1, 2, 3])
+    if not groups or len(set(groups)) != len(groups) or any(g not in (1, 2, 3) for g in groups):
+        raise ValueError("groups must be a nonempty unique subset of [1, 2, 3]")
+    if cfg.get("contact_file"):
+        contact = Path(cfg["contact_file"])
+        if hashlib.sha256(contact.read_bytes()).hexdigest() != cfg["contact_sha256"]:
+            raise ValueError("Contact target SHA256 mismatch")
     for key in ("original_motion", "b4_motion", "semantic_file", "object_urdf", "scene_xml", "render_python"):
         if not Path(cfg[key]).is_file():
             raise FileNotFoundError(f"{key}: {cfg[key]}")
@@ -211,6 +227,8 @@ def preflight(cfg):
     from holosoma.managers.command.semantic_transition_sampler import load_semantic_transitions
     load_semantic_transitions(cfg["semantic_file"], motion_fps=references[0][1], motion_time_step_total=references[0][0])
     inputs = {k: Path(cfg[k]) for k in ("original_motion", "b4_motion", "semantic_file", "object_urdf", "scene_xml")}
+    if cfg.get("contact_file"):
+        inputs["contact_file"] = Path(cfg["contact_file"])
     # URDF paths alone do not protect against edits to their collision meshes.
     for mesh in ET.parse(cfg["object_urdf"]).iter("mesh"):
         asset = Path(mesh.attrib["filename"])
@@ -247,13 +265,18 @@ def main():
     save_json(saved, hashes)
     save_json(root / "experiment.json", cfg)
     print(f"{now()} supervisor pid={os.getpid()}; each group evaluates immediately after successful training", flush=True)
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        futures = [executor.submit(worker, cfg, args.config.resolve(), g) for g in (1,2,3)]
+    groups = cfg.get("groups", [1, 2, 3])
+    with ThreadPoolExecutor(max_workers=len(groups)) as executor:
+        futures = []
+        for index, g in enumerate(groups):
+            if index:
+                time.sleep(float(cfg.get("worker_start_interval_s", 0)))
+            futures.append(executor.submit(worker, cfg, args.config.resolve(), g))
         states = [f.result() for f in as_completed(futures)]
     if not all(s.get("evaluation_complete") for s in states):
         raise SystemExit("One or more groups failed; inspect group*/state.json")
     eval_root = Path(cfg["eval_root"])
-    results = [json.loads((eval_root / f"group{g}_{cfg['iterations'] - 1:05d}/result.json").read_text()) for g in (1,2,3)]
+    results = [json.loads((eval_root / f"group{g}_{cfg['iterations'] - 1:05d}/result.json").read_text()) for g in groups]
     report = {"task": cfg["task"], "protocol": "Paper-DR, seed 42, 32 environments x first 10 completed episodes; pushes on; initial-pose noise off; object thresholds 1m/45deg; shape scaling unsupported.", "results": results}
     save_json(eval_root / "final_results.json", report)
     lines = [f"# {cfg['task']} final evaluation", "", report["protocol"], "",
@@ -263,11 +286,11 @@ def main():
         e = r["trajectory_errors"]
         lines.append(f"| {r['label']} | {r['successes']}/320 | {100*r['success_rate']:.2f}% | {e['object_pos_rmse_m']:.4f} | {e['object_ori_rmse_deg']:.2f} | {e['tracked_body_pos_rmse_m']:.4f} |")
     (eval_root / "FINAL_EVAL_REPORT.md").write_text("\n".join(lines) + "\n")
-    if cfg.get("wandb", True):
+    if cfg.get("wandb", True) and len(groups) > 1:
         summary_state = {}
         run_process([sys.executable, __file__, "--config", args.config.resolve(), "--upload", eval_root / "final_results.json"],
                     eval_root / "upload.log", summary_state, eval_root / "upload_state.json", "upload", timeout=180)
-    print(f"{now()} all three evaluations complete: {eval_root}", flush=True)
+    print(f"{now()} groups {groups} evaluations complete: {eval_root}", flush=True)
 
 
 if __name__ == "__main__":
