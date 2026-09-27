@@ -1,2 +1,2 @@
 WORKSPACE_DIR=$HOME/.holosoma_deps
-CONDA_ROOT=/home/zongyouyu/miniconda3
+CONDA_ROOT=${CONDA_ROOT:-$HOME/miniconda3}

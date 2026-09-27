@@ -910,7 +910,7 @@ def execute_plan(
     return {"fps": 30, "events": events, "trigger_thresholds": thresholds}
 
 
-def validate_semantic_keyframe_json(payload: dict[str, Any]) -> None:
+def validate_semantic_keyframe_json(payload: dict[str, Any], *, require_criticality: bool = True) -> None:
     """Validate resolved windows, discrete criticality, and body aliases."""
     events = payload.get("events")
     if not isinstance(events, list) or not events:
@@ -919,15 +919,16 @@ def validate_semantic_keyframe_json(payload: dict[str, Any]) -> None:
         if not isinstance(event, dict):
             raise ValueError("resolved semantic events must be objects")
         name = event.get("event")
-        level = event.get("criticality_level")
-        if isinstance(level, bool) or not isinstance(level, int) or level not in CRITICALITY_MAPPING:
-            raise ValueError(f"{name}.criticality_level must be one of {sorted(CRITICALITY_MAPPING)}")
-        expected = CRITICALITY_MAPPING[level]
-        criticality = event.get("criticality")
-        if isinstance(criticality, bool) or not isinstance(criticality, (int, float)):
-            raise ValueError(f"{name}.criticality must be numeric")
-        if float(criticality) != expected:
-            raise ValueError(f"{name}.criticality must equal {expected:.2f} for level {level}")
+        if require_criticality or "criticality_level" in event or "criticality" in event:
+            level = event.get("criticality_level")
+            if isinstance(level, bool) or not isinstance(level, int) or level not in CRITICALITY_MAPPING:
+                raise ValueError(f"{name}.criticality_level must be one of {sorted(CRITICALITY_MAPPING)}")
+            expected = CRITICALITY_MAPPING[level]
+            criticality = event.get("criticality")
+            if isinstance(criticality, bool) or not isinstance(criticality, (int, float)):
+                raise ValueError(f"{name}.criticality must be numeric")
+            if float(criticality) != expected:
+                raise ValueError(f"{name}.criticality must equal {expected:.2f} for level {level}")
         body_parts = event.get("body_parts")
         if not isinstance(body_parts, list) or not body_parts:
             raise ValueError(f"{name}.body_parts must be non-empty")
@@ -1026,6 +1027,115 @@ def validate_dynamic_plan(plan: dict[str, Any]) -> None:
         raise ValueError(str(issues[0]["message"]))
 
 
+DYNAMIC_PROMPT_VERSION = "threshold_only_v3"
+DYNAMIC_GENERATION_PRIMITIVES = frozenset({
+    "threshold_crossing_up", "threshold_crossing_down", "sustained_above", "sustained_below",
+})
+
+
+def dynamic_generation_validation_issues(plan: dict[str, Any]) -> list[dict[str, Any]]:
+    """Require quantile rules for new generations; legacy plans remain readable."""
+    issues = dynamic_plan_validation_issues(plan)
+    actions = plan.get("actions")
+    if not isinstance(actions, list):
+        return issues
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        function = action.get("keyframe_function")
+        if not isinstance(function, dict):
+            continue
+        for endpoint in ("start", "end"):
+            rule = function.get(endpoint)
+            if isinstance(rule, dict) and rule.get("primitive") not in DYNAMIC_GENERATION_PRIMITIVES:
+                issues.append({
+                    "action": action.get("action"),
+                    "field": f"keyframe_function.{endpoint}",
+                    "message": (
+                        "New plans only allow threshold_crossing_up, threshold_crossing_down, "
+                        "sustained_above, sustained_below with a quantile threshold; "
+                        "extremum rules are disabled. Select a supported transition based on the video."
+                    ),
+                })
+    return issues
+
+
+def build_dynamic_signal_guide(available_signals) -> str:
+    """Describe the registered bundle signals, including their non-obvious limits."""
+    descriptions = {
+        "object_height": "m; object-origin world Z minus its first-frame Z. Rising/falling height indicates vertical motion, not ground clearance.",
+        "object_speed": "m/s; magnitude of the object's 3-D translational velocity. Low means nearly stationary; no direction information.",
+        "object_vertical_speed": "m/s; ABSOLUTE vertical velocity, abs(dZ/dt). Both lifting and lowering are positive; cannot distinguish up from down.",
+        "object_displacement": "m; straight-line distance of object origin from its initial position. Not cumulative path length; can decrease on return.",
+        "object_progress": "dimensionless [0,1]; displacement projected onto the initial-to-final object direction, divided by initial-to-final distance and clipped. Can decrease; unreliable when start/end positions nearly coincide. Not time or cumulative travel.",
+        "object_goal_distance": "m; distance from current object origin to its final position. Often decreases on approach to the endpoint, but may recur earlier.",
+        "object_rotate": "rad; cumulative unsigned shortest 3-D quaternion rotation increments. Nondecreasing orientation travel, not signed angle or a [0,1] ratio. Use increasing crossings for successive rotation phases.",
+        "object_angular_speed": "rad/s; magnitude of instantaneous orientation change. Detects rotating versus resting, not rotation direction or accumulated angle.",
+        "body_travel_progress": "dimensionless [0,1]; cumulative per-step mean displacement of ALL supplied human joints, divided by the final total. Nondecreasing (may plateau); all zero if static. Describes movement progress, not elapsed time. Increasing quantile crossings can distinguish successive visible phases.",
+        "hand_mean_speed": "m/s; arithmetic mean of left_hand_speed and right_hand_speed. Measures hand motion in the world, not slip relative to the object.",
+        "min_hand_object_distance": "m; smaller of the left/right hand-to-object-origin distances AT EACH FRAME. Not the minimum over time; small value means at least one hand is near the origin.",
+        "max_hand_object_distance": "m; larger of the left/right hand-to-object-origin distances AT EACH FRAME. Not the maximum over time; small value means both hands are near the origin.",
+    }
+    for part, aliases in BODY_JOINT_NAMES.items():
+        point = "/".join(aliases)
+        descriptions.update({
+            f"{part}_height": f"m; absolute world Z of joint {point}. Use upward/downward crossings for that region rising/lowering; not height relative to its first frame.",
+            f"{part}_speed": f"m/s; 3-D world velocity magnitude of joint {point}. Speed has no direction and alone does not prove object contact.",
+            f"{part}_object_distance": f"m; 3-D Euclidean distance from joint {point} to OBJECT ORIGIN. Downward crossing can suggest approach, upward separation, only with visible evidence. Not mesh-surface distance, force, or a contact label.",
+        })
+    names = sorted(available_signals)
+    missing = set(names).difference(descriptions)
+    if missing:
+        raise ValueError(f"Missing dynamic signal documentation: {sorted(missing)}")
+    return (
+        "\nSIGNAL REFERENCE (only these names are available):\n"
+        "Positions use world Z-up coordinates. Distances are to the object origin, which need not be its "
+        "surface or center of mass. Hand signals use the named finger joint in SMPL-H (Middle3), or Hand "
+        "in LAFAN; forearm surface support is not directly measured by the elbow joint distance. "
+        "Choose a signal whose physical meaning matches the visible transition, not merely a joint that moves.\n"
+        + "\n".join(f"- {name}: {descriptions[name]}" for name in names)
+        + "\n"
+    )
+
+
+def build_dynamic_rule_guide() -> str:
+    """Describe the four quantile rules permitted for new generated plans."""
+    return """
+RULE REFERENCE: signal selects a scalar curve s[t]; primitive selects how to find a frame on that curve.
+The ONLY allowed primitives are threshold_crossing_up, threshold_crossing_down, sustained_above,
+sustained_below. Extremum-based rules are not supported. Every boundary must use a quantile threshold.
+   ALWAYS write threshold:{"kind":"quantile","q":<number between 0 and 1>}. Never use null here.
+   The program computes H=np.quantile(ALL samples of this signal in the whole clip,q), even when the
+   search begins later. q is the rank of a SIGNAL VALUE, not a frame/time fraction or q*max(signal).
+   This remains true for signals already normalized to [0,1]: q is not a literal progress threshold.
+   - threshold_crossing_up: earliest eligible t with s[t-1] < H and s[t] >= H.
+   - threshold_crossing_down: earliest eligible t with s[t-1] > H and s[t] <= H.
+   - sustained_above: earliest eligible t with BOTH s[t] >= H and s[t+1] >= H.
+   - sustained_below: earliest eligible t with BOTH s[t] <= H and s[t+1] <= H.
+   Sustained means two consecutive samples, not an arbitrary duration. A crossing cannot start at frame 0.
+   On flat/repeated-valued curves, different q can yield the SAME H and do not separate phases.
+   The legacy executor falls back to the closest signal value when no candidate exists. Do not rely on
+   this fallback: it does not demonstrate an observed crossing and can collapse intervals to one frame.
+
+NUMERIC EXAMPLES ONLY, not event labels or suggested task boundaries:
+For a curve [0,2,4,6,8], Q(0.25)=2 and Q(0.75)=6. Upward crossings at those thresholds are distinct.
+For a descending curve [8,6,4,2,0], a DOWN crossing of Q(0.75)=6 precedes a DOWN crossing of Q(0.25)=2.
+For [0,0,0,0,8], Q(0.25)=Q(0.75)=0: changing q alone does not guarantee different boundaries.
+
+INTERVAL EXECUTION: action onsets are searched in list order, with each search starting at the preceding
+onset. Each end is searched from its own onset and clipped to the following onset. Do not reuse the same
+onset rule for different phases. Identical start/end rules collapse an action and are rejected.
+Describe positive-duration phases with distinct physical transitions.
+For visible lifting, rising object_height crossings can delimit increasing height; for lowering, use
+downward object_height crossings at a higher then a lower quantile. Sustained carrying need not have a
+new height crossing: consider movement/progress signals supported by the video. Never use hand distance
+alone as evidence of vertical lifting, or absolute vertical speed as evidence of upward direction.
+If repeated height/contact crossings cannot distinguish chronological phases, consider increasing
+crossings of body_travel_progress, or object_rotate for rotation, with distinct quantiles reflecting
+the observed order. These provide ordering, not proof of a physical contact or action boundary.
+"""
+
+
 def build_dynamic_prompt(
     object_name: str | None = None,
     available_signals=None,
@@ -1083,10 +1193,9 @@ def build_dynamic_prompt(
         f"{object_hint} Do not assume a box-carry task: distinguish lifting, carrying, dragging, pushing, "
         "placing, rotating, supporting, or any other actions actually visible. "
     )
-    return anatomy + scene + interaction_hint + (
-        "HARD EXECUTABLE CONTRACT: every threshold-crossing or sustained rule requires a quantile threshold. "
-        "Prefer threshold_crossing_down, threshold_crossing_up, sustained_below, or sustained_above for "
-        "multi-action transitions; use global/local extrema only for a genuinely unique visible peak or valley. "
+    signals = available_signals if available_signals is not None else DYNAMIC_SIGNALS
+    return anatomy + scene + interaction_hint + build_dynamic_rule_guide() + build_dynamic_signal_guide(signals) + (
+        "\nOUTPUT CONTRACT: Return task-specific actions based on the video, not on the numerical examples. "
         "Return one JSON object only. Do not return Python, pseudocode, Markdown or prose outside JSON. "
         "Here is a structural event-plan JSON template. Angle-bracket strings are type placeholders only, "
         "not values or a concrete event/body-part example. Replace every placeholder; numerical placeholders "
@@ -1097,31 +1206,14 @@ def build_dynamic_prompt(
         "events whose trajectory conditions cannot distinguish them. Do not invent lift/carry/place phases merely "
         "to increase the action count. "
         "Each action must describe a meaningful state or interaction transition and name the body parts that matter. "
-        "The keyframe_function is a declarative interval predicate: start finds the action's first keyframe and "
-        "end finds its last keyframe on a separate GT trajectory. Use no frame numbers, durations, Python, lambda, "
-        "code, or arbitrary thresholds. A threshold must be a quantile object with q in [0,1]. For global/local "
-        "min/max rules use threshold=null. The allowed primitives are "
-        f"{sorted(DYNAMIC_PRIMITIVES)}; allowed signals are {sorted(available_signals if available_signals is not None else DYNAMIC_SIGNALS)}. "
-        "Use object_height only when the video shows vertical lifting; for dragging/sliding, use object_progress, "
-        "object_displacement, object_speed, and hand-object distance instead. For a visible orientation change, "
-        "use object_rotate to represent cumulative rotation progress; object_angular_speed only represents how fast "
-        "the object is rotating at an instant. Do not describe rotation using contact distance alone. For lowering "
-        "or placement after a lift, object_height must cross downward: use threshold_crossing_down at a higher "
-        "quantile for onset and at a lower quantile for completion. Do not use upward height crossings for placing. "
+        "The keyframe_function contains start and end rules evaluated on the separate GT trajectory. "
+        "Use no frame numbers, durations, Python, lambda, code, or numeric thresholds other than quantile q. "
+        "Every start/end must use one of the four allowed primitives and a quantile object; threshold=null is invalid. "
         "Call an action dragging or sliding only when the video shows the object remaining supported by the ground; "
         "visible off-ground transport is lifting or carrying even when horizontal displacement is large. "
-        "Every action must include all fields "
-        "shown above. Temporal correctness is essential: choose the earliest visible onset after the previous action "
-        "and the last frame of that action, not a later repetition or terminal pose. For transition actions, prefer "
-        "threshold_crossing_up/down or sustained_above/below with a quantile over a global minimum/maximum; global "
-        "extrema are appropriate only for an unambiguous single peak/valley. Do not use a global minimum of a "
-        "distance/progress signal to mean 'first contact', because the same minimum can occur again at release. "
-        "Do not emit duplicate zero-length actions unless the video clearly shows an instantaneous event. The resolved "
-        "intervals must remain in the listed action order and cover the visible interaction rather than only the final "
-        "few frames. Never use identical start and end rules for one action. "
-        "When repeated extrema or crossings cannot separate successive phases, body_travel_progress "
-        "is monotonic cumulative mean joint travel and permits distinct increasing quantile crossings; "
-        "choose quantiles to reflect the visible phases, rather than repeatedly selecting the same peak. "
+        "Every action must include all template fields. Before responding, check each primitive's threshold "
+        "family, signal meaning, onset/exit direction, and whether successive actions have distinct onsets. "
+        "Do not emit duplicate zero-length actions. Never use identical start and end rules for one action. "
     )
 
 
@@ -1206,6 +1298,18 @@ def execute_dynamic_plan(
     fps: float = 30.0,
 ) -> dict[str, Any]:
     """Evaluate each VLM-supplied interval function on aligned GT signals."""
+    if plan.get("schema") in ("holosoma.adjacent_delta_boundary_plan.v1", "holosoma.adjacent_delta_boundary_plan.v2"):
+        from .adjacent_delta_boundaries import execute_boundary_plan
+        return execute_boundary_plan(plan, signals, fps)
+    if plan.get("schema") == "holosoma.adjacent_delta_plan.v1":
+        from .adjacent_delta import execute_adjacent_delta_plan
+        return execute_adjacent_delta_plan(plan, signals, fps)
+    if plan.get("schema") == "holosoma.range_delta_plan.v1":
+        from .range_delta import execute_range_delta_plan
+        return execute_range_delta_plan(plan, signals, fps)
+    if plan.get("schema") == "holosoma.bounded_signal_plan.v1":
+        from .bounded_signals import execute_bounded_plan
+        return execute_bounded_plan(plan, signals, fps)
     if plan.get("schema") == "holosoma.trajectory_event_program.v1":
         from .trajectory_events import execute_event_program
         return execute_event_program(plan, signals, fps)
@@ -1560,9 +1664,12 @@ def generate_dynamic_semantic_keyframes(
             prompt += (
                 "\nYour previous response failed local validation. Here is the exact normalized response: "
                 f"{json.dumps(previous_candidate, ensure_ascii=False)}\n"
-                "Regenerate the complete plan and correct every listed field. A threshold primitive with "
-                "threshold:null is invalid: replace null with {\"kind\":\"quantile\",\"q\":<a number in [0,1]>} "
-                "chosen for the action visible in the video. Fix these issues: "
+                "Regenerate the complete plan and correct every listed field. For threshold_crossing_up/down "
+                "and sustained_above/below, threshold must be {\"kind\":\"quantile\",\"q\":<number in [0,1]>}. "
+                "Extremum rules are disabled for new plans. If start/end are identical, change the allowed "
+                "primitive, signal, or quantile to distinct transitions supported by the video. "
+                "Use the signal/rule reference above and do not discard observed actions just to pass validation. "
+                "Fix these issues: "
                 f"{json.dumps(issues, ensure_ascii=False)}"
             )
         (audit_dir / f"{output.stem}.prompt_attempt_{attempt}.txt").write_text(
@@ -1574,7 +1681,7 @@ def generate_dynamic_semantic_keyframes(
         try:
             candidate = normalize_dynamic_plan(_extract_json_value(raw))
             previous_candidate = candidate
-            issues = dynamic_plan_validation_issues(candidate)
+            issues = dynamic_generation_validation_issues(candidate)
             if issues:
                 last_error = ValueError("; ".join(str(issue["message"]) for issue in issues))
                 continue
@@ -1605,6 +1712,8 @@ def generate_dynamic_semantic_keyframes(
         "source_video": str(video),
         "source_bundle": str(bundle_file),
         "planning_mode": "dynamic_vlm_actions_and_functions",
+        "prompt_version": DYNAMIC_PROMPT_VERSION,
+        "allowed_generation_primitives": sorted(DYNAMIC_GENERATION_PRIMITIVES),
         "body_vocabulary_version": "g1_anatomy_v2",
         "base_prompt_sha256": hashlib.sha256(base_prompt.encode()).hexdigest(),
         "base_prompt_path": str(base_prompt_path),

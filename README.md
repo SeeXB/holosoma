@@ -23,6 +23,7 @@ src/
 
 ## Documentation
 
+- **[Data Layout](DATA_LAYOUT.md)** - Canonical input directories, external dataset links, and experiment outputs
 - **[Training Guide](src/holosoma/README.md)** - Train locomotion and whole-body tracking policies in IsaacGym/IsaacSim
 - **[Inference & Deployment Guide](src/holosoma_inference/README.md)** - Deploy policies to real robots or evaluate in MuJoCo simulation
 - **[Retargeting Guide](src/holosoma_retargeting/holosoma_retargeting/README.md)** - Convert human motion capture data to robot motions
@@ -53,6 +54,29 @@ bash scripts/setup_inference.sh
 # For motion retargeting
 bash scripts/setup_retargeting.sh
 ```
+
+For RTX 5090 / CUDA 12.8 on Ubuntu 22.04+, install Miniconda at
+`~/miniconda3` (or set `CONDA_ROOT`), then use the pinned Conda setup:
+
+```bash
+bash scripts/setup_blackwell.sh            # hssim and hsretargeting
+# Or: bash scripts/setup_blackwell.sh training
+# Or: bash scripts/setup_blackwell.sh retargeting
+
+source scripts/source_isaacsim_setup.sh     # conda: hssim
+# In a separate shell:
+source scripts/source_retargeting_setup.sh # conda: hsretargeting
+```
+
+This uses Python 3.11, PyTorch 2.7.0+cu128, Isaac Sim 5.1.0 and Isaac Lab
+2.3.0. The environments are separate because training requires NumPy 1.x while
+retargeting requires NumPy 2.3.5. Pinned packages are in `scripts/requirements/`;
+installation records and Conda exports are in `outputs/environment-install/conda/`.
+
+Isaac Sim 5.1 pins `typing-extensions==4.12.2`, while Holosoma's Tyro 1.x
+requires `>=4.13`. Training uses `4.15.0`; `pip check` reports this known vendor
+pin exception. Other dependency conflicts stop the setup.
+See [RTX 5090 environment notes](docs/rtx5090-environments.md) for details.
 
 ### Training
 

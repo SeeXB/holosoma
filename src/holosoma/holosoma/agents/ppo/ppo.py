@@ -346,6 +346,20 @@ class PPO(BaseAlgo):
     def learn(self):
         self._train_mode()
 
+        # Opt-in host-memory housekeeping for machines running several IsaacSim
+        # workers. Return unused glibc pages; live tensors/physics are untouched.
+        trim_interval = int(os.getenv("HOLOSOMA_CPU_MALLOC_TRIM_INTERVAL", "0"))
+        trim_cpu_memory = None
+        if trim_interval > 0:
+            import ctypes
+
+            libc = ctypes.CDLL(None)
+            if hasattr(libc, "malloc_trim"):
+                trim_cpu_memory = libc.malloc_trim
+                trim_cpu_memory.argtypes = [ctypes.c_size_t]
+                trim_cpu_memory.restype = ctypes.c_int
+                trim_cpu_memory(0)
+
         obs_dict = self.env.reset_all()
 
         # Initialize environments with different episode length buffers
@@ -372,6 +386,9 @@ class PPO(BaseAlgo):
 
             with self.logging_helper.record_learn_time():
                 loss_dict = self._training_step()
+
+            if trim_cpu_memory is not None and it % trim_interval == 0:
+                trim_cpu_memory(0)
 
             if self.is_main_process:
                 self._post_epoch_logging(it, loss_dict)
@@ -663,7 +680,9 @@ class PPO(BaseAlgo):
                 self.actor_learning_rate = loaded_dict["actor_optimizer_state_dict"]["param_groups"][0]["lr"]
                 self.critic_learning_rate = loaded_dict["critic_optimizer_state_dict"]["param_groups"][0]["lr"]
                 logger.info("Optimizer loaded from checkpoint")
-            self.current_learning_iteration = loaded_dict["iter"]
+            # Checkpoints are saved after this iteration's optimizer update.
+            # Resume at the next iteration instead of repeating a completed step.
+            self.current_learning_iteration = loaded_dict["iter"] + 1
             self._restore_env_state(loaded_dict.get("env_state"))
             return loaded_dict.get("infos")
         return None

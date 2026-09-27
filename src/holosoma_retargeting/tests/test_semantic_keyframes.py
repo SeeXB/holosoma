@@ -100,6 +100,55 @@ def test_dynamic_generation_separates_plan_data_from_audit_logs(tmp_path, monkey
     assert result["generation_metadata"]["base_prompt_path"] == str(audit / "plan.base_prompt.txt")
 
 
+@pytest.mark.parametrize("primitive", ["global_minimum", "global_maximum", "local_minimum", "local_maximum"])
+def test_new_generation_rejects_extrema_and_repairs_with_quantiles(tmp_path, monkeypatch, primitive):
+    from holosoma_retargeting.semantic_keyframes import pipeline
+
+    action = {
+        "action": "move_object", "body_parts": ["left_hand"],
+        "keyframe_function": {
+            "start": {"primitive": primitive, "signal": "object_progress", "threshold": None},
+            "end": {"primitive": "threshold_crossing_up", "signal": "object_progress",
+                    "threshold": {"kind": "quantile", "q": 0.8}},
+        },
+        "criticality_level": 3, "rationale": "Visible object motion.",
+        "criticality_rationale": "The object is moving.", "failure_if_inaccurate": "Incorrect timing.",
+    }
+    rejected = {"actions": [action]}
+    # Loading an existing saved plan keeps its prior contract.
+    assert not pipeline.dynamic_plan_validation_issues(rejected)
+    assert pipeline.dynamic_generation_validation_issues(rejected)
+    accepted = json.loads(json.dumps(rejected))
+    accepted["actions"][0]["keyframe_function"]["start"] = {
+        "primitive": "threshold_crossing_up", "signal": "object_progress",
+        "threshold": {"kind": "quantile", "q": 0.1},
+    }
+    replies = iter([json.dumps(rejected), json.dumps(accepted)])
+    prompts = []
+
+    def fake_call(content, prompt):
+        prompts.append(prompt)
+        return next(replies)
+
+    bundle = tmp_path / "bundle.npz"
+    np.savez(bundle, object_name=np.asarray("test_object"))
+    monkeypatch.setattr(pipeline, "load_env_file", lambda _: None)
+    monkeypatch.setattr(pipeline, "load_retargeting_bundle_signals",
+                        lambda _: ({"object_progress": np.linspace(0, 1, 11)}, {}, 30))
+    monkeypatch.setattr(pipeline, "call_vlm", fake_call)
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    result = pipeline.generate_dynamic_semantic_keyframes(
+        video=tmp_path / "video.mp4", bundle_file=bundle, output=tmp_path / "plan.json",
+        image_content=[], max_repairs=1,
+    )
+    assert len(prompts) == 2
+    assert "extremum rules are disabled" in prompts[1]
+    assert result["events"][0]["windows"][0] == {"start_frame": 1, "end_frame": 8, "trigger_frame": 1}
+    assert result["generation_metadata"]["vlm_attempt_count"] == 2
+    assert result["generation_metadata"]["prompt_version"] == "threshold_only_v3"
+    assert json.loads((tmp_path / "plan.event_plan.json").read_text()) == accepted
+
+
 def test_extract_and_validate_fenced_plan() -> None:
     plan = _valid_plan()
     parsed = extract_json(f"prefix\n```json\n{json.dumps(plan)}\n```\n")
