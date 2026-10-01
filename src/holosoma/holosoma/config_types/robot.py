@@ -46,6 +46,9 @@ class RobotControlConfig:
     clip_actions: bool
     clip_torques: bool
     action_scales_by_effort_limit_over_p_gain: bool = False
+    # Optional per-joint target-angle offset (rad) for one policy-action unit.
+    # Empty preserves the existing scalar/effort-normalized behavior.
+    action_scale_overrides: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

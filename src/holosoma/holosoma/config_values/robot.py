@@ -9,6 +9,7 @@ from holosoma.config_types.robot import (
 )
 from holosoma.config_types.scene import PhysicsConfig, PhysXPhysicsConfig
 from holosoma.utils.config_registry import ConfigRegistry, deprecated_defaults_alias
+from holosoma.config_values.a3_robot import a3_31dof, a3_31dof_w_object
 
 ROBOT_REGISTRY = ConfigRegistry(RobotConfig, group="holosoma.config.robot")
 
@@ -1124,5 +1125,7 @@ g1_29dof_w_object = replace(
 ROBOT_REGISTRY.add("g1_29dof", g1_29dof)
 ROBOT_REGISTRY.add("t1_29dof_waist_wrist", t1_29dof_waist_wrist)
 ROBOT_REGISTRY.add("g1_29dof_w_object", g1_29dof_w_object)
+ROBOT_REGISTRY.add("a3_31dof", a3_31dof)
+ROBOT_REGISTRY.add("a3_31dof_w_object", a3_31dof_w_object)
 
 __getattr__ = deprecated_defaults_alias(__name__, ROBOT_REGISTRY)
