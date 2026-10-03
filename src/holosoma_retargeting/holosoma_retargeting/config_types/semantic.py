@@ -10,6 +10,7 @@ are no longer accepted here.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, get_args
@@ -65,6 +66,32 @@ class SemanticRetargetingConfig:
     # Registered refinement curve. Arbitrary values remain invalid.
     exact_trigger_budget: int = 4
     random_exclusion_radius: int = 3
+
+    # Optional source-surface contact objective. The artifact is produced from
+    # semantic-plan key parts only; historical B4 runs remain unchanged unless
+    # a path is supplied explicitly.
+    contact_targets_path: Path | None = None
+    contact_objective_weight: float = 200.0
+    contact_sqp_iterations: int = 6
+    # The legacy onset window applies over this many approach frames and the
+    # onset itself. The optional Gaussian schedule instead uses symmetric
+    # pre/post-onset tails without changing the contact labels.
+    contact_approach_frames: int = 0
+    contact_temporal_schedule: Literal[
+        "onset_window", "smooth_window", "gaussian"
+    ] = "onset_window"
+    contact_release_frames: int = 0
+    contact_gaussian_sigma_frames: float = 10.0
+    contact_gaussian_min_relative_weight: float = 1e-6
+    contact_target_mode: Literal[
+        "nearest_surface",
+        "source_anchor",
+        "palm_patch",
+        "palm_nearest_surface",
+        "palm_face_plane",
+    ] = "nearest_surface"
+    # Palm normal only: no finger heading, full hand rotation or arm pose lock.
+    contact_normal_weight: float = 0.5
 
     # Optional profiling-only frames.  These frames do not alter the budget
     # plan or any solver parameter; they only retain accepted SQP iterates for
@@ -199,11 +226,52 @@ class SemanticRetargetingConfig:
         return self.uses_semantic_weights
 
     @property
+    def uses_contact_objective(self) -> bool:
+        return self.contact_targets_path is not None
+
+    @property
     def semantic_weight_components(self) -> str:
         # Edge weighting and new objectives are intentionally absent.
         return "part"
 
     def validate(self) -> None:
+        if self.uses_contact_objective and self.mode != FINAL_SEMANTIC_MODE:
+            raise ValueError("contact_targets_path is only supported for the explicit B4 variant")
+        if not self.contact_objective_weight > 0.0:
+            raise ValueError("contact_objective_weight must be positive")
+        if self.contact_sqp_iterations < 1:
+            raise ValueError("contact_sqp_iterations must be positive")
+        if (
+            not isinstance(self.contact_approach_frames, int)
+            or not 0 <= self.contact_approach_frames <= 30
+        ):
+            raise ValueError("contact_approach_frames must be an integer in [0, 30]")
+        if self.contact_temporal_schedule not in {
+            "onset_window", "smooth_window", "gaussian"
+        }:
+            raise ValueError("unsupported contact_temporal_schedule")
+        if (
+            not isinstance(self.contact_release_frames, int)
+            or not 0 <= self.contact_release_frames <= 30
+        ):
+            raise ValueError("contact_release_frames must be an integer in [0, 30]")
+        if (
+            not math.isfinite(self.contact_gaussian_sigma_frames)
+            or self.contact_gaussian_sigma_frames <= 0.0
+        ):
+            raise ValueError("contact_gaussian_sigma_frames must be positive and finite")
+        if not 0.0 <= self.contact_gaussian_min_relative_weight < 1.0:
+            raise ValueError("contact_gaussian_min_relative_weight must be in [0, 1)")
+        if self.contact_target_mode not in {
+            "nearest_surface",
+            "source_anchor",
+            "palm_patch",
+            "palm_nearest_surface",
+            "palm_face_plane",
+        }:
+            raise ValueError("unsupported contact_target_mode")
+        if self.contact_normal_weight < 0.0:
+            raise ValueError("contact_normal_weight must be non-negative")
         if self.geometry_projection and self.mode != FINAL_SEMANTIC_MODE:
             raise ValueError("geometry_projection is only supported for the explicit B4 variant")
         if self.geometry_projection_max_iterations < 1:
