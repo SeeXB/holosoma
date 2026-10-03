@@ -84,6 +84,11 @@ def train_command(cfg, group, train_base, run_id):
         command += ["--logger.id", run_id, "--logger.group", f"{cfg['task']}_{cfg['tag']}"]
     if "save_interval" in cfg:
         command += ["--algo.config.save-interval", cfg["save_interval"]]
+    if cfg.get("undesired_contacts_body_names"):
+        command += [
+            "--reward.terms.undesired-contacts.params.undesired-contacts-body-names",
+            cfg["undesired_contacts_body_names"],
+        ]
     if group == 3:
         command += ["--command.setup-terms.motion-command.params.motion-config.semantic-file", cfg["semantic_file"]]
         if cfg.get("contact_file"):

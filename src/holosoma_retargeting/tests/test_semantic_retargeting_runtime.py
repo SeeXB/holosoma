@@ -569,6 +569,44 @@ def test_active_pair_nonpenetration_refinement_is_explicit_final_b4_only() -> No
         ).validate()
 
 
+def test_contact_approach_window_is_bounded() -> None:
+    SemanticRetargetingConfig(contact_approach_frames=5).validate()
+    for invalid in (-1, 31, 2.5):
+        with pytest.raises(ValueError, match="contact_approach_frames"):
+            SemanticRetargetingConfig(contact_approach_frames=invalid).validate()
+
+
+def test_contact_gaussian_schedule_configuration_is_validated() -> None:
+    SemanticRetargetingConfig(
+        contact_temporal_schedule="gaussian",
+        contact_gaussian_sigma_frames=10.0,
+        contact_gaussian_min_relative_weight=1e-6,
+    ).validate()
+    with pytest.raises(ValueError, match="contact_temporal_schedule"):
+        SemanticRetargetingConfig(contact_temporal_schedule="step").validate()
+    with pytest.raises(ValueError, match="contact_gaussian_sigma_frames"):
+        SemanticRetargetingConfig(contact_gaussian_sigma_frames=float("nan")).validate()
+    with pytest.raises(ValueError, match="contact_gaussian_min_relative_weight"):
+        SemanticRetargetingConfig(contact_gaussian_min_relative_weight=1.0).validate()
+
+
+def test_contact_smooth_window_configuration_is_validated() -> None:
+    SemanticRetargetingConfig(
+        contact_temporal_schedule="smooth_window",
+        contact_approach_frames=10,
+        contact_release_frames=5,
+    ).validate()
+    for invalid in (-1, 31, 2.5):
+        with pytest.raises(ValueError, match="contact_release_frames"):
+            SemanticRetargetingConfig(contact_release_frames=invalid).validate()
+
+
+def test_contact_normal_alignment_can_be_disabled() -> None:
+    SemanticRetargetingConfig(contact_normal_weight=0.0).validate()
+    with pytest.raises(ValueError, match="contact_normal_weight"):
+        SemanticRetargetingConfig(contact_normal_weight=-0.1).validate()
+
+
 def test_precision_evaluator_uses_raw_geometry_and_original_criticality() -> None:
     num_frames = 40
     residuals = np.ones((num_frames, 5), dtype=np.float64)
