@@ -158,10 +158,6 @@ def _camera(
     part_bodies: dict[str, int],
     args: argparse.Namespace,
 ) -> mujoco.MjvCamera:
-    # When several comparisons share the same baseline, use that baseline's
-    # camera alone so their pixels can be combined into a fair multi-panel view.
-    if getattr(args, "camera_source", "shared") == "original":
-        final_data = original_data
     object_center = 0.5 * (
         original_data.xpos[object_body] + final_data.xpos[object_body]
     )
@@ -396,11 +392,7 @@ def render(args: argparse.Namespace) -> None:
             "azimuth": args.azimuth,
             "elevation": args.elevation,
             "distance": args.distance,
-            "anchor": (
-                "original trajectory only; identical for all comparisons with that baseline"
-                if args.camera_source == "original" else
-                "shared per-frame object/selected-part center across both trajectories"
-            ),
+            "anchor": "shared per-frame object/selected-part center across both trajectories",
         },
         "highlight": {**{part: list(PART_COLORS[part]) for part in contacts.parts}, "object": [65, 135, 235]},
         "distance_definition": "signed MuJoCo collision-surface distance; positive gap, negative overlap",
@@ -431,7 +423,6 @@ def main() -> None:
     parser.add_argument("--azimuth", type=float, default=145.0)
     parser.add_argument("--elevation", type=float, default=-55.0)
     parser.add_argument("--distance", type=float, default=1.45)
-    parser.add_argument("--camera-source", choices=("shared", "original"), default="shared")
     parser.add_argument("--playback-speed", type=float, default=1.0)
     parser.add_argument("--final-label", default="New B4 + Contact")
     parser.add_argument("--original-label", default="Original OmniRetarget")

@@ -76,11 +76,6 @@ def make_job(
     contact_targets=None,
     contact_objective_weight=200.0,
     contact_sqp_iterations=6,
-    contact_approach_frames=0,
-    contact_temporal_schedule="onset_window",
-    contact_release_frames=0,
-    contact_gaussian_sigma_frames=10.0,
-    contact_gaussian_min_relative_weight=1e-6,
     contact_target_mode="nearest_surface",
     contact_normal_weight=0.5,
 ):
@@ -164,13 +159,6 @@ def make_job(
             job['contact_objective_weight'] = float(contact_objective_weight)
             job['sources'][str(contact_targets)] = digest(contact_targets)
             job['contact_sqp_iterations'] = int(contact_sqp_iterations)
-            job['contact_approach_frames'] = int(contact_approach_frames)
-            job['contact_temporal_schedule'] = str(contact_temporal_schedule)
-            job['contact_release_frames'] = int(contact_release_frames)
-            job['contact_gaussian_sigma_frames'] = float(contact_gaussian_sigma_frames)
-            job['contact_gaussian_min_relative_weight'] = float(
-                contact_gaussian_min_relative_weight
-            )
             job['contact_target_mode'] = str(contact_target_mode)
             job['contact_normal_weight'] = float(contact_normal_weight)
     job['signature'] = hashlib.sha256(json.dumps(job, sort_keys=True).encode()).hexdigest()
@@ -315,27 +303,10 @@ def main():
                     help='Opt-in semantic surface-contact artifact (single OMOMO task only).')
     ap.add_argument('--contact-objective-weight', type=float, default=200.0)
     ap.add_argument('--contact-sqp-iterations', type=int, default=6)
-    ap.add_argument('--contact-approach-frames', type=int, default=0)
-    ap.add_argument(
-        '--contact-temporal-schedule',
-        choices=('onset_window', 'smooth_window', 'gaussian'),
-        default='onset_window',
-    )
-    ap.add_argument('--contact-release-frames', type=int, default=0)
-    ap.add_argument('--contact-gaussian-sigma-frames', type=float, default=10.0)
-    ap.add_argument(
-        '--contact-gaussian-min-relative-weight', type=float, default=1e-6
-    )
     ap.add_argument('--contact-normal-weight', type=float, default=0.5)
     ap.add_argument(
         '--contact-target-mode',
-        choices=(
-            'nearest_surface',
-            'source_anchor',
-            'palm_patch',
-            'palm_nearest_surface',
-            'palm_face_plane',
-        ),
+        choices=('nearest_surface', 'source_anchor', 'palm_patch'),
         default='nearest_surface',
     )
     args=ap.parse_args()
@@ -360,17 +331,6 @@ def main():
                 ),
                 contact_objective_weight=job.get('contact_objective_weight', 200.0),
                 contact_sqp_iterations=job.get('contact_sqp_iterations', 6),
-                contact_approach_frames=job.get('contact_approach_frames', 0),
-                contact_temporal_schedule=job.get(
-                    'contact_temporal_schedule', 'onset_window'
-                ),
-                contact_release_frames=job.get('contact_release_frames', 0),
-                contact_gaussian_sigma_frames=job.get(
-                    'contact_gaussian_sigma_frames', 10.0
-                ),
-                contact_gaussian_min_relative_weight=job.get(
-                    'contact_gaussian_min_relative_weight', 1e-6
-                ),
                 contact_target_mode=job.get('contact_target_mode', 'nearest_surface'),
                 contact_normal_weight=job.get('contact_normal_weight', 0.5),
                 geometry_projection=job.get('geometry_projection', False),
@@ -418,13 +378,6 @@ def main():
               contact_targets=args.contact_targets if m == 'semantic_b4' else None,
               contact_objective_weight=args.contact_objective_weight,
               contact_sqp_iterations=args.contact_sqp_iterations,
-              contact_approach_frames=args.contact_approach_frames,
-              contact_temporal_schedule=args.contact_temporal_schedule,
-              contact_release_frames=args.contact_release_frames,
-              contact_gaussian_sigma_frames=args.contact_gaussian_sigma_frames,
-              contact_gaussian_min_relative_weight=(
-                  args.contact_gaussian_min_relative_weight
-              ),
               contact_target_mode=args.contact_target_mode,
               contact_normal_weight=args.contact_normal_weight,
           )

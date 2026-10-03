@@ -28,7 +28,6 @@ from holosoma_retargeting.config_types.retargeter import FootLockConfig, SelfCol
 from holosoma_retargeting.config_types.semantic import SemanticRetargetingConfig
 from holosoma_retargeting.semantic_keyframes.contact_targets import (
     RetargetContactTargets,
-    contact_objective_schedule,
     load_retarget_contact_targets,
 )
 from holosoma_retargeting.semantic_keyframes.profiling import write_rows_csv, write_run_artifacts
@@ -66,27 +65,6 @@ from utils import (  # type: ignore[import-not-found,no-redef]  # noqa: E402
 
 
 OMNI_LAPLACIAN_WEIGHT = 10.0
-
-
-def _slerp_unit_vectors(start: np.ndarray, end: np.ndarray, progress: float) -> np.ndarray:
-    """Interpolate unit directions at constant angular speed."""
-    start = np.asarray(start, dtype=np.float64)
-    end = np.asarray(end, dtype=np.float64)
-    dot = float(np.clip(start @ end, -1.0, 1.0))
-    if dot > 1.0 - 1e-8:
-        value = (1.0 - progress) * start + progress * end
-        return value / np.linalg.norm(value)
-    if dot < -1.0 + 1e-8:
-        axis = np.zeros(3)
-        axis[int(np.argmin(np.abs(start)))] = 1.0
-        tangent = np.cross(start, axis)
-        tangent /= np.linalg.norm(tangent)
-        return np.cos(np.pi * progress) * start + np.sin(np.pi * progress) * tangent
-    angle = np.arccos(dot)
-    return (
-        np.sin((1.0 - progress) * angle) * start
-        + np.sin(progress * angle) * end
-    ) / np.sin(angle)
 
 
 class InteractionMeshRetargeter:
@@ -231,51 +209,22 @@ class InteractionMeshRetargeter:
         self.semantic_config = semantic_config or SemanticRetargetingConfig()
         self.semantic_config.validate()
         self._retarget_contact_targets: RetargetContactTargets | None = None
-        self._contact_objective_active: np.ndarray | None = None
-        self._contact_objective_target_frames: np.ndarray | None = None
-        self._contact_objective_progress: np.ndarray | None = None
-        self._contact_approach_point_origins: dict[tuple[int, int], np.ndarray] = {}
-        self._contact_approach_normal_origins: dict[tuple[int, int], np.ndarray] = {}
-        self._contact_approach_face_origins: dict[tuple[int, int], float] = {}
-        self._contact_face_normals_local: dict[tuple[int, int], np.ndarray] = {}
         self._contact_geometry_by_part: dict[str, tuple[int, ...]] = {}
         self._contact_object_geometries: tuple[int, ...] = ()
-        self._contact_setup_wall_time = 0.0
-        self._contact_schedule_wall_time = 0.0
         if self.semantic_config.contact_targets_path is not None:
-            contact_setup_start = time.perf_counter()
             self._retarget_contact_targets = load_retarget_contact_targets(
                 self.semantic_config.contact_targets_path
             )
-            contact_schedule_start = time.perf_counter()
-            (
-                self._contact_objective_active,
-                self._contact_objective_target_frames,
-                self._contact_objective_progress,
-            ) = contact_objective_schedule(
-                self._retarget_contact_targets.active,
-                self.semantic_config.contact_approach_frames,
-                self.semantic_config.contact_temporal_schedule,
-                self.semantic_config.contact_gaussian_sigma_frames,
-                self.semantic_config.contact_gaussian_min_relative_weight,
-                self.semantic_config.contact_release_frames,
-            )
-            self._contact_schedule_wall_time = time.perf_counter() - contact_schedule_start
-            if self.semantic_config.contact_target_mode in {
-                "palm_patch",
-                "palm_nearest_surface",
-                "palm_face_plane",
-            }:
+            if self.semantic_config.contact_target_mode == "palm_patch":
                 targets = self._retarget_contact_targets
                 if set(targets.parts).difference({"left_hand", "right_hand"}):
-                    raise ValueError("palm contact modes support semantic hand contacts only")
+                    raise ValueError("palm_patch supports semantic hand contacts only")
                 if targets.robot_points_local is None or targets.object_normals_local is None:
-                    raise ValueError("palm contact modes require a palm geometry/normal target artifact")
+                    raise ValueError("palm_patch requires a palm geometry/normal target artifact")
             self._contact_geometry_by_part = self._resolve_contact_geometries(
                 self._retarget_contact_targets.parts
             )
             self._contact_object_geometries = self._resolve_contact_object_geometries()
-            self._contact_setup_wall_time = time.perf_counter() - contact_setup_start
         self._convex_solver_calls = 0
 
     def _resolve_contact_geometries(
@@ -340,50 +289,6 @@ class InteractionMeshRetargeter:
             raise ValueError("dynamic object has no collision geometry")
         return geom_ids
 
-    def _contact_face_normal_local(
-        self,
-        *,
-        anchor_object: np.ndarray,
-        object_position: np.ndarray,
-        object_rotation: np.ndarray,
-        cache_key: tuple[int, int],
-    ) -> np.ndarray:
-        """Return the exact triangle normal of the face containing an anchor."""
-        if not hasattr(self, "_contact_face_normals_local"):
-            self._contact_face_normals_local = {}
-        cached = self._contact_face_normals_local.get(cache_key)
-        if cached is not None:
-            return cached
-        anchor_world = object_position + object_rotation @ anchor_object
-        best: tuple[float, np.ndarray] | None = None
-        for object_geom_id in self._contact_object_geometries:
-            vertices_world, faces = _world_mesh_from_geom(
-                self.robot_model,
-                self.robot_data,
-                object_geom_id,
-                "object",
-            )
-            mesh = trimesh.Trimesh(
-                vertices=vertices_world,
-                faces=faces,
-                process=False,
-            )
-            _, distances, triangle_ids = trimesh.proximity.closest_point_naive(
-                mesh, anchor_world[None]
-            )
-            candidate = (
-                float(distances[0]),
-                np.asarray(mesh.face_normals[int(triangle_ids[0])], dtype=np.float64),
-            )
-            if best is None or candidate[0] < best[0]:
-                best = candidate
-        if best is None:
-            raise RuntimeError("dynamic object has no triangle at contact anchor")
-        normal_local = object_rotation.T @ best[1]
-        normal_local /= np.linalg.norm(normal_local)
-        self._contact_face_normals_local[cache_key] = normal_local
-        return normal_local
-
     def _linearized_surface_contacts(
         self,
         q: np.ndarray,
@@ -395,23 +300,7 @@ class InteractionMeshRetargeter:
             return ()
         if not 0 <= frame_idx < len(targets.active):
             raise IndexError(f"contact frame {frame_idx} outside {len(targets.active)} frames")
-        objective_active = getattr(self, "_contact_objective_active", None)
-        target_frames = getattr(self, "_contact_objective_target_frames", None)
-        objective_progress = getattr(self, "_contact_objective_progress", None)
-        if objective_active is None:
-            objective_active, target_frames, objective_progress = contact_objective_schedule(
-                targets.active,
-                getattr(self.semantic_config, "contact_approach_frames", 0),
-                getattr(self.semantic_config, "contact_temporal_schedule", "onset_window"),
-                getattr(self.semantic_config, "contact_gaussian_sigma_frames", 10.0),
-                getattr(
-                    self.semantic_config,
-                    "contact_gaussian_min_relative_weight",
-                    1e-6,
-                ),
-                getattr(self.semantic_config, "contact_release_frames", 0),
-            )
-        active_indices = np.flatnonzero(objective_active[frame_idx])
+        active_indices = np.flatnonzero(targets.active[frame_idx])
         if not len(active_indices):
             return ()
 
@@ -431,50 +320,15 @@ class InteractionMeshRetargeter:
         output = []
         for raw_target_index in active_indices:
             target_index = int(raw_target_index)
-            target_frame = int(target_frames[frame_idx, target_index])
-            progress = float(objective_progress[frame_idx, target_index])
             part = targets.parts[target_index]
-            if self.semantic_config.contact_target_mode in {
-                "palm_patch",
-                "palm_nearest_surface",
-                "palm_face_plane",
-            }:
+            if self.semantic_config.contact_target_mode == "palm_patch":
                 geom_id = self._contact_geometry_by_part[part][0]
                 body_id = int(self.robot_model.geom_bodyid[geom_id])
                 body_rotation = self.robot_data.xmat[body_id].reshape(3, 3)
                 point_world = self.robot_data.xpos[body_id] + body_rotation @ targets.robot_points_local[target_index]
-                if self.semantic_config.contact_target_mode in {
-                    "palm_patch",
-                    "palm_face_plane",
-                }:
-                    anchor_object = targets.object_points_local[target_frame, target_index]
-                else:
-                    best_object_point: tuple[float, np.ndarray] | None = None
-                    for object_geom_id in self._contact_object_geometries:
-                        vertices_world, faces = _world_mesh_from_geom(
-                            self.robot_model,
-                            self.robot_data,
-                            object_geom_id,
-                            "object",
-                        )
-                        object_mesh = trimesh.Trimesh(
-                            vertices=vertices_world,
-                            faces=faces,
-                            process=False,
-                        )
-                        points, distances, _ = trimesh.proximity.closest_point_naive(
-                            object_mesh, point_world[None]
-                        )
-                        candidate = (float(distances[0]), points[0])
-                        if best_object_point is None or candidate[0] < best_object_point[0]:
-                            best_object_point = candidate
-                    if best_object_point is None:
-                        raise RuntimeError("dynamic object has no surface for palm target")
-                    anchor_object = object_rotation_inverse @ (
-                        best_object_point[1] - object_position
-                    )
+                anchor_object = targets.object_points_local[frame_idx, target_index]
             elif self.semantic_config.contact_target_mode == "source_anchor":
-                anchor_object = targets.object_points_local[target_frame, target_index]
+                anchor_object = targets.object_points_local[frame_idx, target_index]
                 anchor_world = object_position + object_rotation @ anchor_object
                 best_anchor: tuple[float, np.ndarray, int] | None = None
                 for geom_id in self._contact_geometry_by_part[part]:
@@ -556,71 +410,13 @@ class InteractionMeshRetargeter:
             point_body = body_rotation.T @ (point_world - body_position)
             jacobian_world = self._calc_contact_jacobian_from_point(body_id, point_body)
             point_object = object_rotation_inverse @ (point_world - object_position)
-            part_weight = float(targets.weights[target_index])
             jacobian_object = object_rotation_inverse @ jacobian_world[:, self.q_a_indices]
-            if self.semantic_config.contact_target_mode == "palm_face_plane":
-                face_normal = self._contact_face_normal_local(
-                    anchor_object=anchor_object,
-                    object_position=object_position,
-                    object_rotation=object_rotation,
-                    cache_key=(target_frame, target_index),
-                )
-                signed_distance = float(face_normal @ (point_object - anchor_object))
-                target_distance = 0.0
-                if frame_idx < target_frame:
-                    if not hasattr(self, "_contact_approach_face_origins"):
-                        self._contact_approach_face_origins = {}
-                    origin_distance = self._contact_approach_face_origins.setdefault(
-                        (target_frame, target_index), signed_distance
-                    )
-                    target_distance = (1.0 - progress) * origin_distance
-                if (
-                    self.semantic_config.contact_temporal_schedule == "gaussian"
-                    or (
-                        self.semantic_config.contact_temporal_schedule == "smooth_window"
-                        and frame_idx > target_frame
-                    )
-                ):
-                    part_weight *= progress
-                output.append(
-                    (
-                        np.asarray(face_normal[None, :] @ jacobian_object),
-                        np.asarray([signed_distance], dtype=np.float64),
-                        np.asarray([target_distance], dtype=np.float64),
-                        part_weight,
-                        part,
-                    )
-                )
-                continue
-            if (
-                self.semantic_config.contact_target_mode == "palm_patch"
-                and frame_idx < target_frame
-            ):
-                if not hasattr(self, "_contact_approach_point_origins"):
-                    self._contact_approach_point_origins = {}
-                origin = self._contact_approach_point_origins.setdefault(
-                    (target_frame, target_index), point_object.copy()
-                )
-                anchor_object = origin + progress * (anchor_object - origin)
-            if (
-                self.semantic_config.contact_target_mode != "palm_patch"
-                or self.semantic_config.contact_temporal_schedule == "gaussian"
-                or (
-                    self.semantic_config.contact_temporal_schedule == "smooth_window"
-                    and frame_idx > target_frame
-                )
-            ):
-                # Dynamic-nearest and non-palm modes use coefficient
-                # scheduling. A smooth fixed-patch approach instead uses the
-                # full coefficient on a target that starts exactly at the
-                # current palm; only its post-onset release scales the weight.
-                part_weight *= progress
             output.append(
                 (
                     np.asarray(jacobian_object, dtype=np.float64),
                     np.asarray(point_object, dtype=np.float64),
                     np.asarray(anchor_object, dtype=np.float64),
-                    part_weight,
+                    float(targets.weights[target_index]),
                     part,
                 )
             )
@@ -628,28 +424,12 @@ class InteractionMeshRetargeter:
 
     def _linearized_palm_normals(self, q: np.ndarray, frame_idx: int):
         """Normal alignment has no finger heading or rotation-about-normal target."""
-        if self.semantic_config.contact_target_mode not in {"palm_patch", "palm_nearest_surface"}:
+        if self.semantic_config.contact_target_mode != "palm_patch":
             return ()
         targets = self._retarget_contact_targets
         if targets is None:
             return ()
-        objective_active = getattr(self, "_contact_objective_active", None)
-        target_frames = getattr(self, "_contact_objective_target_frames", None)
-        objective_progress = getattr(self, "_contact_objective_progress", None)
-        if objective_active is None:
-            objective_active, target_frames, objective_progress = contact_objective_schedule(
-                targets.active,
-                getattr(self.semantic_config, "contact_approach_frames", 0),
-                getattr(self.semantic_config, "contact_temporal_schedule", "onset_window"),
-                getattr(self.semantic_config, "contact_gaussian_sigma_frames", 10.0),
-                getattr(
-                    self.semantic_config,
-                    "contact_gaussian_min_relative_weight",
-                    1e-6,
-                ),
-                getattr(self.semantic_config, "contact_release_frames", 0),
-            )
-        active_indices = np.flatnonzero(objective_active[frame_idx])
+        active_indices = np.flatnonzero(targets.active[frame_idx])
         if not len(active_indices):
             return ()
         self.robot_data.qpos[:] = q
@@ -658,8 +438,6 @@ class InteractionMeshRetargeter:
         world_to_object = Rotation.from_quat([qx, qy, qz, qw]).as_matrix().T
         result = []
         for index in active_indices:
-            target_frame = int(target_frames[frame_idx, index])
-            progress = float(objective_progress[frame_idx, index])
             part = targets.parts[index]
             body_id = int(self.robot_model.geom_bodyid[self._contact_geometry_by_part[part][0]])
             rotation = self.robot_data.xmat[body_id].reshape(3, 3)
@@ -671,30 +449,8 @@ class InteractionMeshRetargeter:
             base = self._calc_contact_jacobian_from_point(body_id, np.zeros(3))
             tip = self._calc_contact_jacobian_from_point(body_id, normal_local)
             jacobian = world_to_object @ (tip - base)[:, self.q_a_indices]
-            target = -targets.object_normals_local[target_frame, index]
-            if frame_idx < target_frame:
-                if not hasattr(self, "_contact_approach_normal_origins"):
-                    self._contact_approach_normal_origins = {}
-                origin = self._contact_approach_normal_origins.setdefault(
-                    (target_frame, int(index)), normal.copy()
-                )
-                target = _slerp_unit_vectors(origin, target, progress)
-            part_weight = float(targets.weights[index])
-            if (
-                self.semantic_config.contact_temporal_schedule == "gaussian"
-                or (
-                    self.semantic_config.contact_temporal_schedule == "smooth_window"
-                    and frame_idx > target_frame
-                )
-            ):
-                part_weight *= progress
-            result.append((
-                jacobian,
-                normal,
-                target,
-                part_weight,
-                part,
-            ))
+            target = -targets.object_normals_local[frame_idx, index]
+            result.append((jacobian, normal, target, float(targets.weights[index]), part))
         return tuple(result)
 
     def _surface_contact_metrics(self, q: np.ndarray, frame_idx: int) -> dict[str, Any]:
@@ -706,15 +462,63 @@ class InteractionMeshRetargeter:
             "contact_error_max_m": max(errors, default=0.0),
             "contact_active_parts": [part for *_, part in contacts],
         }
-        normals = (
-            self._linearized_palm_normals(q, frame_idx)
-            if self.semantic_config.contact_normal_weight > 0.0 else ()
-        )
+        normals = self._linearized_palm_normals(q, frame_idx)
         if normals:
             angles = {part: float(np.degrees(np.arccos(np.clip(normal @ target, -1, 1))))
                       for _, normal, target, _, part in normals}
             metrics["palm_normal_error_deg"] = angles
         return metrics
+
+    def _linearized_palm_supports(self, q: np.ndarray, frame_idx: int):
+        """Keep the selected rigid hand outside its local contact-side plane.
+
+        A palm center alone can be driven through the scanned surface while
+        its curved collision mesh penetrates. These are geometric clearance
+        inequalities, not finger poses or finger-heading costs.
+        """
+        targets = self._retarget_contact_targets
+        if self.semantic_config.contact_target_mode != "palm_patch" or targets is None:
+            return ()
+        active = np.flatnonzero(targets.active[frame_idx])
+        if not len(active):
+            return ()
+        self.robot_data.qpos[:] = q
+        mujoco.mj_forward(self.robot_model, self.robot_data)
+        qw, qx, qy, qz = q[-4:]
+        world_to_object = Rotation.from_quat([qx, qy, qz, qw]).as_matrix().T
+        object_position = q[-7:-4]
+        object_vertices = []
+        for geom in self._contact_object_geometries:
+            vertices, _ = _world_mesh_from_geom(self.robot_model, self.robot_data, geom, "object")
+            object_vertices.append((vertices - object_position) @ world_to_object.T)
+        object_vertices = np.concatenate(object_vertices)
+        result = []
+        for index in active:
+            part = targets.parts[index]
+            normal = targets.object_normals_local[frame_idx, index]
+            anchor = targets.object_points_local[frame_idx, index]
+            # A scanned triangle tangent is not necessarily a supporting
+            # plane of MuJoCo's convex collision shape. Place the clearance
+            # plane outside every object collision vertex along this normal.
+            plane_offset = float(np.max((object_vertices - anchor) @ normal))
+            for geom in self._contact_geometry_by_part[part]:
+                vertices, _ = _world_mesh_from_geom(self.robot_model, self.robot_data, geom, part)
+                local = (vertices - object_position) @ world_to_object.T
+                distances = (local - anchor) @ normal - plane_offset
+                body = int(self.robot_model.geom_bodyid[geom])
+                # Retain previously exposed support vertices for this frame.
+                # Replacing them with only the new minimum lets the hand
+                # oscillate: rotating one tip out can push the opposite tip
+                # in, which was absent from the previous linear constraints.
+                if not hasattr(self, "_palm_support_vertices"):
+                    self._palm_support_vertices = {}
+                exposed = self._palm_support_vertices.setdefault((frame_idx, geom), set())
+                exposed.update(int(vertex) for vertex in np.argsort(distances)[:3])
+                for vertex in sorted(exposed):
+                    jacobian = self._calc_contact_jacobian_from_point(body, vertices[vertex], input_world=True)
+                    derivative = normal @ world_to_object @ jacobian[:, self.q_a_indices]
+                    result.append((derivative, float(distances[vertex]), part))
+        return tuple(result)
 
     def _init_foot_lock(self, foot_lock: FootLockConfig | None) -> None:
         """Initialize foot lock configuration and normalize window mappings."""
@@ -1998,14 +1802,10 @@ class InteractionMeshRetargeter:
                     w_nominal_tracking = self.w_nominal_tracking_init * np.exp(-i / self.nominal_tracking_tau)
 
                 scheduled_budget = int(budget_plan.budgets[i])
-                contact_frame_active = False
-                if self._retarget_contact_targets is not None:
-                    active_now = self._retarget_contact_targets.active[i]
-                    active_previous = (
-                        np.zeros_like(active_now)
-                        if i == 0 else self._retarget_contact_targets.active[i - 1]
-                    )
-                    contact_frame_active = bool((active_now & ~active_previous).any())
+                contact_frame_active = bool(
+                    self._retarget_contact_targets is not None
+                    and self._retarget_contact_targets.active[i].any()
+                )
                 base_budget = max(
                     scheduled_budget,
                     config.contact_sqp_iterations if contact_frame_active else 0,
@@ -2514,51 +2314,12 @@ class InteractionMeshRetargeter:
                             else None
                         ),
                         "weight": config.contact_objective_weight,
-                        "onset_frame_sqp_iterations": config.contact_sqp_iterations,
-                        "approach_frames": config.contact_approach_frames,
-                        "release_frames": config.contact_release_frames,
-                        "setup_wall_time_seconds": self._contact_setup_wall_time,
-                        "schedule_wall_time_seconds": self._contact_schedule_wall_time,
-                        "temporal_schedule": config.contact_temporal_schedule,
-                        "gaussian_sigma_frames": (
-                            config.contact_gaussian_sigma_frames
-                            if config.contact_temporal_schedule == "gaussian"
-                            else None
-                        ),
-                        "gaussian_min_relative_weight": (
-                            config.contact_gaussian_min_relative_weight
-                            if config.contact_temporal_schedule == "gaussian"
-                            else None
-                        ),
-                        "approach_ramp": (
-                            "Gaussian relative weight centered at each contact onset; symmetric pre/post tails"
-                            if config.contact_temporal_schedule == "gaussian"
-                            else "compact quintic target path at full tracking weight with optional post-onset coefficient release"
-                            if config.contact_temporal_schedule == "smooth_window"
-                            else "linear coefficient ramp to the current nearest object surface; objective applies only through onset"
-                            if config.contact_target_mode == "palm_nearest_surface"
-                            else "linear palm-position path and constant-angular-speed palm-normal path; objective applies only through onset"
-                        ),
-                        "approach_changes_contact_mask": False,
-                        "approach_changes_sqp_budget": False,
+                        "active_frame_sqp_iterations": config.contact_sqp_iterations,
                         "target_mode": config.contact_target_mode,
-                        "normal_weight": (
-                            config.contact_normal_weight
-                            if config.contact_target_mode in {"palm_patch", "palm_nearest_surface"}
-                            else 0.0
-                        ),
-                        "palm_position_target": (
-                            "nearest object surface per SQP linearization"
-                            if config.contact_target_mode == "palm_nearest_surface"
-                            else "artifact anchor"
-                            if config.contact_target_mode == "palm_patch"
-                            else "signed normal distance to the exact triangle containing the artifact anchor; tangential motion is free"
-                            if config.contact_target_mode == "palm_face_plane"
-                            else None
-                        ),
+                        "normal_weight": config.contact_normal_weight if config.contact_target_mode == "palm_patch" else 0.0,
                         "finger_heading_constraint": False,
                         "canonicalization_backend": "default",
-                        "palm_contact_side_clearance": False,
+                        "palm_contact_side_clearance": config.contact_target_mode == "palm_patch",
                         "semantic_parts": (
                             list(self._retarget_contact_targets.parts)
                             if self._retarget_contact_targets is not None
@@ -2927,6 +2688,12 @@ class InteractionMeshRetargeter:
                 new_constraint = Ja_n @ dqa >= rhs
                 constraints += [new_constraint]
                 original_constraint_objects["nonpenetration"].append(new_constraint)
+            for derivative, distance, _ in self._linearized_palm_supports(q, frame_idx):
+                # Same clearance tolerance as the original collision
+                # constraints; only the selected hand contact sides are used.
+                support_constraint = derivative @ dqa >= -self.penetration_tolerance - distance
+                constraints.append(support_constraint)
+                original_constraint_objects["nonpenetration"].append(support_constraint)
 
         # Self-collision constraints
         Js_sc, phis_sc = self._compute_self_collision_constraints(frame_idx)
@@ -2991,10 +2758,9 @@ class InteractionMeshRetargeter:
             contact_terms.append(weight * cp.sum_squares(residual))
         contact_objective = cp.sum(contact_terms) if contact_terms else cp.Constant(0.0)
         normal_terms = []
-        if self.semantic_config.contact_normal_weight > 0.0:
-            for jacobian, normal, target, part_weight, _ in self._linearized_palm_normals(q, frame_idx):
-                residual = normal + cp.Constant(jacobian) @ dqa - target
-                normal_terms.append(self.semantic_config.contact_normal_weight * part_weight * cp.sum_squares(residual))
+        for jacobian, normal, target, part_weight, _ in self._linearized_palm_normals(q, frame_idx):
+            residual = normal + cp.Constant(jacobian) @ dqa - target
+            normal_terms.append(self.semantic_config.contact_normal_weight * part_weight * cp.sum_squares(residual))
         normal_objective = cp.sum(normal_terms) if normal_terms else cp.Constant(0.0)
         total_objective = omni_objective + contact_objective + normal_objective
         problem = cp.Problem(cp.Minimize(total_objective), constraints)
