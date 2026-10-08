@@ -432,6 +432,7 @@ class AdaptiveTimestepsSampler:
         adaptive_lambda: float = 0.8,
         adaptive_uniform_ratio: float = 0.1,
         adaptive_alpha: float = 0.001,
+        adaptive_num_bins: int | None = None,
     ):
         self.device = device
         # length of the motion in rl environment time steps
@@ -444,8 +445,13 @@ class AdaptiveTimestepsSampler:
         self.adaptive_uniform_ratio = adaptive_uniform_ratio
         self.adaptive_alpha = adaptive_alpha
 
-        # Match BeyondMimic binning: ~1 second bins at env FPS, with +1 tail bin.
-        self.num_bins = int(self.motion_time_step_total // max(self.env_fps, 1)) + 1
+        # Match BeyondMimic binning by default: ~1 second bins at env FPS, with
+        # +1 tail bin.  Experiments may deliberately use fewer, longer bins to
+        # move a physically fragile reset away from a bin boundary.
+        default_num_bins = int(self.motion_time_step_total // max(self.env_fps, 1)) + 1
+        if adaptive_num_bins is not None and adaptive_num_bins <= 0:
+            raise ValueError("adaptive_num_bins must be positive when provided")
+        self.num_bins = adaptive_num_bins if adaptive_num_bins is not None else default_num_bins
 
         # Match BeyondMimic non-causal kernel.
         self.kernel = torch.tensor(
@@ -624,7 +630,10 @@ class MotionCommand(CommandTermBase):
         # historical path separate so original_adaptive remains unchanged.
         if self._uses_original_adaptive:
             self.adaptive_timesteps_sampler = AdaptiveTimestepsSampler(
-                self.motion.time_step_total, self.device, int(1 / (self._env.dt))
+                self.motion.time_step_total,
+                self.device,
+                int(1 / (self._env.dt)),
+                adaptive_num_bins=self.motion_cfg.adaptive_num_bins,
             )
         if self._uses_semantic_sampling:
             if self.motion.num_motions != 1:

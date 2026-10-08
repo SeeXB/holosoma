@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import logging
 import os
 import sys
@@ -36,6 +37,7 @@ class TrainingContext:
 
     def __enter__(self):
         # Initialize simulation app
+        validate_semantic_contact_reward(self.config)
         self.simulation_app = init_sim_imports(self.config)
         return self
 
@@ -146,6 +148,30 @@ def configure_logging(distributed_conf: MultGPUConfig | None = None, log_dir: Pa
     logging.getLogger().addHandler(LoguruLoggingBridge())
 
 
+def validate_semantic_contact_reward(config: ExperimentConfig) -> None:
+    """Fail before simulator startup if semantic-adaptive omits contact targets."""
+    if config.command is None:
+        return
+    command_term = config.command.setup_terms.get("motion_command")
+    if command_term is None:
+        return
+    motion_cfg = command_term.params.get("motion_config")
+    if motion_cfg is None or motion_cfg.sampling_mode != "semantic_adaptive":
+        return
+    if config.reward is None or "reference_contact_position" not in config.reward.terms:
+        raise ValueError("semantic_adaptive training requires the reference_contact_position reward")
+    params = config.reward.terms["reference_contact_position"].params
+    path_value = params.get("contact_file")
+    expected = params.get("contact_sha256")
+    if not path_value or not expected:
+        raise ValueError("semantic_adaptive training requires contact_file and contact_sha256")
+    path = Path(path_value)
+    if not path.is_file():
+        raise FileNotFoundError(f"Contact target file does not exist: {path}")
+    if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+        raise ValueError("Contact artifact SHA256 mismatch")
+
+
 def train(tyro_config: ExperimentConfig, training_context: TrainingContext | None = None) -> None:
     """Train an agent with optional context for sim app management.
 
@@ -155,6 +181,8 @@ def train(tyro_config: ExperimentConfig, training_context: TrainingContext | Non
         Optional training context with pre-initialized sim app.
         If None, creates and manages sim app automatically.
     """
+
+    validate_semantic_contact_reward(tyro_config)
 
     if training_context is not None:
         # Use the context's pre-initialized sim app

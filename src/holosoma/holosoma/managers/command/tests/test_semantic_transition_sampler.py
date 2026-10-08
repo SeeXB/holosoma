@@ -215,7 +215,9 @@ def test_semantic_fps_mismatch_and_missing_metadata_are_explicit(tmp_path):
         load_semantic_transitions(no_fps, motion_fps=50, motion_time_step_total=100)
 
 
-def test_paper_sampling_presets_use_baseline_reward_and_distinct_modes():
+def test_paper_sampling_presets_use_contact_reward_for_semantic_adaptive():
+    from holosoma.config_values.wbt.g1.reward import g1_29dof_wbt_reward_w_object_contact_position
+
     s0 = g1_29dof_wbt_w_object_b4_s0_original_adaptive_paper_dr
     s1 = g1_29dof_wbt_w_object_b4_s1_semantic_uniform_paper_dr
     s2 = g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr
@@ -233,5 +235,7 @@ def test_paper_sampling_presets_use_baseline_reward_and_distinct_modes():
         "semantic_adaptive",
     ]
     assert motions[2].semantic_critical_interval_weight == pytest.approx(2.0)
-    assert s0.reward.terms == s1.reward.terms == s2.reward.terms == g1_29dof_wbt_reward_w_object.terms
-    assert s0 == replace(s1, command=s0.command) == replace(s2, command=s0.command)
+    assert s0.reward.terms == s1.reward.terms == g1_29dof_wbt_reward_w_object.terms
+    assert s2.reward == g1_29dof_wbt_reward_w_object_contact_position
+    assert s0 == replace(s1, command=s0.command)
+    assert s0 == replace(s2, command=s0.command, reward=s0.reward)

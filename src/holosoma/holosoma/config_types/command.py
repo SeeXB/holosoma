@@ -111,6 +111,14 @@ class MotionConfig:
     use_adaptive_timesteps_sampler: bool = False
     """During training, whether to prioritize training on motion segments where the robot fails often."""
 
+    adaptive_num_bins: int | None = None
+    """Optional original-adaptive timeline bin count.
+
+    ``None`` preserves the historical BeyondMimic-style approximately one-second
+    bins.  A smaller positive value creates longer bins without changing the
+    failure-prioritized sampling algorithm.
+    """
+
     sampling_mode: str = "original_adaptive"
     """Reference-timestep sampler mode.
 

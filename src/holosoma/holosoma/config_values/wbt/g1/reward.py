@@ -113,7 +113,8 @@ g1_29dof_wbt_reward_w_object = RewardManagerCfg(
 )
 
 
-# Explicit opt-in; historical G1/G2/G3 presets retain their exact rewards.
+# Task-specific paths are supplied at launch. Semantic-adaptive training
+# presets select this reward and fail closed when the artifact is omitted.
 g1_29dof_wbt_reward_w_object_contact_position = replace(
     g1_29dof_wbt_reward_w_object,
     terms={

@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -42,6 +43,18 @@ def canonical_hashes(hashes):
     return {str(Path(k).resolve()) if Path(k).is_absolute() else k: v for k, v in hashes.items()}
 
 
+def legacy_preflight(cfg):
+    """Validate a frozen legacy experiment with the preflight code saved at launch."""
+    snapshot = Path(cfg['work_root']).parent / 'source_snapshot/scripts/run_three_group_experiment.py'
+    if not snapshot.is_file():
+        raise FileNotFoundError(f'Legacy preflight snapshot not found: {snapshot}')
+    spec = importlib.util.spec_from_file_location('legacy_run_three_group_experiment', snapshot)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module.preflight(cfg)
+
+
 def report(cfg, root, jobs):
     results = []
     for group, step in jobs:
@@ -49,9 +62,12 @@ def report(cfg, root, jobs):
         if path.is_file():
             results.append(json.loads(path.read_text()))
     results.sort(key=lambda r: (r['group'], r['checkpoint_iteration']))
+    requested_steps = sorted({step for _, step in jobs})
+    note = ('Exact requested checkpoint evaluation.' if requested_steps == [10000]
+            else f'Requested checkpoint iterations: {requested_steps}.')
     payload = {
         'task': cfg['task'], 'updated': now(), 'completed': len(results), 'expected': len(jobs),
-        'note': 'No exact 10k checkpoint exists; 8k and 12k bracket 10k.',
+        'note': note,
         'protocol': 'Paper-DR; seed 42; 32 envs, first 10 completed episodes/env including failures; '
                     'own training reference, frame 0, full (N-1)/fps horizon, no initial pose noise; '
                     'push interval 1-3s, linear 0.3m/s, angular 0.78rad/s; object thresholds 1m/pi/4; '
@@ -81,14 +97,23 @@ def main():
     parser.add_argument('--eval-root', type=Path, required=True)
     parser.add_argument('--steps', nargs='+', type=int, default=[8000, 12000, 20000])
     parser.add_argument('--min-free-mib', type=int, default=5000)
+    parser.add_argument('--gpu', type=int, help='Runtime GPU override; does not change the frozen experiment')
+    parser.add_argument('--skip-render', action='store_true', help='Only compute quantitative evaluation results')
+    parser.add_argument('--legacy-frozen-inputs', action='store_true',
+                        help='Validate legacy inputs with the experiment\'s saved source snapshot')
     parser.add_argument('--check-only', action='store_true')
     args = parser.parse_args()
     cfg = json.loads(args.config.read_text())
-    hashes = preflight(cfg)
+    hashes = legacy_preflight(cfg) if args.legacy_frozen_inputs else preflight(cfg)
     frozen = json.loads((Path(cfg['work_root']) / 'input_sha256.json').read_text())
     if canonical_hashes(hashes) != canonical_hashes(frozen):
         raise ValueError('Production inputs changed since training launch')
-    jobs = [(g, s) for s in args.steps for g in (1, 2, 3)]
+    if args.gpu is not None:
+        if args.gpu < 0:
+            raise ValueError('GPU index must be nonnegative')
+        cfg = dict(cfg, gpu=args.gpu)
+    groups = cfg.get('groups', [1, 2, 3])
+    jobs = [(g, s) for s in args.steps for g in groups]
     inventory = [{ 'group': g, 'iteration': s, 'checkpoint': str(checkpoint_for(cfg, g, s) or '')}
                  for g, s in jobs]
     if args.check_only:
@@ -137,7 +162,9 @@ def main():
                 save_json(state_path, state)
                 report(cfg, root, jobs)
                 print(f"{now()} group={group} iteration={step} SR={result['successes']}/320", flush=True)
-            if not state.get('video_complete'):
+            if args.skip_render:
+                state['render_skipped'] = 'quantitative_checkpoint_sweep'
+            elif not state.get('video_complete'):
                 run_process([cfg['render_python'], 'scripts/render_clothesstand_checkpoint_eval.py',
                              '--actual', out / 'rollout.npz', '--reference', motion, '--scene', cfg['scene_xml'],
                              '--label', f'Group {group}, iteration {step}', '--output', out / 'actual_vs_reference.mp4'],

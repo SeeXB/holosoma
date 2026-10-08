@@ -28,6 +28,13 @@ def recovery_command(cfg, group, work, checkpoint, completed_iteration, run_id):
     return command
 
 
+def runtime_config(cfg, gpu):
+    """Override placement without changing the frozen experiment specification."""
+    if gpu is not None and gpu < 0:
+        raise ValueError("GPU index must be nonnegative")
+    return dict(cfg) if gpu is None else dict(cfg, gpu=gpu)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
@@ -38,6 +45,7 @@ def main():
     parser.add_argument("--allow-paused", action="store_true", help="Explicitly resume a user-paused worker")
     parser.add_argument("--skip-finalization", action="store_true", help="Another worker owns the joint report")
     parser.add_argument("--reason", default="Recovery after training failure")
+    parser.add_argument("--gpu", type=int, help="Runtime GPU override; keep the original experiment immutable")
     args = parser.parse_args()
     cfg = json.loads(args.config.read_text())
     root = Path(cfg["work_root"])
@@ -48,6 +56,8 @@ def main():
         raise ValueError("Recovery checkpoint must belong to this worker")
     if cfg != json.loads((root / "experiment.json").read_text()):
         raise ValueError("Experiment configuration changed since original launch")
+    original_gpu = cfg["gpu"]
+    cfg = runtime_config(cfg, args.gpu)
     lock = (work / "recovery.lock").open("w")
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     state = json.loads(state_path.read_text())
@@ -73,7 +83,8 @@ def main():
     run_id = uuid.uuid4().hex[:8]
     command = recovery_command(cfg, args.group, work, checkpoint, args.completed_iteration, run_id)
     if args.check_only:
-        print(json.dumps({"preflight": "passed", "command": list(map(str, command))}, indent=2))
+        print(json.dumps({"preflight": "passed", "gpu": cfg["gpu"],
+                          "command": list(map(str, command))}, indent=2))
         return
     old_id = state["train_run_id"]
     backup = work / f"failed_state_{old_id}_{int(time.time())}.json"
@@ -83,6 +94,8 @@ def main():
         "reason": args.reason, "source_phase": state["phase"],
         "new_run_id": run_id, "checkpoint": str(checkpoint),
         "completed_iteration": args.completed_iteration,
+        "original_gpu": original_gpu,
+        "runtime_gpu": cfg["gpu"],
         "first_resumed_iteration": args.completed_iteration + 1,
         "target_final_iteration": cfg["iterations"] - 1,
         "save_interval": 500,

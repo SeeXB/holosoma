@@ -9,7 +9,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from holosoma.config_values.wbt.g1.reward import g1_29dof_wbt_reward_w_object
+from holosoma.config_values.wbt.g1.reward import (
+    g1_29dof_wbt_reward_w_object,
+    g1_29dof_wbt_reward_w_object_contact_position,
+)
 from holosoma.managers.reward.terms.wbt import SemanticPlanUndesiredContacts, UndesiredContacts
 from holosoma.utils.semantic_contacts import (
     G1_BODY_PART_LINKS,
@@ -102,19 +105,20 @@ def test_versioned_preset_changes_only_contact_term_and_requires_plan():
         g1_29dof_wbt_w_object_b4_s0_original_adaptive_paper_dr as original,
     )
     from holosoma.config_values.wbt.g1.paper_dr import (
-        g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr as legacy,
+        g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr as adaptive,
     )
     from holosoma.config_values.wbt.g1.paper_dr import (
         g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr as new,
     )
 
-    assert original.reward == legacy.reward == g1_29dof_wbt_reward_w_object
-    for name, cfg in legacy.reward.terms.items():
+    assert original.reward == g1_29dof_wbt_reward_w_object
+    assert adaptive.reward == g1_29dof_wbt_reward_w_object_contact_position
+    for name, cfg in adaptive.reward.terms.items():
         if name == "undesired_contacts":
             assert replace(new.reward.terms[name], func=cfg.func) == cfg
         else:
             assert new.reward.terms[name] == cfg
     assert new.command.setup_terms["motion_command"].params["motion_config"].semantic_file == ""
-    assert new.randomization == legacy.randomization
-    assert new.termination == legacy.termination
-    assert new.observation == legacy.observation
+    assert new.randomization == adaptive.randomization
+    assert new.termination == adaptive.termination
+    assert new.observation == adaptive.observation

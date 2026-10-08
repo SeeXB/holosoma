@@ -10,10 +10,18 @@ from unittest.mock import Mock, patch
 import torch
 
 from holosoma.agents.ppo.ppo import PPO
-from scripts.resume_three_group_worker import recovery_command
+from scripts.resume_three_group_worker import recovery_command, runtime_config
 
 
 class RecoveryTest(unittest.TestCase):
+    def test_gpu_override_does_not_mutate_frozen_config(self):
+        cfg = dict(gpu=1, iterations=30000, num_envs=4096)
+        self.assertEqual(runtime_config(cfg, 0), dict(cfg, gpu=0))
+        self.assertEqual(cfg["gpu"], 1)
+        self.assertEqual(runtime_config(cfg, None), cfg)
+        with self.assertRaises(ValueError):
+            runtime_config(cfg, -1)
+
     def test_opt_in_memory_trim_preserves_update_count(self):
         fake = SimpleNamespace(
             _train_mode=lambda: None, env=SimpleNamespace(reset_all=lambda: {}),

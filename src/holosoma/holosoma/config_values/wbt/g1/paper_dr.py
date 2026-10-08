@@ -42,7 +42,10 @@ from holosoma.config_values.wbt.g1.command import motion_config_w_object_transit
 from holosoma.config_values.wbt.g1.experiment import (
     g1_29dof_wbt_w_object_semantic_r1_b4_omni,
 )
-from holosoma.config_values.wbt.g1.reward import g1_29dof_wbt_reward_w_object
+from holosoma.config_values.wbt.g1.reward import (
+    g1_29dof_wbt_reward_w_object,
+    g1_29dof_wbt_reward_w_object_contact_position,
+)
 from holosoma.config_values.wbt.g1.observation import (
     actor_obs_shared,
     g1_29dof_wbt_observation_w_object,
@@ -235,10 +238,13 @@ g1_29dof_wbt_w_object_b4_semantic_paper_dr = _paper_experiment(
     g1_29dof_wbt_w_object_semantic_r1_b4_omni,
     command_cfg=paper_command_semantic_adaptive,
 )
+g1_29dof_wbt_w_object_b4_semantic_paper_dr = replace(
+    g1_29dof_wbt_w_object_b4_semantic_paper_dr,
+    reward=g1_29dof_wbt_reward_w_object_contact_position,
+)
 
-# First-round sampling ablations.  All three presets share the original Omni
-# reward, PPO, DR, observations, and termination; only reset-time sampling mode
-# differs.
+# Sampling ablations. S0/S1 retain the original Omni reward. All new
+# semantic-adaptive runs use semantic-key-part surface contact targets.
 g1_29dof_wbt_w_object_b4_s0_original_adaptive_paper_dr = _paper_experiment(
     g1_29dof_wbt_w_object_semantic_r1_b4_omni,
     command_cfg=paper_command,
@@ -251,10 +257,14 @@ g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr = _paper_experiment(
     g1_29dof_wbt_w_object_semantic_r1_b4_omni,
     command_cfg=paper_command_semantic_adaptive,
 )
+g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr = replace(
+    g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
+    reward=g1_29dof_wbt_reward_w_object_contact_position,
+)
 
-# Anatomy-v2 experiment. Keep the first-round sampling-only S2 preset frozen
-# so loading/evaluating its existing checkpoints does not change reward rules.
-_semantic_contact_terms = dict(g1_29dof_wbt_reward_w_object.terms)
+# Anatomy-v2 experiment additionally exempts semantic key parts from the
+# generic undesired-contact penalty; it keeps the positive contact term above.
+_semantic_contact_terms = dict(g1_29dof_wbt_reward_w_object_contact_position.terms)
 _semantic_contact_terms["undesired_contacts"] = replace(
     _semantic_contact_terms["undesired_contacts"],
     func="holosoma.managers.reward.terms.wbt:SemanticPlanUndesiredContacts",
@@ -274,7 +284,7 @@ _semantic_contact_command = replace(
 g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr = replace(
     g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
     command=_semantic_contact_command,
-    reward=replace(g1_29dof_wbt_reward_w_object, terms=_semantic_contact_terms),
+    reward=replace(g1_29dof_wbt_reward_w_object_contact_position, terms=_semantic_contact_terms),
 )
 
 __all__ = [

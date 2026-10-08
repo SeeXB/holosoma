@@ -84,6 +84,11 @@ def train_command(cfg, group, train_base, run_id):
         command += ["--logger.id", run_id, "--logger.group", f"{cfg['task']}_{cfg['tag']}"]
     if "save_interval" in cfg:
         command += ["--algo.config.save-interval", cfg["save_interval"]]
+    if cfg.get("adaptive_num_bins") is not None:
+        command += [
+            "--command.setup-terms.motion-command.params.motion-config.adaptive-num-bins",
+            cfg["adaptive_num_bins"],
+        ]
     if cfg.get("undesired_contacts_body_names"):
         command += [
             "--reward.terms.undesired-contacts.params.undesired-contacts-body-names",
@@ -91,10 +96,11 @@ def train_command(cfg, group, train_base, run_id):
         ]
     if group == 3:
         command += ["--command.setup-terms.motion-command.params.motion-config.semantic-file", cfg["semantic_file"]]
-        if cfg.get("contact_file"):
-            command.insert(4, "reward:g1-29dof-wbt-w-object-contact-position")
-            command += ["--reward.terms.reference-contact-position.params.contact-file", cfg["contact_file"],
-                        "--reward.terms.reference-contact-position.params.contact-sha256", cfg["contact_sha256"]]
+        if not cfg.get("contact_file") or not cfg.get("contact_sha256"):
+            raise ValueError("Group 3 semantic_adaptive requires contact_file and contact_sha256")
+        command.insert(4, "reward:g1-29dof-wbt-w-object-contact-position")
+        command += ["--reward.terms.reference-contact-position.params.contact-file", cfg["contact_file"],
+                    "--reward.terms.reference-contact-position.params.contact-sha256", cfg["contact_sha256"]]
     return command
 
 
@@ -214,10 +220,22 @@ def preflight(cfg):
     groups = cfg.get("groups", [1, 2, 3])
     if not groups or len(set(groups)) != len(groups) or any(g not in (1, 2, 3) for g in groups):
         raise ValueError("groups must be a nonempty unique subset of [1, 2, 3]")
+    if cfg.get("adaptive_num_bins") is not None and int(cfg["adaptive_num_bins"]) <= 0:
+        raise ValueError("adaptive_num_bins must be positive when provided")
+    if 3 in groups and (not cfg.get("contact_file") or not cfg.get("contact_sha256")):
+        raise ValueError("semantic-adaptive group 3 requires contact_file and contact_sha256")
     if cfg.get("contact_file"):
         contact = Path(cfg["contact_file"])
         if hashlib.sha256(contact.read_bytes()).hexdigest() != cfg["contact_sha256"]:
             raise ValueError("Contact target SHA256 mismatch")
+        with np.load(contact, allow_pickle=False) as data:
+            metadata = json.loads(str(data["metadata_json"].item()))
+        if metadata.get("schema") != "holosoma.reference_surface_contacts.v2":
+            raise ValueError("New semantic-adaptive runs require a v2 semantic-key-part contact artifact")
+        if metadata.get("motion_sha256") != hashlib.sha256(Path(cfg["b4_motion"]).read_bytes()).hexdigest():
+            raise ValueError("Contact artifact does not match b4_motion")
+        if metadata.get("semantic_sha256") != hashlib.sha256(Path(cfg["semantic_file"]).read_bytes()).hexdigest():
+            raise ValueError("Contact artifact does not match semantic_file")
     for key in ("original_motion", "b4_motion", "semantic_file", "object_urdf", "scene_xml", "render_python"):
         if not Path(cfg[key]).is_file():
             raise FileNotFoundError(f"{key}: {cfg[key]}")

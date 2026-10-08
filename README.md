@@ -21,6 +21,28 @@ src/
 └── holosoma_retargeting/  # Motion retargeting from human motion data to robots
 ```
 
+## Canonical InterMimic trajectory inputs
+
+All registered OMOMO/InterMimic retargeting runs must read their human/object
+trajectory `.pt` files from:
+
+```text
+src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/official_inputs/
+```
+
+These are the processed InterMimic trajectories and are the repository's
+single authoritative retargeting inputs. Do not start a new run from a copied
+trajectory under `exp/`, an older batch input directory, `OMOMO_new`, or an
+OMOMO bundle, even when its checksum happens to match. If an official `.pt`
+file is missing, stop and add or register it instead of silently falling back
+to another directory.
+
+The files under `demo_data/omomo/bundles/<task>/input/` may be used to derive
+semantic/contact evidence, but they are not the canonical robot-retargeting
+trajectory source. Semantic plans are selected independently and must be
+recorded with their path and SHA-256. A run must likewise record the scene path
+and SHA-256 when a machine-local, path-rewritten scene is required.
+
 ## Documentation
 
 - **[Data Layout](DATA_LAYOUT.md)** - Canonical input directories, external dataset links, and experiment outputs

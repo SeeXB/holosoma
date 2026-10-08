@@ -4,6 +4,27 @@ This repository provides tools for retargeting human motion data to humanoid rob
 
 **Data Requirements**: The retargeting pipeline requires motion data in world joint positions. For custom data, you need to prepare world joint positions in shape `(T, J, 3)` where T is the number of frames and J is the number of joints, and modify `demo_joints` and `joints_mapping` defined in `config_types/data_type.py`.
 
+## Canonical OMOMO/InterMimic input policy
+
+For repository experiments, the only authoritative OMOMO trajectory root is:
+
+```text
+demo_data/omomo/official_inputs/
+```
+
+Its `.pt` files are processed InterMimic trajectories. Pass this directory to
+`--data-path`/`--data_path` or `--data-dir`; do not use copied trajectories
+from `exp/retargeting/.../inputs`, legacy `demo_data/OMOMO_new` directories, or
+`demo_data/omomo/bundles`. This rule still applies if a copied file currently
+has the same checksum. Missing official inputs are an error and must not cause
+an implicit fallback.
+
+Bundle files such as
+`demo_data/omomo/bundles/<task>/input/omomo_gt_sequence.npz` are auxiliary
+human-mesh/object evidence for semantic or contact analysis. They are not the
+formal robot-retargeting input. Keep trajectory, semantic-plan, and scene
+provenance separate, and record the path and SHA-256 of each in every run.
+
 ## Semantic Keyframes Before Retargeting
 
 The optional semantic-keyframe stage preserves the input boundary of the human-video pipeline:
@@ -40,10 +61,10 @@ The repository includes the migrated `sub3_largebox_003` example output under `h
 
 ```bash
 # Robot-only (OMOMO)
-python examples/robot_retarget.py --data_path demo_data/OMOMO_new --task-type robot_only --task-name sub3_largebox_003 --data_format smplh --retargeter.debug --retargeter.visualize
+python examples/robot_retarget.py --data_path demo_data/omomo/official_inputs --task-type robot_only --task-name sub3_largebox_003 --data_format smplh --retargeter.debug --retargeter.visualize
 
 # Object interaction (OMOMO)
-python examples/robot_retarget.py --data_path demo_data/OMOMO_new --task-type object_interaction --task-name sub3_largebox_003 --data_format smplh --retargeter.debug --retargeter.visualize
+python examples/robot_retarget.py --data_path demo_data/omomo/official_inputs --task-type object_interaction --task-name sub3_largebox_003 --data_format smplh --retargeter.debug --retargeter.visualize
 
 # Climbing
 python examples/robot_retarget.py --data_path demo_data/climb --task-type climbing --task-name mocap_climb_seq_0 --data_format mocap --robot-config.robot-urdf-file models/g1/g1_29dof_spherehand.urdf --retargeter.debug --retargeter.visualize
@@ -84,7 +105,7 @@ python examples/robot_retarget.py \
     --task-type object_interaction \
     --task-name sub3_largebox_003 \
     --data-format smplh \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --save-dir benchmark_results_semantic_budget/runs/semantic_budget \
     --semantic.mode uniform2_semantic_weight_semantic_budget \
     --semantic.semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
@@ -98,7 +119,7 @@ python examples/robot_retarget.py \
     --task-type object_interaction \
     --task-name sub3_largebox_003 \
     --data-format smplh \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --save-dir benchmark_results/original \
     --semantic.mode original \
     --semantic.profile-dir benchmark_results/original
@@ -109,7 +130,7 @@ Run the registered Legacy compatibility check, Semantic/Random/Original budget c
 ```bash
 python examples/benchmark_semantic_budget.py \
     --task-name sub3_largebox_003 \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
     --output-dir benchmark_results_semantic_budget
 ```
@@ -121,7 +142,7 @@ Run the registered Full-Event refinement curve with:
 ```bash
 python examples/benchmark_full_event_semantic_budget.py \
     --task-name sub3_largebox_003 \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
     --output-dir benchmark_results_full_event_semantic_budget
 ```
@@ -139,7 +160,7 @@ Run the causal approach body-only validation with:
 ```bash
 python examples/benchmark_full_event_approach_body_only.py \
     --task-name sub3_largebox_003 \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
     --output-dir benchmark_results_full_event_approach_body_only
 ```
@@ -155,7 +176,7 @@ Run the generic transition-truncation diagnostic with:
 ```bash
 python examples/benchmark_full_event_transition_truncation.py \
     --task-name sub3_largebox_003 \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
     --output-dir benchmark_results_full_event_transition_truncation
 ```
@@ -171,7 +192,7 @@ Run the B2/B4/B6/B8/B10 exact-trigger budget curve with:
 ```bash
 python examples/benchmark_transition_truncation_budget_curve.py \
     --task-name sub3_largebox_003 \
-    --data-path demo_data/OMOMO_new \
+    --data-path demo_data/omomo/official_inputs \
     --semantic-keyframe-path demo_data/semantic_keyframes/sub3_largebox_003_semantic_v2.json \
     --output-dir benchmark_results_full_event_transition_truncation
 ```
@@ -185,14 +206,87 @@ the registered curve and preserves zero official penetration.
 
 Hand/object distance is measured against the existing fixed object surface samples, so it is a reproducible surface approximation rather than exact triangle-mesh distance. The official optimizer has no velocity-limit constraint; velocity violation is therefore reported as unavailable unless `--semantic.rescue-velocity-limit-per-frame` is explicitly configured. Self-collision is likewise reported as unavailable unless collision pairs are configured. No threshold is tuned from benchmark results.
 
+### Source-only anchor-force extension for Semantic B4
+
+The anchor-force method augments the registered Semantic B4 SQP objective with
+two source-derived terms during the scripted grasp interval:
+
+- a point term between a fixed robot-hand support point and a time-varying
+  object-local anchor;
+- a normal term aligning the hand support normal against the object surface
+  normal.
+
+Targets are built directly from the official InterMimic SMPL/object motion.
+The builder refuses robot `qpos` input, records source/plan hashes, and uses a
+script-derived interval and anchor frame; manual frame overrides are not part
+of the production path. The robot is not replaced: `--hand-model original`
+and `directional_support` select support points on the original rubber-hand
+meshes. If compound object collision is needed,
+`build_original_hand_force_affordance_scene.py` changes only the object and
+verifies that the source robot subtree is byte-equivalent.
+
+The method remains inside the normal B4 solve. Frame 0 uses 50 iterations,
+ordinary frames use 2, and semantic trigger frames use 4; contact activation
+never adds SQP iterations or a rescue pass. The validated default point/normal
+weights are `2000/2`.
+
+A task run is assembled in four explicit stages:
+
+```bash
+python tools/derive_force_affordance_interval.py \
+    --official-input <official_inputs/task.pt> \
+    --semantic-plan <bundle/semantic_keyframes/semantic_plan.json> \
+    --object-mesh <object.obj> \
+    --output <run>/inputs/force_interval.json
+
+python tools/build_force_affordance_targets.py \
+    --official-input <official_inputs/task.pt> \
+    --semantic-plan <bundle/semantic_keyframes/semantic_plan.json> \
+    --object-mesh <object.obj> \
+    --interval-plan <run>/inputs/force_interval.json \
+    --hand-model original \
+    --hand-point-policy directional_support \
+    --left-hand-mesh <left_rubber_hand.obj> \
+    --right-hand-mesh <right_rubber_hand.obj> \
+    --output <run>/inputs/force_affordance_targets.npz
+
+python tools/run_current_semantic_retarget_comparison.py \
+    --output <run>/retarget \
+    --tasks <task> \
+    --methods original semantic_b4 semantic_b4_force_affordance \
+    --semantic-plan <bundle/semantic_keyframes/semantic_plan.json> \
+    --omomo-input-root src/holosoma_retargeting/holosoma_retargeting/demo_data/omomo/official_inputs \
+    --omomo-scene <original-hand scene.xml> \
+    --contact-targets <run>/inputs/force_affordance_targets.npz
+```
+
+For semantic-adaptive RL, transfer those same object anchors and activation
+values to the training half-sphere geometry instead of detecting contact from
+the RL trajectory:
+
+```bash
+python scripts/adapt_retarget_contacts_for_rl.py \
+    --retarget-targets <run>/inputs/force_affordance_targets.npz \
+    --motion <rl_motion.npz> \
+    --semantic-file <semantic.json> \
+    --robot-urdf <main_mesh_collision_halfspherehand.urdf> \
+    --output <reference_surface_contacts_v2.npz>
+```
+
+The adapter finds a directional support point on each half-sphere and expresses
+it in the wrist body used by Isaac. The RL reward then compares that body-local
+point with the transferred object-local anchor, weights the squared error by
+the smooth source activation, and validates motion, semantic, artifact, and
+geometry hashes before training. No per-step nearest-point search is used.
+
 ## Batch Processing for Motion Retargeting
 
 ```bash
 # Robot-only (OMOMO)
-python examples/parallel_robot_retarget.py --data-dir demo_data/OMOMO_new --task-type robot_only --data_format smplh --save_dir demo_results_parallel/g1/robot_only/omomo --task-config.object-name ground
+python examples/parallel_robot_retarget.py --data-dir demo_data/omomo/official_inputs --task-type robot_only --data_format smplh --save_dir demo_results_parallel/g1/robot_only/omomo --task-config.object-name ground
 
 # Object interaction (OMOMO)
-python examples/parallel_robot_retarget.py --data-dir demo_data/OMOMO_new --task-type object_interaction --data_format smplh --save_dir demo_results_parallel/g1/object_interaction/omomo --task-config.object-name largebox
+python examples/parallel_robot_retarget.py --data-dir demo_data/omomo/official_inputs --task-type object_interaction --data_format smplh --save_dir demo_results_parallel/g1/object_interaction/omomo --task-config.object-name largebox
 
 # Climbing
 python examples/parallel_robot_retarget.py --data-dir demo_data/climb --task-type climbing --data_format mocap --robot-config.robot-urdf-file models/g1/g1_29dof_spherehand.urdf --task-config.object-name multi_boxes --save_dir demo_results_parallel/g1/climbing/mocap_climb
@@ -209,7 +303,9 @@ We provide `demo_data/` for fast testing. To test on more motion sequences, plea
 Our pipeline uses the processed dataset by InterMimic. The data format differs from the original OMOMO dataset.
 
 1. Download the processed OMOMO data from [this link](https://drive.google.com/file/d/141YoPOd2DlJ4jhU2cpZO5VU5GzV_lm5j/view)
-2. Extract the downloaded folder to `demo_data/OMOMO_new`
+2. For ad-hoc local experiments, extract it outside the canonical input tree.
+   Files become registered repository inputs only after they are placed and
+   validated under `demo_data/omomo/official_inputs`.
 
 The data should contain `.pt` files.
 
@@ -335,13 +431,13 @@ python viser_player.py --robot_urdf models/g1/g1_29dof.urdf \
 
 ```bash
 # Evaluate robot-object interaction
-python evaluation/eval_retargeting.py --res_dir demo_results_parallel/g1/object_interaction/omomo --data_dir demo_data/OMOMO_new --data_type "robot_object"
+python evaluation/eval_retargeting.py --res_dir demo_results_parallel/g1/object_interaction/omomo --data_dir demo_data/omomo/official_inputs --data_type "robot_object"
 
 # Evaluate climbing sequence
 python evaluation/eval_retargeting.py --res_dir demo_results_parallel/g1/climbing/mocap_climb --data_dir demo_data/climb --data_type "robot_terrain" --robot-config.robot-urdf-file models/g1/g1_29dof_spherehand.urdf
 
 # Evaluate robot only (OMOMO)
-python evaluation/eval_retargeting.py --res_dir demo_results_parallel/g1/robot_only/omomo --data_dir demo_data/OMOMO_new --data_type "robot_only"
+python evaluation/eval_retargeting.py --res_dir demo_results_parallel/g1/robot_only/omomo --data_dir demo_data/omomo/official_inputs --data_type "robot_only"
 ```
 
 ## Prepare Data for Training RL Whole-Body Tracking Policy

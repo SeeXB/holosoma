@@ -595,6 +595,7 @@ def build_semantic_vertex_weight_result(
     num_human_vertices: int,
     num_vertices: int,
     config: SemanticRetargetingConfig,
+    suppressed_object_neighbor_parts: Iterable[str] = (),
 ) -> SemanticWeightResult:
     """Build de-duplicated Part/Edge weights on existing Laplacian residuals.
 
@@ -617,6 +618,7 @@ def build_semantic_vertex_weight_result(
     components = config.semantic_weight_components
     sigma = config.semantic_temporal_sigma
     body_only_events = set(config.body_only_weight_events)
+    suppressed_parts = set(suppressed_object_neighbor_parts)
     for event in events:
         if config.uses_transition_truncated_weight_support and not _event_inside_transition_support(
             frame_idx, event, events
@@ -635,7 +637,7 @@ def build_semantic_vertex_weight_result(
                 continue
             object_neighbors = (
                 []
-                if event.name in body_only_events
+                if event.name in body_only_events or body_part in suppressed_parts
                 else [
                     int(neighbor_idx)
                     for neighbor_idx in adjacency[vertex_idx]

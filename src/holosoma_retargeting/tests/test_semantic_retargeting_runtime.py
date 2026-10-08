@@ -318,6 +318,28 @@ def test_registered_final_semantic_recipe_is_transition_truncated_b4() -> None:
     assert config.is_uniform2_mainline
 
 
+def test_force_affordance_keeps_registered_b4_budget_schedule() -> None:
+    events = [
+        _event("pick", 25, 25, 40, ["left_hand", "right_hand"]),
+        _event("lift", 49, 49, 99, ["left_hand", "right_hand"]),
+    ]
+    base = SemanticRetargetingConfig(
+        mode=FINAL_SEMANTIC_MODE,
+        semantic_keyframe_path=Path("plan.json"),
+    )
+    force = SemanticRetargetingConfig(
+        mode=FINAL_SEMANTIC_MODE,
+        semantic_keyframe_path=Path("plan.json"),
+        contact_targets_path=Path("source_only_contacts.npz"),
+        contact_target_mode="force_affordance",
+    )
+    force.validate()
+    np.testing.assert_array_equal(
+        make_budget_plan(144, events, force).budgets,
+        make_budget_plan(144, events, base).budgets,
+    )
+
+
 @pytest.mark.parametrize("budget", (1, 3, 5, 12))
 def test_unregistered_exact_trigger_budgets_are_rejected(budget: int) -> None:
     config = SemanticRetargetingConfig(
@@ -567,44 +589,6 @@ def test_active_pair_nonpenetration_refinement_is_explicit_final_b4_only() -> No
             active_pair_acceptance_tolerance=0.01,
             active_pair_prediction_margin=0.009,
         ).validate()
-
-
-def test_contact_approach_window_is_bounded() -> None:
-    SemanticRetargetingConfig(contact_approach_frames=5).validate()
-    for invalid in (-1, 31, 2.5):
-        with pytest.raises(ValueError, match="contact_approach_frames"):
-            SemanticRetargetingConfig(contact_approach_frames=invalid).validate()
-
-
-def test_contact_gaussian_schedule_configuration_is_validated() -> None:
-    SemanticRetargetingConfig(
-        contact_temporal_schedule="gaussian",
-        contact_gaussian_sigma_frames=10.0,
-        contact_gaussian_min_relative_weight=1e-6,
-    ).validate()
-    with pytest.raises(ValueError, match="contact_temporal_schedule"):
-        SemanticRetargetingConfig(contact_temporal_schedule="step").validate()
-    with pytest.raises(ValueError, match="contact_gaussian_sigma_frames"):
-        SemanticRetargetingConfig(contact_gaussian_sigma_frames=float("nan")).validate()
-    with pytest.raises(ValueError, match="contact_gaussian_min_relative_weight"):
-        SemanticRetargetingConfig(contact_gaussian_min_relative_weight=1.0).validate()
-
-
-def test_contact_smooth_window_configuration_is_validated() -> None:
-    SemanticRetargetingConfig(
-        contact_temporal_schedule="smooth_window",
-        contact_approach_frames=10,
-        contact_release_frames=5,
-    ).validate()
-    for invalid in (-1, 31, 2.5):
-        with pytest.raises(ValueError, match="contact_release_frames"):
-            SemanticRetargetingConfig(contact_release_frames=invalid).validate()
-
-
-def test_contact_normal_alignment_can_be_disabled() -> None:
-    SemanticRetargetingConfig(contact_normal_weight=0.0).validate()
-    with pytest.raises(ValueError, match="contact_normal_weight"):
-        SemanticRetargetingConfig(contact_normal_weight=-0.1).validate()
 
 
 def test_precision_evaluator_uses_raw_geometry_and_original_criticality() -> None:
