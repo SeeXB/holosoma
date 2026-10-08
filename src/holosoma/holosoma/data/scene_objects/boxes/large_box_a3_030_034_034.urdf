@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<robot name="largebox_a3_030_034_034">
+  <link name="baseLink">
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.00192666667" ixy="0" ixz="0" iyy="0.00171333333" iyz="0" izz="0.00171333333"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="largebox.obj" scale="0.636734202 0.741176517 0.833546868"/>
+      </geometry>
+      <material name="mat">
+        <color rgba="0.7 0.8 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <!-- Match the visual mesh bounds, but provide a planar support face. -->
+      <origin rpy="0 0 0" xyz="0.00095149 -0.00053022 0.00479755"/>
+      <geometry>
+        <box size="0.30 0.34 0.34"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>

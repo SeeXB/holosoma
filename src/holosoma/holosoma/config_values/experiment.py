@@ -27,6 +27,10 @@ from holosoma.config_values.wbt.g1.paper_dr import (
     g1_29dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
     g1_29dof_wbt_w_object_b4_semantic_paper_dr,
 )
+from holosoma.config_values.wbt.a3.experiment import (
+    a3_31dof_wbt_w_object_b4_s0_original_adaptive_paper_dr,
+    a3_31dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
+)
 from holosoma.utils.config_registry import ConfigRegistry
 
 EXPERIMENT_REGISTRY = ConfigRegistry(ExperimentConfig, group="holosoma.config.experiment")
@@ -73,6 +77,14 @@ EXPERIMENT_REGISTRY.add(
 )
 
 EXPERIMENT_REGISTRY.add("g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr", g1_29dof_wbt_w_object_b4_s2_semantic_contacts_paper_dr)
+EXPERIMENT_REGISTRY.add(
+    "a3_31dof_wbt_w_object_b4_s0_original_adaptive_paper_dr",
+    a3_31dof_wbt_w_object_b4_s0_original_adaptive_paper_dr,
+)
+EXPERIMENT_REGISTRY.add(
+    "a3_31dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr",
+    a3_31dof_wbt_w_object_b4_s2_semantic_adaptive_paper_dr,
+)
 
 def get_annotated_experiment_config() -> type:
     """Return the ``exp:`` subcommand type."""

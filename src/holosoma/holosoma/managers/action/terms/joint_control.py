@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import torch
@@ -335,3 +336,14 @@ class JointPositionActionTerm(ActionTermBase):
                     self.action_scales[i] = control_cfg.action_scale * effort / stiffness
         else:
             self.action_scales[:] = control_cfg.action_scale
+
+        overrides = control_cfg.action_scale_overrides
+        unknown = set(overrides) - set(env.dof_names)
+        if unknown:
+            raise ValueError(f"Action scale overrides reference unknown joints: {sorted(unknown)}")
+        for i, name in enumerate(env.dof_names):
+            if name in overrides:
+                scale = overrides[name]
+                if not math.isfinite(scale) or scale <= 0.0:
+                    raise ValueError(f"Action scale override for '{name}' must be finite and positive, got {scale}")
+                self.action_scales[i] = scale
