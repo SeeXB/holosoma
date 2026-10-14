@@ -34,6 +34,42 @@ def contact_position_reward(body_points, object_points, active, sigma):
     return reward, mse.sqrt()
 
 
+def contact_force_gate(object_on_body_forces, outward_normals, activation, minimum_normal_force):
+    """Require current compressive object contact on EVERY active target.
+
+    Force vectors must come from an object-filtered sensor. The outward
+    object normal is the direction of the object's reaction force on the
+    contacting robot part. Tangential/reversed forces cannot open the gate.
+    A hard gate retains the position objective and never rewards force growth.
+    """
+    normal_force = (object_on_body_forces * outward_normals).sum(dim=-1).clamp_min(0.0)
+    finite = torch.isfinite(object_on_body_forces).all(dim=-1) & torch.isfinite(normal_force)
+    normal_force = torch.where(finite, normal_force, 0.0)
+    loaded = finite & (normal_force >= minimum_normal_force)
+    active = activation > 0
+    gate = active.any(dim=-1) & (loaded | ~active).all(dim=-1)
+    return gate, normal_force, loaded & active
+
+
+def contact_force_shaped_reward(body_points, object_points, activation, normal_force,
+                                sigma, approach_fraction, force_scale_n):
+    """Small approach signal plus bounded, independent per-part force feedback.
+
+    The scale is a saturation scale, not a binary grasp threshold. A part
+    cannot borrow another part's force; inactive parts contribute nothing.
+    """
+    weight = activation.to(dtype=body_points.dtype)
+    active = weight > 0
+    count = active.sum(dim=-1).clamp_min(1)
+    squared = (body_points - object_points).square().sum(dim=-1)
+    proximity = torch.exp(-squared / sigma**2)
+    pressure = torch.where(torch.isfinite(normal_force), normal_force.clamp_min(0), 0.0)
+    force_fraction = (pressure / force_scale_n).clamp(max=1.0)
+    approach = (weight * proximity * approach_fraction).sum(dim=-1) / count
+    bonus = (weight * proximity * (1 - approach_fraction) * force_fraction).sum(dim=-1) / count
+    return approach + bonus, approach, bonus, force_fraction
+
+
 class ReferenceContactPosition(RewardTermBase):
     """Track active contact anchors for semantic key parts only."""
 
@@ -64,6 +100,7 @@ class ReferenceContactPosition(RewardTermBase):
             local_object = data["object_points_local"].copy()
             active = data["active"].copy()
             activation = data["activation"].copy() if "activation" in data.files else active.astype(np.float32)
+            local_normals = data["object_normals_local"].copy() if "object_normals_local" in data.files else None
         motion_file = Path(command.motion_cfg.motion_file)
         if hashlib.sha256(motion_file.read_bytes()).hexdigest() != metadata["motion_sha256"]:
             raise ValueError("Contact targets were generated for a different motion")
@@ -101,10 +138,20 @@ class ReferenceContactPosition(RewardTermBase):
         self.object = torch.as_tensor(local_object, device=env.device, dtype=torch.float32)
         self.active = torch.as_tensor(active, device=env.device)
         self.activation = torch.as_tensor(activation, device=env.device, dtype=torch.float32)
+        self.body_names = names
+        self.object_normals = None
+        if local_normals is not None:
+            if (
+                local_normals.shape != local_object.shape
+                or not np.isfinite(local_normals).all()
+                or not np.allclose(np.linalg.norm(local_normals, axis=-1), 1.0, atol=1e-4)
+            ):
+                raise ValueError("Object contact normals must be finite unit vectors matching anchors")
+            self.object_normals = torch.as_tensor(local_normals, device=env.device, dtype=torch.float32)
         self.command = command
         self.ready = True
 
-    def __call__(self, env, **kwargs):
+    def _world_points(self, env):
         if not self.ready:
             self._initialize(env)
         command = self.command
@@ -116,6 +163,10 @@ class ReferenceContactPosition(RewardTermBase):
         obj = command._simulator_object_states()
         object_rotation = obj[:, None, 3:7].expand(-1, len(self.body_indexes), -1)
         object_world = obj[:, None, :3] + quat_apply(object_rotation, self.object[step], w_last=True)
+        return step, body_world, object_world, object_rotation
+
+    def _position_reward(self, step, body_world, object_world):
+        command = self.command
         active = self.active[step]
         activation = self.activation[step]
         reward, error = contact_position_reward(body_world, object_world, activation, self.sigma)
@@ -125,5 +176,97 @@ class ReferenceContactPosition(RewardTermBase):
         command.metrics["contact/position_reward_raw"] = reward
         return reward
 
+    def __call__(self, env, **kwargs):
+        step, body_world, object_world, _ = self._world_points(env)
+        return self._position_reward(step, body_world, object_world)
+
     def reset(self, env_ids=None):
         pass
+
+
+class ReferenceContactForce(ReferenceContactPosition):
+    """Position reward gated by current, target-object-filtered contact force."""
+
+    def __init__(self, cfg, env):
+        super().__init__(cfg, env)
+        self.minimum_normal_force = float(cfg.params.get("minimum_normal_force_n", 1.0))
+        self.object_name = str(cfg.params.get("object_name", "object"))
+        if not np.isfinite(self.minimum_normal_force) or self.minimum_normal_force <= 0:
+            raise ValueError("minimum_normal_force_n must be finite and strictly positive")
+
+    def _initialize(self, env):
+        super()._initialize(env)
+        self.ready = False
+        if self.object_normals is None:
+            raise ValueError("Force-gated contacts require object_normals_local in the contact artifact")
+        if not callable(getattr(env.simulator, "get_object_contact_forces", None)):
+            raise ValueError("Force-gated contacts require target-object-filtered contact sensors")
+        if getattr(self.command, "object_name", self.object_name) != self.object_name:
+            raise ValueError("Contact force sensors must filter the motion command's tracked object")
+        self.ready = True
+
+    def __call__(self, env, **kwargs):
+        step, body_world, object_world, object_rotation = self._world_points(env)
+        position_reward = self._position_reward(step, body_world, object_world)
+        normal_world = quat_apply(object_rotation, self.object_normals[step], w_last=True)
+        forces = env.simulator.get_object_contact_forces(self.body_names, self.object_name)
+        activation = self.activation[step]
+        gate, normal_force, loaded = contact_force_gate(
+            forces, normal_world, activation, self.minimum_normal_force,
+        )
+        reward = torch.where(gate, position_reward, torch.zeros_like(position_reward))
+        active = activation > 0
+        count = active.sum(dim=-1).clamp_min(1)
+        metrics = self.command.metrics
+        metrics["contact/force_gate"] = gate.float()
+        metrics["contact/loaded_part_fraction"] = loaded.sum(dim=-1).float() / count
+        force_norm = torch.linalg.vector_norm(forces, dim=-1)
+        metrics["contact/object_force_norm_mean_n"] = (force_norm * active).sum(dim=-1) / count
+        metrics["contact/normal_force_mean_n"] = (normal_force * active).sum(dim=-1) / count
+        minimum = normal_force.masked_fill(~active, float("inf")).min(dim=-1).values
+        metrics["contact/normal_force_min_n"] = torch.where(active.any(dim=-1), minimum, 0.0)
+        metrics["contact/force_reward_raw"] = reward
+        return reward
+
+
+class ReferenceContactForceShaped(ReferenceContactForce):
+    """Dense approach shaping, amplified by actual force on each key part.
+
+    Explicitly opt-in: frozen hard-gated checkpoints retain their old reward.
+    No actor observation, tracking reward or sampler setting is changed.
+    """
+
+    def __init__(self, cfg, env):
+        ReferenceContactPosition.__init__(self, cfg, env)
+        self.object_name = str(cfg.params.get("object_name", "object"))
+        self.approach_fraction = float(cfg.params.get("approach_fraction", 0.1))
+        self.force_scale_n = float(cfg.params.get("force_scale_n", 4.0))
+        if not np.isfinite(self.approach_fraction) or not 0 < self.approach_fraction < 1:
+            raise ValueError("approach_fraction must be finite and strictly between zero and one")
+        if not np.isfinite(self.force_scale_n) or self.force_scale_n <= 0:
+            raise ValueError("force_scale_n must be finite and strictly positive")
+
+    def __call__(self, env, **kwargs):
+        step, body_world, object_world, object_rotation = self._world_points(env)
+        self._position_reward(step, body_world, object_world)  # Retain position diagnostics.
+        normals = quat_apply(object_rotation, self.object_normals[step], w_last=True)
+        forces = env.simulator.get_object_contact_forces(self.body_names, self.object_name)
+        activation = self.activation[step]
+        _, pressure, _ = contact_force_gate(forces, normals, activation, self.force_scale_n)
+        reward, approach, bonus, fraction = contact_force_shaped_reward(
+            body_world, object_world, activation, pressure,
+            self.sigma, self.approach_fraction, self.force_scale_n,
+        )
+        active = activation > 0
+        count = active.sum(dim=-1).clamp_min(1)
+        metrics = self.command.metrics
+        metrics["contact/approach_reward_raw"] = approach
+        metrics["contact/force_bonus_raw"] = bonus
+        metrics["contact/force_reward_raw"] = reward
+        metrics["contact/loaded_part_fraction"] = ((pressure > 1e-6) & active).sum(dim=-1) / count
+        metrics["contact/force_amplification_fraction"] = (fraction * active).sum(dim=-1) / count
+        metrics["contact/normal_force_mean_n"] = (pressure * active).sum(dim=-1) / count
+        finite_forces = torch.where(torch.isfinite(forces).all(dim=-1, keepdim=True), forces, 0.0)
+        magnitude = torch.linalg.vector_norm(finite_forces, dim=-1)
+        metrics["contact/object_force_norm_mean_n"] = (magnitude * active).sum(dim=-1) / count
+        return reward

@@ -17,7 +17,7 @@ import isaaclab.terrains as terrain_gen
 import isaacsim.core.utils.stage as stage_utils
 import omni.log
 import torch
-from pxr import Usd, UsdGeom
+from pxr import Usd, UsdGeom, UsdPhysics
 from isaaclab.actuators import IdealPDActuatorCfg
 from isaaclab.assets import Articulation, ArticulationCfg
 from isaaclab.envs import ViewerCfg, mdp
@@ -509,6 +509,39 @@ class IsaacSim(BaseSimulator):
 
         self.contact_sensor = ContactSensor(contact_sensor_config)
         self.scene.sensors["contact_sensor"] = self.contact_sensor
+
+        # IsaacLab supports many-to-one contact filtering only when each
+        # sensor contains a single robot body. Keep these sensors opt-in so
+        # historical runs and original-RL jobs have no added sensor cost.
+        self.object_contact_sensors: dict[str, ContactSensor] = {}
+        contact_bodies = self.simulator_config.object_contact_body_names
+        if contact_bodies:
+            if len(set(contact_bodies)) != len(contact_bodies):
+                raise ValueError("object_contact_body_names must be unique")
+            object_name = self.simulator_config.object_contact_object_name
+            if object_name not in self.scene.rigid_objects:
+                raise ValueError(f"Filtered contact object is not in the scene: {object_name}")
+            object_root = self.scene.rigid_objects[object_name].cfg.prim_path.replace("env_.*", "env_0")
+            stage = stage_utils.get_current_stage()
+            object_bodies = [
+                prim for prim in Usd.PrimRange(stage.GetPrimAtPath(object_root))
+                if prim.HasAPI(UsdPhysics.RigidBodyAPI)
+            ]
+            if len(object_bodies) != 1:
+                raise ValueError(f"Filtered object must resolve to one rigid body: {object_name}")
+            object_path = str(object_bodies[0].GetPath()).replace("/env_0/", "/env_.*/")
+            for body_name in contact_bodies:
+                if not body_name or "/" in body_name:
+                    raise ValueError(f"Invalid filtered contact body name: {body_name!r}")
+                sensor = ContactSensor(ContactSensorCfg(
+                    prim_path=f"/World/envs/env_.*/Robot/{body_name}",
+                    filter_prim_paths_expr=[object_path],
+                    update_period=0.0,  # Fresh data at every physics step.
+                    history_length=0,
+                    debug_vis=False,
+                ))
+                self.object_contact_sensors[body_name] = sensor
+                self.scene.sensors[f"object_contact_{body_name}"] = sensor
 
         if height_scanner_config:
             self._height_scanner = RayCaster(height_scanner_config)
@@ -1051,6 +1084,28 @@ class IsaacSim(BaseSimulator):
     def clear_contact_forces_history(self, env_ids: torch.Tensor) -> None:
         if len(env_ids) > 0:
             self.contact_forces_history[env_ids, :, :, :] = 0.0
+            # Never let pre-reset forces provide a grasp bonus after reset.
+            for sensor in self.object_contact_sensors.values():
+                sensor.reset(env_ids)
+
+    def get_object_contact_forces(self, body_names: list[str], object_name: str) -> torch.Tensor:
+        """Current object-on-body normal forces, [env, requested body, xyz].
+
+        This deliberately reads the filtered force matrix, not net_forces_w
+        or a maximum over contact history. No net-force fallback is allowed.
+        """
+        if object_name != self.simulator_config.object_contact_object_name:
+            raise ValueError(f"Contact sensors do not filter object {object_name!r}")
+        forces = []
+        for body_name in body_names:
+            if body_name not in self.object_contact_sensors:
+                raise ValueError(f"No filtered object contact sensor for {body_name!r}")
+            sensor = self.object_contact_sensors[body_name]
+            matrix = sensor.data.force_matrix_w
+            if sensor.body_names != [body_name] or matrix is None or matrix.shape[2] == 0:
+                raise RuntimeError(f"Invalid object contact filtering on {body_name!r}")
+            forces.append(matrix[:, 0].sum(dim=1))
+        return torch.stack(forces, dim=1)
 
     def apply_torques_at_dof(self, torques):
         self._robot.set_joint_effort_target(torques, joint_ids=self.dof_ids)

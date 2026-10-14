@@ -96,12 +96,41 @@ def train_command(cfg, group, train_base, run_id):
         ]
     if group == 3:
         command += ["--command.setup-terms.motion-command.params.motion-config.semantic-file", cfg["semantic_file"]]
-        if not cfg.get("contact_file") or not cfg.get("contact_sha256"):
-            raise ValueError("Group 3 semantic_adaptive requires contact_file and contact_sha256")
-        command.insert(4, "reward:g1-29dof-wbt-w-object-contact-position")
-        command += ["--reward.terms.reference-contact-position.params.contact-file", cfg["contact_file"],
-                    "--reward.terms.reference-contact-position.params.contact-sha256", cfg["contact_sha256"]]
+        mode = semantic_reward_mode(cfg)
+        if mode in ("contact", "contact_force", "contact_force_shaped"):
+            if not cfg.get("contact_file") or not cfg.get("contact_sha256"):
+                raise ValueError("Contact mode requires contact_file and contact_sha256")
+            preset = {"contact": "contact-position", "contact_force": "contact-force",
+                      "contact_force_shaped": "contact-force-shaped"}[mode]
+            command.insert(4, f"reward:g1-29dof-wbt-w-object-{preset}")
+            command += ["--reward.terms.reference-contact-position.params.contact-file", cfg["contact_file"],
+                        "--reward.terms.reference-contact-position.params.contact-sha256", cfg["contact_sha256"]]
+            if mode in ("contact_force", "contact_force_shaped"):
+                with np.load(cfg["contact_file"], allow_pickle=False) as data:
+                    bodies = list(dict.fromkeys(data["body_names"].tolist()))
+                object_name = cfg.get("contact_object_name", "object")
+                command += [
+                    "--reward.terms.reference-contact-position.params.object-name", object_name,
+                    "--simulator.config.object-contact-object-name", object_name,
+                    "--simulator.config.object-contact-body-names", repr(bodies),
+                ]
+                if mode == "contact_force":
+                    command += ["--reward.terms.reference-contact-position.params.minimum-normal-force-n",
+                                cfg.get("minimum_normal_force_n", 1.0)]
+                else:
+                    command += ["--reward.terms.reference-contact-position.params.approach-fraction",
+                                cfg.get("contact_approach_fraction", 0.1),
+                                "--reward.terms.reference-contact-position.params.force-scale-n",
+                                cfg.get("contact_force_scale_n", 4.0)]
     return command
+
+
+def semantic_reward_mode(cfg):
+    """Keep position-only defaults; force feedback must be selected explicitly."""
+    mode = cfg.get("semantic_reward_mode", "contact")
+    if mode not in ("contact", "contact_force", "contact_force_shaped"):
+        raise ValueError(f"Unknown semantic_reward_mode: {mode!r}")
+    return mode
 
 
 def eval_command(cfg, checkpoint, out, motion):
@@ -222,7 +251,8 @@ def preflight(cfg):
         raise ValueError("groups must be a nonempty unique subset of [1, 2, 3]")
     if cfg.get("adaptive_num_bins") is not None and int(cfg["adaptive_num_bins"]) <= 0:
         raise ValueError("adaptive_num_bins must be positive when provided")
-    if 3 in groups and (not cfg.get("contact_file") or not cfg.get("contact_sha256")):
+    mode = semantic_reward_mode(cfg) if 3 in groups else None
+    if mode in ("contact", "contact_force", "contact_force_shaped") and (not cfg.get("contact_file") or not cfg.get("contact_sha256")):
         raise ValueError("semantic-adaptive group 3 requires contact_file and contact_sha256")
     if cfg.get("contact_file"):
         contact = Path(cfg["contact_file"])
@@ -230,6 +260,27 @@ def preflight(cfg):
             raise ValueError("Contact target SHA256 mismatch")
         with np.load(contact, allow_pickle=False) as data:
             metadata = json.loads(str(data["metadata_json"].item()))
+            if mode in ("contact_force", "contact_force_shaped"):
+                if "object_normals_local" not in data.files:
+                    raise ValueError("contact_force mode requires object_normals_local")
+                normals = data["object_normals_local"]
+                if (
+                    normals.shape != data["object_points_local"].shape
+                    or not np.isfinite(normals).all()
+                    or not np.allclose(np.linalg.norm(normals, axis=-1), 1.0, atol=1e-4)
+                ):
+                    raise ValueError("Invalid contact-force surface normals")
+                if mode == "contact_force":
+                    threshold = float(cfg.get("minimum_normal_force_n", 1.0))
+                    if not np.isfinite(threshold) or threshold <= 0:
+                        raise ValueError("minimum_normal_force_n must be finite and strictly positive")
+                else:
+                    fraction = float(cfg.get("contact_approach_fraction", 0.1))
+                    scale = float(cfg.get("contact_force_scale_n", 4.0))
+                    if not np.isfinite(fraction) or not 0 < fraction < 1:
+                        raise ValueError("contact_approach_fraction must be strictly between zero and one")
+                    if not np.isfinite(scale) or scale <= 0:
+                        raise ValueError("contact_force_scale_n must be finite and strictly positive")
         if metadata.get("schema") != "holosoma.reference_surface_contacts.v2":
             raise ValueError("New semantic-adaptive runs require a v2 semantic-key-part contact artifact")
         if metadata.get("motion_sha256") != hashlib.sha256(Path(cfg["b4_motion"]).read_bytes()).hexdigest():

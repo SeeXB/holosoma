@@ -113,8 +113,7 @@ g1_29dof_wbt_reward_w_object = RewardManagerCfg(
 )
 
 
-# Task-specific paths are supplied at launch. Semantic-adaptive training
-# presets select this reward and fail closed when the artifact is omitted.
+# Historical contact runs remain reproducible via this explicit opt-in preset.
 g1_29dof_wbt_reward_w_object_contact_position = replace(
     g1_29dof_wbt_reward_w_object,
     terms={
@@ -122,6 +121,42 @@ g1_29dof_wbt_reward_w_object_contact_position = replace(
         "reference_contact_position": RewardTermCfg(
             func="holosoma.managers.reward.terms.reference_contact:ReferenceContactPosition",
             params={"contact_file": "", "contact_sha256": "", "sigma": 0.05},
+            weight=2.0,
+        ),
+    },
+)
+
+# Preserve the contact-point objective, but award it only while every active
+# key part has compressive normal contact force from the tracked object.
+g1_29dof_wbt_reward_w_object_contact_force = replace(
+    g1_29dof_wbt_reward_w_object_contact_position,
+    terms={
+        **g1_29dof_wbt_reward_w_object_contact_position.terms,
+        "reference_contact_position": RewardTermCfg(
+            func="holosoma.managers.reward.terms.reference_contact:ReferenceContactForce",
+            params={
+                "contact_file": "", "contact_sha256": "", "sigma": 0.05,
+                "minimum_normal_force_n": 1.0, "object_name": "object",
+            },
+            weight=2.0,
+        ),
+    },
+)
+
+
+# Dense approach shaping plus independent, bounded normal-force amplification.
+# 4 N is a tunable saturation scale, initialized from White chair G2's positive
+# normal-force P5 (3.91 N); it is not a universal physical grasp threshold.
+g1_29dof_wbt_reward_w_object_contact_force_shaped = replace(
+    g1_29dof_wbt_reward_w_object_contact_position,
+    terms={
+        **g1_29dof_wbt_reward_w_object_contact_position.terms,
+        "reference_contact_position": RewardTermCfg(
+            func="holosoma.managers.reward.terms.reference_contact:ReferenceContactForceShaped",
+            params={
+                "contact_file": "", "contact_sha256": "", "sigma": 0.05,
+                "approach_fraction": 0.1, "force_scale_n": 4.0, "object_name": "object",
+            },
             weight=2.0,
         ),
     },
@@ -179,6 +214,8 @@ __all__ = [
     "g1_29dof_wbt_reward",
     "g1_29dof_wbt_reward_w_object",
     "g1_29dof_wbt_reward_w_object_contact_position",
+    "g1_29dof_wbt_reward_w_object_contact_force",
+    "g1_29dof_wbt_reward_w_object_contact_force_shaped",
     "g1_29dof_wbt_semantic_keyframe_reward",
     "g1_29dof_wbt_semantic_reward",
     "g1_29dof_wbt_w_object_semantic_e1_part_reward",

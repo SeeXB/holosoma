@@ -31,7 +31,7 @@ import math
 from dataclasses import replace
 
 from holosoma.config_types.command import CommandTermCfg
-from holosoma.config_types.observation import ObservationManagerCfg, ObsGroupCfg, ObsTermCfg
+from holosoma.config_types.observation import ObservationManagerCfg
 from holosoma.config_types.randomization import (
     BaseComRange,
     InertiaScale,
@@ -125,39 +125,14 @@ paper_randomization = RandomizationManagerCfg(
 )
 
 
-# The actor previously omitted pelvis linear velocity and pelvis position error.
-# The paper's full proprioceptive object policy contains both.  Noise magnitudes
-# below are literal uniform half-widths, matching ObservationManager semantics.
-_paper_actor_terms = dict(actor_obs_shared.terms)
-_paper_actor_terms.update(
-    {
-        "motion_ref_pos_b": ObsTermCfg(
-            func="holosoma.managers.observation.terms.wbt:motion_ref_pos_b",
-            scale=1.0,
-            noise=0.0,
-        ),
-        "base_lin_vel": ObsTermCfg(
-            func="holosoma.managers.observation.terms.wbt:base_lin_vel",
-            scale=1.0,
-            noise=0.5,
-        ),
-    }
-)
-# Assert the already-present channels really match the paper instead of merely
-# inheriting them by accident.
-_paper_actor_terms["motion_ref_ori_b"] = replace(_paper_actor_terms["motion_ref_ori_b"], noise=0.05)
-_paper_actor_terms["base_ang_vel"] = replace(_paper_actor_terms["base_ang_vel"], noise=0.2)
-_paper_actor_terms["dof_pos"] = replace(_paper_actor_terms["dof_pos"], noise=0.01)
-_paper_actor_terms["dof_vel"] = replace(_paper_actor_terms["dof_vel"], noise=0.5)
-
+# Keep the original deployment-compatible 154-D actor observation unchanged.
+# Base linear velocity and reference-body position error are privileged critic
+# channels: the existing real-robot WBT interface does not supply either.
+# Historical 160-D checkpoints retain their serialized observation config and
+# must not be resumed into this 154-D policy without explicit model adaptation.
 paper_observation = ObservationManagerCfg(
     groups={
-        "actor_obs": ObsGroupCfg(
-            concatenate=True,
-            enable_noise=True,
-            history_length=1,
-            terms=_paper_actor_terms,
-        ),
+        "actor_obs": actor_obs_shared,
         "critic_obs": g1_29dof_wbt_observation_w_object.groups["critic_obs"],
     }
 )
@@ -243,8 +218,8 @@ g1_29dof_wbt_w_object_b4_semantic_paper_dr = replace(
     reward=g1_29dof_wbt_reward_w_object_contact_position,
 )
 
-# Sampling ablations. S0/S1 retain the original Omni reward. All new
-# semantic-adaptive runs use semantic-key-part surface contact targets.
+# Sampling ablations. S0/S1 retain the original Omni reward. Force-contact
+# rewards are selected explicitly by the launcher; position-only is preserved.
 g1_29dof_wbt_w_object_b4_s0_original_adaptive_paper_dr = _paper_experiment(
     g1_29dof_wbt_w_object_semantic_r1_b4_omni,
     command_cfg=paper_command,

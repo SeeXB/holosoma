@@ -148,6 +148,10 @@ def build(args: argparse.Namespace) -> dict[str, object]:
             raise ValueError(f"Expected {SOURCE_SCHEMA} source artifact")
         parts = data["semantic_parts"].tolist()
         object_points_source = np.asarray(data["object_points_local"], dtype=np.float64)
+        object_normals_source = (
+            np.asarray(data["object_normals_local"], dtype=np.float64)
+            if "object_normals_local" in data.files else None
+        )
         active_source = np.asarray(data["active"])
         activation_source = np.asarray(
             data["activation"] if "activation" in data.files else active_source,
@@ -190,6 +194,20 @@ def build(args: argparse.Namespace) -> dict[str, object]:
             f"RL motion duration {destination_times[-1]:.6f}s exceeds contact source duration {source_last_time:.6f}s"
         )
     object_points = _resample(object_points_source, source_fps, destination_times)
+    extra_arrays = {}
+    if object_normals_source is not None:
+        lengths = np.linalg.norm(object_normals_source, axis=-1)
+        if (
+            object_normals_source.shape != object_points_source.shape
+            or not np.isfinite(object_normals_source).all()
+            or not np.allclose(lengths, 1.0, atol=1e-4)
+        ):
+            raise ValueError("Source object normals must be finite unit vectors matching anchors")
+        object_normals = _resample(object_normals_source, source_fps, destination_times)
+        lengths = np.linalg.norm(object_normals, axis=-1, keepdims=True)
+        if np.any(lengths < 1e-8):
+            raise ValueError("Resampled object normals cannot be zero")
+        extra_arrays["object_normals_local"] = (object_normals / lengths).astype(np.float32)
     activation = _resample(activation_source, source_fps, destination_times)
     activation = np.clip(activation, 0.0, 1.0)
     active = activation > 1e-8
@@ -229,6 +247,8 @@ def build(args: argparse.Namespace) -> dict[str, object]:
         "sphere_support": sphere_audit,
         "geometry_sha256": {str(path): _sha256(path) for path in sorted(geometry_paths, key=str)},
     }
+    if extra_arrays:
+        metadata["normal_definition"] = "source outward object surface normals; resampled and normalized"
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_name(output.name + ".tmp.npz")
     np.savez_compressed(
@@ -241,6 +261,7 @@ def build(args: argparse.Namespace) -> dict[str, object]:
         object_points_local=object_points.astype(np.float32),
         active=active.astype(np.bool_),
         activation=activation.astype(np.float32),
+        **extra_arrays,
     )
     temporary.replace(output)
     metadata_path = output.with_suffix(".json")

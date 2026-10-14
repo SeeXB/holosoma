@@ -48,6 +48,7 @@ def test_transfers_object_anchors_and_only_adapts_sphere_geometry(tmp_path):
         metadata_json=json.dumps(source_metadata),
         semantic_parts=np.array(["left_hand", "right_hand"]),
         object_points_local=object_points,
+        object_normals_local=np.broadcast_to(np.array([[1, 0, 0], [-1, 0, 0]]), (3, 2, 3)).copy(),
         active=activation > 0,
         activation=activation,
         # Deliberately absurd rubber points: the adapter must ignore these.
@@ -75,6 +76,8 @@ def test_transfers_object_anchors_and_only_adapts_sphere_geometry(tmp_path):
         ]
         np.testing.assert_allclose(result["object_points_local"][:, 0, 0], [0, 0.5, 1, 1.5, 2])
         np.testing.assert_allclose(result["activation"][:, 0], [0, 0.25, 0.5, 0.75, 1])
+        np.testing.assert_allclose(result["object_normals_local"][:, 0], np.tile([1, 0, 0], (5, 1)))
+        np.testing.assert_allclose(result["object_normals_local"][:, 1], np.tile([-1, 0, 0], (5, 1)))
         np.testing.assert_allclose(result["body_points_local"][0, 0], [0.05, -0.043, 0], atol=1e-8)
         np.testing.assert_allclose(result["body_points_local"][0, 1], [0.05, 0.037, 0], atol=1e-8)
         assert np.max(result["body_points_local"]) < 1.0

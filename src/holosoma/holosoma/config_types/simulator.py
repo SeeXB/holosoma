@@ -288,6 +288,17 @@ class SimulatorInitConfig:
     contact_sensor_history_length: int = 3
     """Number of frames of contact data retained for sensors."""
 
+    object_contact_body_names: list[str] = field(default_factory=list)
+    """Opt-in IsaacSim bodies with one filtered contact sensor per body.
+
+    Empty preserves the existing simulator setup. Sensors report only normal
+    contact forces from ``object_contact_object_name``, excluding ground and
+    self-collisions. A separate sensor is required for each body by IsaacLab.
+    """
+
+    object_contact_object_name: str = "object"
+    """Scene rigid-object name used by the opt-in filtered contact sensors."""
+
     robot_mjcf_filter: MujocoXMLFilterCfg = field(default_factory=MujocoXMLFilterCfg)
     """MuJoCo-specific XML filtering configuration for robot MJCF files."""
 
