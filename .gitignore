@@ -11,6 +11,8 @@ MUJOCO_LOG.TXT
 *.avi
 *.mov
 *.mkv
+!/assets/demos/largetable-success.mp4
+!/assets/demos/whitechair-success.mp4
 src/holosoma_retargeting/holosoma_retargeting/benchmark_results_*/videos/
 
 # Local generated experiment artifacts
