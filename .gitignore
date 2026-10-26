@@ -34,7 +34,7 @@ logs
 logs_eval
 /runs/
 
-# Local experiment/runtime checkouts (keep source reports under exp/ trackable)
+# Local experiment/runtime checkouts (keep configs/scripts under exp/ trackable)
 /outputs/
 /third_party/
 /exp/eval/**/rollout*.npz
@@ -75,3 +75,21 @@ wandb-metadata.json
 
 # BAZEL build artifacts
 BUILD.bazel
+
+# Local notes and generated reports (keep upstream documentation tracked)
+/DATA_LAYOUT.md
+/NEXT_CONVERSATION_HANDOFF.md
+/semantic_*_reward_report.md
+/docs/*.md
+!/docs/g1-docker-cheatsheet.md
+!/docs/writing-extensions.md
+/diagnostics/**/*.md
+/exp/**/*.md
+/src/holosoma/holosoma/data/README.md
+/src/holosoma_retargeting/SEMANTIC_B4_OPTIMIZATION.md
+/src/holosoma_retargeting/holosoma_retargeting/benchmark_results_*/*.md
+/src/holosoma_retargeting/holosoma_retargeting/benchmark_results_*/*.txt
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/README.md
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/semantic_keyframes/README.md
+/src/holosoma_retargeting/holosoma_retargeting/demo_data/semantic_keyframes/*.vlm_attempt_*.txt
+/tools/omomo_cari4d_renderer/README.md

@@ -58,7 +58,7 @@ known_exception = (
 if result.returncode:
     if name != "hssim" or output.strip().replace("typing_extensions", "typing-extensions") != known_exception:
         raise SystemExit(result.returncode)
-    print("Known Isaac Sim / Tyro typing-extensions pin exception; see docs/rtx5090-environments.md.")
+    print("Known Isaac Sim / Tyro typing-extensions pin exception; see README.md.")
 CHECK
     "$python" -m pip freeze > "outputs/environment-install/conda/$name-freeze.txt"
     "$CONDA_ROOT/bin/conda" env export --prefix "$CONDA_ROOT/envs/$name" \
