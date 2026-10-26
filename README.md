@@ -4,12 +4,12 @@
 
 ## 成功 episode
 
-点击动图打开完整 MP4。左侧是重定向参考，右侧是训练后的策略；两段均为 Isaac Sim 评测 rollout 的 MuJoCo 离线回放，按 **0.5 倍速**播放。
+动图展示完整成功回合，点击可下载 MP4。左侧是重定向参考，右侧是训练后的策略；两段均为 Isaac Sim 评测 rollout 的 MuJoCo 离线回放，按 **0.5 倍速**播放。
 
 | Large table · `sub1_largetable_028` | White chair · `sub10_whitechair_118` |
 | --- | --- |
 | [![Large table 成功 episode](assets/demos/largetable-success.gif)](assets/demos/largetable-success.mp4?raw=1) | [![White chair 成功 episode](assets/demos/whitechair-success.gif)](assets/demos/whitechair-success.mp4?raw=1) |
-| [完整视频](assets/demos/largetable-success.mp4?raw=1) · G2 · checkpoint **28,500** | [完整视频](assets/demos/whitechair-success.mp4?raw=1) · G2 · checkpoint **16,500** |
+| [下载 MP4](assets/demos/largetable-success.mp4?raw=1) · G2 · checkpoint **28,500** | [下载 MP4](assets/demos/whitechair-success.mp4?raw=1) · G2 · checkpoint **16,500** |
 | **313 / 320（97.81%）** | **297 / 320（92.81%）** |
 
 两段视频均取各自评测中 **env 0 / episode 1** 的成功回合。G2 使用 B4+force 参考轨迹、original-adaptive 采样和基础跟踪奖励。表中成功率来自对应 checkpoint 的完整评测：seed 42，32 个环境，每环境前 10 个完成回合，保留成功和失败回合，开启推扰动，从参考起点运行到结束。这是各任务选定 checkpoint 的结果。
